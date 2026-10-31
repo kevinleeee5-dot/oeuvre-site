@@ -1,9 +1,8 @@
 <!doctype html>
-<!-- deploy test 1 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Oeuvre</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="Oeuvre is being renovated. Back soon.">
@@ -11,31 +10,86 @@
   :root { --bg:#0b0b0b; --fg:#f4f4f2; --dim:#8a8a86; --line:#2a2a28; }
   * { box-sizing:border-box; }
   html,body { height:100%; margin:0; }
-  body {
-    background:var(--bg); color:var(--fg);
-    font-family:"Helvetica Neue",Helvetica,Arial,"PingFang SC","Noto Sans SC",sans-serif;
-    display:grid; grid-template-rows:auto 1fr auto;
-    padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
-  }
+  body { background:var(--bg); color:var(--fg); overflow:hidden; cursor:none; touch-action:none;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+
+  /* Two identical layers. The top one is inverted and only visible inside a disc that follows the cursor. */
+  .layer { position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto;
+    padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left)); }
+  .inv { background:var(--fg); color:var(--bg); --dim:#6d6d68; --line:#cfcfca;
+    clip-path:circle(var(--r,0px) at var(--x,50%) var(--y,50%)); pointer-events:none; }
+
   header,footer { display:flex; justify-content:space-between; gap:16px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
   main { display:grid; align-content:center; gap:28px; }
-  h1 { margin:0; font-weight:500; letter-spacing:-.04em; line-height:.9; font-size:clamp(64px,17vw,220px); }
+  h1 { margin:0; font-weight:500; letter-spacing:-.045em; line-height:.9; font-size:clamp(64px,19vw,260px); }
   .rule { height:1px; background:var(--line); max-width:720px; }
   p { margin:0; font-size:clamp(16px,2vw,22px); line-height:1.5; max-width:34ch; }
-  p + p { color:var(--dim); }
-  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--fg); margin-right:10px; animation:pulse 2.4s ease-in-out infinite; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:currentColor; margin-right:10px; animation:pulse 2.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity:.2; } }
+
+  .ring { position:fixed; left:0; top:0; width:44px; height:44px; margin:-22px 0 0 -22px; border:1px solid #fff; border-radius:50%;
+    mix-blend-mode:difference; pointer-events:none; will-change:transform; }
+  .pip { position:fixed; left:0; top:0; width:6px; height:6px; margin:-3px 0 0 -3px; background:#fff; border-radius:50%;
+    mix-blend-mode:difference; pointer-events:none; will-change:transform; }
   @media (prefers-reduced-motion:reduce) { .dot { animation:none; } }
 </style>
 </head>
 <body>
-  <header><span>Auckland</span><span>Under renovation</span></header>
-  <main>
-    <h1>Oeuvre</h1>
-    <div class="rule"></div>
-    <p><span class="dot"></span>We&rsquo;re renovating. Back soon.</p>
-    <p>&#x7F51;&#x7AD9;&#x6B63;&#x5728;&#x88C5;&#x4FEE;&#x4E2D;&#xFF0C;&#x5F88;&#x5FEB;&#x56DE;&#x6765;&#x3002;</p>
-  </main>
-  <footer><span>BNB Management Consulting Ltd t/a Oeuvre</span><span>New Zealand</span></footer>
+  <div class="layer">
+    <header><span>Auckland</span><span>Under renovation</span></header>
+    <main>
+      <h1>Oeuvre</h1>
+      <div class="rule"></div>
+      <p><span class="dot"></span>We&rsquo;re renovating. Back soon.</p>
+    </main>
+    <footer><span>BNB Management Consulting Ltd t/a Oeuvre</span><span>New Zealand</span></footer>
+  </div>
+
+  <div class="layer inv" id="inv" aria-hidden="true">
+    <header><span>Auckland</span><span>Under renovation</span></header>
+    <main>
+      <h1>Oeuvre</h1>
+      <div class="rule"></div>
+      <p><span class="dot"></span>We&rsquo;re renovating. Back soon.</p>
+    </main>
+    <footer><span>BNB Management Consulting Ltd t/a Oeuvre</span><span>New Zealand</span></footer>
+  </div>
+
+  <div class="ring" id="ring"></div>
+  <div class="pip" id="pip"></div>
+
+<script>
+(function () {
+  var inv = document.getElementById("inv"), ring = document.getElementById("ring"), pip = document.getElementById("pip");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var W = window.innerWidth, H = window.innerHeight;
+  var tx = W / 2, ty = H / 2, x = tx, y = ty, rx = tx, ry = ty, px = x, py = y, r = 0, pressed = false, active = false, idle = 0, last = 0;
+
+  window.addEventListener("resize", function () { W = window.innerWidth; H = window.innerHeight; });
+  window.addEventListener("pointermove", function (e) { tx = e.clientX; ty = e.clientY; active = true; idle = 0; });
+  window.addEventListener("pointerdown", function (e) { tx = e.clientX; ty = e.clientY; active = true; idle = 0; pressed = true; });
+  window.addEventListener("pointerup", function () { pressed = false; });
+  window.addEventListener("pointercancel", function () { pressed = false; });
+
+  function frame(t) {
+    var dt = last ? t - last : 16; last = t; idle += dt;
+    if (!active || idle > 3500) {            // nobody is moving: drift on its own so the page is never static
+      var a = t / 2600;
+      tx = W * (0.5 + 0.28 * Math.cos(a)); ty = H * (0.5 + 0.2 * Math.sin(a * 1.3));
+    }
+    x += (tx - x) * (reduce ? 1 : 0.11); y += (ty - y) * (reduce ? 1 : 0.11);
+    rx += (tx - rx) * 0.3; ry += (ty - ry) * 0.3;
+    var v = Math.hypot(x - px, y - py); px = x; py = y;           // speed makes the disc swell
+    var target = reduce ? 120 : 100 + Math.min(v * 7, 200);
+    if (pressed) target = Math.max(W, H) * 0.9;                    // press: the whole page flips
+    r += (target - r) * (pressed ? 0.09 : 0.12);
+    inv.style.setProperty("--x", x + "px"); inv.style.setProperty("--y", y + "px"); inv.style.setProperty("--r", r + "px");
+    ring.style.transform = "translate(" + rx + "px," + ry + "px) scale(" + (pressed ? 0.6 : 1) + ")";
+    pip.style.transform = "translate(" + tx + "px," + ty + "px)";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
