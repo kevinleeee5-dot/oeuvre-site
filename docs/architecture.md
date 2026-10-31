@@ -154,3 +154,19 @@ Not used, on purpose: Bei`Care simulator screenshots and mockups (they show real
 spend). Bei`Care needs new screenshots with demo data. ACE has no UI screenshots yet: the app cannot start on this
 Mac right now ("installed engine was moved") — needs a screen recording once it runs.
 All images are shown greyscale on the site; PNG graphics are inverted to white-on-black.
+
+## 8. The built site (2026-11-01)
+
+Real URLs, plain static files (see README): `/`, `/work/`, `/work/beicare/`, `/work/muzi/`, `/work/folio/`,
+`/work/ace/`, `/services/` (Photography marked 2027), `/studio/`, `/contact/`, `/404.html`.
+
+- Transition: every same-site link plays the halftone iris from the click point, the next page opens
+  covered and the dots shrink away from the same point (going home: from the menu word you came from).
+  Stored in sessionStorage; falls back to a normal page load. Off with reduced motion.
+- Home: the figure (`being/`) fills the screen; the four words are placed around the face box it reports.
+  "Index" switches to a plain list. Without JS the words are a plain list.
+- Sub-pages: titles rise letter by letter; images arrive as halftone dots and resolve into the
+  greyscale photo; Services rows fill with a dot sweep (native `<details>`); Studio statement lights
+  word by word; Contact leaves a dot trail; a dot cursor on mouse devices.
+- Bei`Care images are screenshots of the public site beicare.co.nz; the workshop app is shown as a
+  drawn placeholder until screens with demo data exist. ACE shows the reel and the left (player) half of its UI only.
