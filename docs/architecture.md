@@ -16,7 +16,7 @@ Status: proposal for discussion. Navigation prototype: `proto/nav.html`. All cop
 │   ├── /work/beicare   Case study — Bei`Care (operations app)
 │   ├── /work/muzi      Case study — MUZI (garden brand + e-commerce)
 │   ├── /work/folio     Case study — Folio (reading + narration app)
-│   └── /work/<music>   Case study — local music app with the turntable dial (name TBC)
+│   └── /work/ace       Case study — ACE (local music studio, turntable dial)
 ├── /services           What we do (one page, five disciplines)
 │   └── #photography    Placeholder: "Opening 2027"
 ├── /studio             About: who, how we work, where
@@ -73,8 +73,8 @@ Proposed content per project (to confirm with you — I only know what is on thi
 |---|---|---|---|
 | **Bei`Care** | An iPad "instrument panel" that runs a small production business: today's batches, stock, workshop. Every screen fits on one screen; drag to act. English first, Chinese toggle. | Product strategy, UX, UI, app build (Expo/React Native), bilingual system | Approved mockups (`design/mockups/*/*.png`), simulator screenshots, beicare.co.nz |
 | **MUZI** | A New Zealand succulent and garden brand: identity, packaging photography, product range of ~300 SKUs, retail partner material, online shop at muzi.co.nz. | Brand identity, product photography, e-commerce, retail collateral | Logo, product photos (`Downloads/MUZI/Soil/*`), site screenshots |
-| **Folio** | A calm reading app: daily editions, articles narrated by a natural voice, background listening with lock-screen controls. | Product, editorial design, iOS build, audio pipeline | App screenshots (to be taken), the two concept images in `Project Name Folio/Image` |
-| **Music app (name?)** | A local music player whose centre is a turntable / dial you turn to scrub and choose. | Interaction design, motion, build | Not found yet — see open questions |
+| **Folio** (confirmed: the reading app, not LeafReader) | A calm reading app: daily editions, articles narrated by a natural voice, background listening with lock-screen controls. | Product, editorial design, iOS build, audio pipeline | App screenshots (to be taken), the two concept images in `Project Name Folio/Image` |
+| **ACE** | A private music studio on one Mac: generates long-form tracks locally (one prompt, eight takes), learns from channel data, carries each session to a finished video — and you play it all on a turntable dial. | Interaction design, AI pipeline, build | Screenshots of the turntable UI (to be taken — none found on disk); app icon `~/Applications/ACE Music.app` |
 
 Do **not** publish: client prices, margins, supplier names, contracts, internal data visible in mockups
 (stock numbers, staff names). Screens should be shot with demo data.

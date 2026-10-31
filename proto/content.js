@@ -90,19 +90,20 @@ window.OEUVRE_CONTENT = {
           gallery: ["page", "page", "page"]
         },
         {
-          slug: "dial",
-          name: "Dial (name TBC)",
-          outcome: "A local music player you play by turning a record.",
-          sector: "Music / personal",
+          slug: "ace",
+          name: "ACE",
+          outcome: "A private music studio on one Mac, played by turning a record.",
+          sector: "Music / production",
           year: "2026",
-          tags: ["Interaction", "Motion", "App"],
+          tags: ["Interaction", "AI pipeline", "App"],
           placeholder: "turntable",
           image: null,
-          brief: "Music libraries became spreadsheets. This player brings back the hand: a turntable dial to choose, scrub and slow down.",
+          brief: "Making long-form music for a channel meant juggling prompts, files, research and video in a dozen places. ACE puts it in one studio, and puts the hand back on the music: a turntable dial to choose, scrub and listen.",
           did: [
-            "Designed the dial as the whole interface.",
-            "Tuned inertia and detents until it felt like vinyl.",
-            "Built it to play local files, no account needed."
+            "Designed the turntable dial as the centre of the interface.",
+            "Built a local pipeline: one prompt, eight takes, different seeds.",
+            "Turned channel and market data into the next session's brief.",
+            "Added rooms that carry a session from first take to finished video."
           ],
           result: "Placeholder — add a fact you are happy to publish.",
           gallery: ["turntable", "turntable", "turntable"]
