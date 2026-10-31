@@ -92,18 +92,18 @@ window.OEUVRE_CONTENT = {
         {
           slug: "ace",
           name: "ACE",
-          outcome: "A private music studio on one Mac, played by turning a record.",
-          sector: "Music / production",
+          outcome: "A music player you play by turning a record.",
+          sector: "Music / interaction",
           year: "2026",
-          tags: ["Interaction", "AI pipeline", "App"],
+          tags: ["Interaction", "Motion", "App"],
           placeholder: "turntable",
           image: null,
-          brief: "Making long-form music for a channel meant juggling prompts, files, research and video in a dozen places. ACE puts it in one studio, and puts the hand back on the music: a turntable dial to choose, scrub and listen.",
+          brief: "Music libraries became lists and buttons. ACE puts the hand back on the music: one turntable dial to choose, scrub and listen.",
           did: [
-            "Designed the turntable dial as the centre of the interface.",
-            "Built a local pipeline: one prompt, eight takes, different seeds.",
-            "Turned channel and market data into the next session's brief.",
-            "Added rooms that carry a session from first take to finished video."
+            "Made the turntable dial the whole interface.",
+            "Turn to move through tracks; drag the platter to scrub.",
+            "Tuned weight, inertia and detents until it felt like vinyl.",
+            "Matched sound and motion so every turn has feedback."
           ],
           result: "Placeholder — add a fact you are happy to publish.",
           gallery: ["turntable", "turntable", "turntable"]
