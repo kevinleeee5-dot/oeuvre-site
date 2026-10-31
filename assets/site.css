@@ -234,3 +234,9 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 .nf .page-title { font-size: clamp(3.2rem, 11vw, 11rem); }
 .static .page-title .ch { animation: none; }
 .static .statement-big span { transition: none; }
+@media (max-width: 600px) {
+  .page-title { font-size: 19vw; }
+  .mail { font-size: 7vw; letter-spacing: -.04em; }
+  .mail span { white-space: normal; }
+  .cta-link { font-size: 11vw; }
+}
