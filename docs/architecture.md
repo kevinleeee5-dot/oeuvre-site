@@ -16,7 +16,7 @@ Status: proposal for discussion. Navigation prototype: `proto/nav.html`. All cop
 │   ├── /work/beicare   Case study — Bei`Care (operations app)
 │   ├── /work/muzi      Case study — MUZI (garden brand + e-commerce)
 │   ├── /work/folio     Case study — Folio (reading + narration app)
-│   └── /work/ace       Case study — ACE (local music studio, turntable dial)
+│   └── /work/ace       Case study — ACE (music player built around a tape reel)
 ├── /services           What we do (one page, five disciplines)
 │   └── #photography    Placeholder: "Opening 2027"
 ├── /studio             About: who, how we work, where
@@ -74,7 +74,7 @@ Proposed content per project (to confirm with you — I only know what is on thi
 | **Bei`Care** | An iPad "instrument panel" that runs a small production business: today's batches, stock, workshop. Every screen fits on one screen; drag to act. English first, Chinese toggle. | Product strategy, UX, UI, app build (Expo/React Native), bilingual system | Approved mockups (`design/mockups/*/*.png`), simulator screenshots, beicare.co.nz |
 | **MUZI** | A New Zealand succulent and garden brand: identity, packaging photography, product range of ~300 SKUs, retail partner material, online shop at muzi.co.nz. | Brand identity, product photography, e-commerce, retail collateral | Logo, product photos (`Downloads/MUZI/Soil/*`), site screenshots |
 | **Folio** (confirmed: the reading app, not LeafReader) | A calm reading app: daily editions, articles narrated by a natural voice, background listening with lock-screen controls. | Product, editorial design, iOS build, audio pipeline | App screenshots (to be taken), the two concept images in `Project Name Folio/Image` |
-| **ACE** | A music player you play by turning a record: one turntable dial to choose, scrub and listen, with weight, inertia and detents tuned to feel like vinyl. Story is the interaction only (do not mention the AI generation pipeline or the channel). | Interaction design, motion, build | Screen recording / screenshots of the turntable UI (to be taken — none found on disk) |
+| **ACE** | A music player built around a reel-to-reel tape reel (checked against the real app, `~/Applications/ACE Music.app`): the reel is labelled like a tape box (title, date, master format), turns with the music (18°/s — one turn per 20 s), and you grab and turn it to scrub. One play button, a countdown, a plain track list. Story is the interaction only — never mention the AI generation pipeline or the channel. | Interaction design, motion, build | `reel.png` (the reel artwork, inside the app's runtime folder) + screenshots / a screen recording of the player (to be taken) |
 
 Do **not** publish: client prices, margins, supplier names, contracts, internal data visible in mockups
 (stock numbers, staff names). Screens should be shot with demo data.

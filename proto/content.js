@@ -92,21 +92,21 @@ window.OEUVRE_CONTENT = {
         {
           slug: "ace",
           name: "ACE",
-          outcome: "A music player you play by turning a record.",
+          outcome: "A music player built around a reel of tape.",
           sector: "Music / interaction",
           year: "2026",
           tags: ["Interaction", "Motion", "App"],
-          placeholder: "turntable",
+          placeholder: "reel",
           image: null,
-          brief: "Music libraries became lists and buttons. ACE puts the hand back on the music: one turntable dial to choose, scrub and listen.",
+          brief: "Music apps reduce a track to a progress bar. ACE gives it a body again: a tape reel that turns while the music plays, and that you turn to move through it.",
           did: [
-            "Made the turntable dial the whole interface.",
-            "Turn to move through tracks; drag the platter to scrub.",
-            "Tuned weight, inertia and detents until it felt like vinyl.",
-            "Matched sound and motion so every turn has feedback."
+            "Made a tape reel the centre of the player, labelled like a tape box: title, date, master format.",
+            "The reel turns with the music: one full turn every twenty seconds.",
+            "Grab the reel and turn it to scrub, forwards or back.",
+            "Kept everything else quiet: one play button, a countdown, a plain track list."
           ],
           result: "Placeholder — add a fact you are happy to publish.",
-          gallery: ["turntable", "turntable", "turntable"]
+          gallery: ["reel", "reel", "reel"]
         }
       ]
     },
