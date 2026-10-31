@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oeuvre</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Oeuvre is being renovated. Back soon.">
+<style>
+  :root { --bg:#0b0b0b; --fg:#f4f4f2; --dim:#8a8a86; --line:#2a2a28; }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; }
+  body {
+    background:var(--bg); color:var(--fg);
+    font-family:"Helvetica Neue",Helvetica,Arial,"PingFang SC","Noto Sans SC",sans-serif;
+    display:grid; grid-template-rows:auto 1fr auto;
+    padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  }
+  header,footer { display:flex; justify-content:space-between; gap:16px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+  main { display:grid; align-content:center; gap:28px; }
+  h1 { margin:0; font-weight:500; letter-spacing:-.04em; line-height:.9; font-size:clamp(64px,17vw,220px); }
+  .rule { height:1px; background:var(--line); max-width:720px; }
+  p { margin:0; font-size:clamp(16px,2vw,22px); line-height:1.5; max-width:34ch; }
+  p + p { color:var(--dim); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--fg); margin-right:10px; animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity:.2; } }
+  @media (prefers-reduced-motion:reduce) { .dot { animation:none; } }
+</style>
+</head>
+<body>
+  <header><span>Auckland</span><span>Under renovation</span></header>
+  <main>
+    <h1>Oeuvre</h1>
+    <div class="rule"></div>
+    <p><span class="dot"></span>We&rsquo;re renovating. Back soon.</p>
+    <p>&#x7F51;&#x7AD9;&#x6B63;&#x5728;&#x88C5;&#x4FEE;&#x4E2D;&#xFF0C;&#x5F88;&#x5FEB;&#x56DE;&#x6765;&#x3002;</p>
+  </main>
+  <footer><span>BNB Management Consulting Ltd t/a Oeuvre</span><span>New Zealand</span></footer>
+</body>
+</html>
