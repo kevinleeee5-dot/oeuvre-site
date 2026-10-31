@@ -84,8 +84,9 @@ body.list .being { opacity: .2; transition: opacity .4s; }
 .lead { font-size: clamp(1.2rem, 2.3vw, 1.85rem); line-height: 1.3; letter-spacing: -.01em; max-width: 30ch; margin: 0 0 clamp(48px, 9vh, 96px); color: var(--dim); }
 
 /* title letters rise in on load (js) */
-.js .page-title .ch { display: inline-block; transform: translateY(.5em); opacity: 0; transition: transform .9s var(--ease), opacity .9s var(--ease); transition-delay: calc(var(--i) * 28ms + 120ms); }
-.js .page-title.in .ch { transform: none; opacity: 1; }
+.page-title .ch { display: inline-block; animation: chIn 1s var(--ease) both; animation-delay: calc(var(--i) * 30ms + var(--d, 120ms)); }
+html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
+@keyframes chIn { from { transform: translateY(.55em); opacity: 0; } }
 
 /* ---------- work list ---------- */
 .work-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
@@ -210,3 +211,22 @@ body.list .being { opacity: .2; transition: opacity .4s; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   html.arriving body::after { display: none; }
 }
+
+/* ---------- count next to a title ---------- */
+.page-title[data-count]::after { content: attr(data-count); font-size: .12em; letter-spacing: 0; font-weight: 400; vertical-align: top; margin-left: .4em; color: var(--dim); position: relative; top: .5em; }
+
+/* ---------- closing call to action on sub-pages ---------- */
+.cta { padding-top: clamp(80px, 16vh, 180px); padding-bottom: clamp(40px, 8vh, 80px); border-top: 1px solid var(--line); margin-top: clamp(80px, 14vh, 160px); }
+.cta-link { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; text-decoration: none;
+            font-size: clamp(2.6rem, 9vw, 9rem); font-weight: 500; letter-spacing: -.055em; line-height: .95; }
+.cta-link .arr { font-weight: 300; transition: transform .6s var(--ease); }
+.cta-link:hover .arr { transform: translateX(.15em); }
+.cta-link span:first-child { background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; transition: background-size .6s var(--ease); }
+.cta-link:hover span:first-child { background-size: 100% 2px; }
+
+/* ---------- the dot cursor ---------- */
+.dot-cursor { position: fixed; left: 0; top: 0; z-index: 170; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #fff;
+              pointer-events: none; mix-blend-mode: difference; transition: width .35s var(--ease), height .35s var(--ease), margin .35s var(--ease), opacity .3s; opacity: 0; }
+.dot-cursor.on { opacity: 1; }
+.dot-cursor.big { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
+.dot-cursor.down { width: 6px; height: 6px; margin: -3px 0 0 -3px; }

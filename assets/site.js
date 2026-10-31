@@ -101,7 +101,7 @@
     if (reduced) return;
     const text = h.textContent; h.setAttribute("aria-label", text);
     h.innerHTML = [...text].map((ch, i) => `<span class="ch" aria-hidden="true" style="--i:${i}">${ch === " " ? "&nbsp;" : ch.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</span>`).join("");
-    requestAnimationFrame(() => requestAnimationFrame(() => h.classList.add("in")));
+    if (root.classList.contains("arriving")) h.classList.add("late");
   });
 
   /* ================= pointer ================= */
@@ -163,8 +163,11 @@
           if (x < g) x = g; if (x + w.w > W - g) x = W - g - w.w;
           y = upper ? f.y + f.h * (left ? 0.02 : 0.28) - w.h / 2 : f.y + f.h * (left ? 0.78 : 1.06) - w.h / 2;
         } else {
+          // phones: two words in the space above the face, two below, staggered left/right
           x = left ? g : W - g - w.w;
-          y = upper ? Math.min(f.y - w.h * (left ? 2.3 : 1.15), f.y - w.h) : Math.max(f.y + f.h + w.h * (left ? 0.15 : 1.3), f.y + f.h);
+          const lo = upper ? top : f.y + f.h * 0.9, hi = upper ? f.y + f.h * 0.12 : bottom - 40;
+          const span = Math.max(hi - lo - w.h, w.h * 1.2);
+          y = lo + span * (left ? 0.06 : 0.94);
         }
         y = clamp(y, top, bottom - w.h);
         w.tx = x; w.ty = y;
@@ -355,6 +358,18 @@
       tctx.fill();
     };
     requestAnimationFrame(draw);
+  }
+
+  /* ================= the dot cursor ================= */
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
+    const d = document.createElement("div"); d.className = "dot-cursor"; d.setAttribute("aria-hidden", "true"); body.appendChild(d);
+    let cx = -50, cy = -50, tx = -50, ty = -50;
+    addEventListener("pointermove", e => { tx = e.clientX; ty = e.clientY; d.classList.add("on"); }, { passive: true });
+    document.addEventListener("pointerleave", () => d.classList.remove("on"));
+    addEventListener("pointerdown", () => d.classList.add("down")); addEventListener("pointerup", () => d.classList.remove("down"));
+    document.addEventListener("pointerover", e => d.classList.toggle("big", !!(e.target.closest && e.target.closest("a,button,summary"))));
+    const step = () => { cx += (tx - cx) * 0.25; cy += (ty - cy) * 0.25; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
+    requestAnimationFrame(step);
   }
 
   /* ================= resize + arrive ================= */

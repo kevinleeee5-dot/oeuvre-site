@@ -111,6 +111,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
   {'<button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
 </header>
 {body}
+{cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
 <footer class="foot">
   <p class="foot-legal">{esc(s['legal'])}</p>
   <div class="langs" role="group" aria-label="{esc(s['languages'])}">{''.join(langs)}</div>
@@ -120,6 +121,12 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 </body>
 </html>
 """
+
+
+def cta(c, P):
+    s = c["site"]
+    return (f'<aside class="cta wrap"><p class="kicker">{esc(s["ctaLead"])}</p>'
+            f'<a class="cta-link" href="{P}/contact/"><span>{esc(s["ctaLink"])}</span><span class="arr" aria-hidden="true">→</span></a></aside>')
 
 
 def back(c, href):
@@ -173,7 +180,7 @@ def work_index(c, P):
   <span class="oc">{esc(p['outcome'])}</span></a></li>""")
     return f"""<main id="main" class="wrap">
   {back(c, P + '/')}
-  <h1 class="page-title">{esc(W['title'])}</h1>
+  <h1 class="page-title" data-count="{len(W['projects']):02d}">{esc(W['title'])}</h1>
   <p class="lead">{esc(W['intro'])}</p>
   <ol class="work-list">{''.join(rows)}</ol>
   <canvas id="preview" aria-hidden="true"></canvas>
