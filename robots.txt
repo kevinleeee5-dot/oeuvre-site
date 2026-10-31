@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /proto/
+Disallow: /tools/
+Sitemap: https://oeuvre.co.nz/sitemap.xml

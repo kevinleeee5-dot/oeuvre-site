@@ -1,0 +1,179 @@
+{
+  "lang": "en",
+  "htmlLang": "en",
+  "site": {
+    "name": "Oeuvre",
+    "url": "https://oeuvre.co.nz",
+    "statement": "One team for a brand's whole digital life.",
+    "description": "Oeuvre is a small Auckland studio. Brand, apps, websites and motion — one team for a brand's whole digital life.",
+    "place": "Auckland, Aotearoa — New Zealand",
+    "legal": "Oeuvre is a trading name of BNB Management Consulting Ltd.",
+    "email": "info@bnbmanagement.co.nz",
+    "back": "Back",
+    "skip": "Skip to content",
+    "index": "Index",
+    "float": "Float",
+    "soon": "Coming soon",
+    "languages": "Language",
+    "sections": "Sections",
+    "home": "Home",
+    "seeYou": "Let it see you",
+    "seeYouOff": "Stop camera",
+    "beingTitle": "A figure made of points that mirrors your face",
+    "copyright": "© 2026 BNB Management Consulting Ltd"
+  },
+  "languages": [
+    { "code": "en", "label": "EN", "name": "English", "ready": true },
+    { "code": "zh", "label": "中", "name": "中文", "ready": false },
+    { "code": "mi", "label": "MI", "name": "Te reo Māori", "ready": false }
+  ],
+  "menu": [
+    { "id": "work", "label": "Work", "href": "/work/" },
+    { "id": "services", "label": "Services", "href": "/services/" },
+    { "id": "studio", "label": "Studio", "href": "/studio/" },
+    { "id": "contact", "label": "Contact", "href": "/contact/" }
+  ],
+  "work": {
+    "title": "Work",
+    "metaDescription": "Selected work by Oeuvre: BeiCare, MUZI, Folio and ACE.",
+    "intro": "Selected projects. Each one taken from first idea to the thing people use.",
+    "next": "Next project",
+    "all": "All work",
+    "labels": { "brief": "The brief", "did": "What we did", "result": "Where it is now", "role": "Role", "year": "Year", "sector": "Sector", "visit": "Visit" },
+    "projects": [
+      {
+        "slug": "beicare",
+        "name": "BeiCare",
+        "outcome": "Natural skincare, freshly made in New Zealand — the shop people see, and the iPad app that runs the workshop behind it.",
+        "sector": "Skincare / made in NZ",
+        "year": "2026",
+        "tags": ["Web", "App", "Operations"],
+        "link": { "label": "beicare.co.nz", "href": "https://beicare.co.nz" },
+        "hero": { "src": "/assets/img/beicare-site.jpg", "alt": "The BeiCare website: a glass flask of oil over dried flowers, with the line “Freshly made, naturally cared.”", "w": 1440, "h": 900 },
+        "brief": "A small maker blends hydrosols, oils and balms by hand in small batches. The shop had to feel as fresh as the product. The workshop needed one calm screen that says what to make today.",
+        "did": [
+          "Shaped the shop around the product: botanical, warm, made in small batches.",
+          "Designed an iPad instrument panel for the workshop: today's batches, stock and work, on one screen.",
+          "Made every action direct — drag a batch, tap a line, done.",
+          "Built it bilingual: English first, Chinese one tap away."
+        ],
+        "result": "The shop is live at beicare.co.nz. The workshop app is in daily use on iPad.",
+        "gallery": [
+          { "src": "/assets/img/beicare-site-mobile.jpg", "alt": "The BeiCare website on a phone.", "w": 780, "h": 1688, "fit": "contain" },
+          { "kind": "dashboard", "alt": "Workshop app — screens with demo data to come.", "caption": "Workshop app. Screens with demo data to come." }
+        ]
+      },
+      {
+        "slug": "muzi",
+        "name": "MUZI",
+        "outcome": "A New Zealand home and garden brand, from the soil bag to the online shop.",
+        "sector": "Home & garden / retail",
+        "year": "2026",
+        "tags": ["Brand", "Photography", "E-commerce"],
+        "link": { "label": "muzi.co.nz", "href": "https://muzi.co.nz" },
+        "hero": { "src": "/assets/img/muzi-site.jpg", "alt": "The MUZI website: four hand-made glazed pots on a pale background.", "w": 1440, "h": 900 },
+        "brief": "A specialist range of succulent soils, stones and pots needed to look as considered as the plants they hold — on the shelf, in store and online.",
+        "did": [
+          "Shaped the identity and the voice: Home & Garden, quiet and earthy.",
+          "Photographed the range in one consistent light.",
+          "Organised a catalogue of around three hundred products.",
+          "Built the shop at muzi.co.nz and the retail material around it."
+        ],
+        "result": "The shop is live at muzi.co.nz, with stock in Auckland retail.",
+        "gallery": [
+          { "src": "/assets/img/muzi-site-new-in.jpg", "alt": "The ‘New in’ row of the MUZI shop: soil bags and granules.", "w": 1440, "h": 700 },
+          { "src": "/assets/img/muzi-maifan.jpg", "alt": "An echeveria top-dressed with 2–4 mm Maifan stone.", "w": 1800, "h": 1800 },
+          { "src": "/assets/img/muzi-diatomite.jpg", "alt": "Succulents top-dressed with 2–4 mm diatomite.", "w": 1800, "h": 1800 },
+          { "src": "/assets/img/muzi-site-mobile.jpg", "alt": "The MUZI shop on a phone.", "w": 780, "h": 1688, "fit": "contain" },
+          { "src": "/assets/img/muzi-logo.png", "alt": "The MUZI Home & Garden wordmark.", "w": 520, "h": 241, "fit": "contain", "graphic": true }
+        ]
+      },
+      {
+        "slug": "folio",
+        "name": "Folio",
+        "outcome": "A quiet reading app with a daily edition you can read or listen to.",
+        "sector": "Media / reading",
+        "year": "2026",
+        "tags": ["App", "Editorial", "Audio"],
+        "hero": { "src": "/assets/img/folio-five-topics.jpg", "alt": "Five Folio articles side by side on iPhone: environment, space, technology, business and world.", "w": 2400, "h": 1040 },
+        "brief": "Reading apps shout. Folio had to feel like a well-made paper: a daily edition with a beginning and an end, read or narrated, then put down.",
+        "did": [
+          "Designed a daily edition with a clear start and finish.",
+          "Set the type for long reading, in light and dark.",
+          "Chose a calm, natural narration voice and built background listening with lock-screen controls.",
+          "Kept the whole pipeline small enough to run every day."
+        ],
+        "result": "In private testing on iPhone.",
+        "gallery": [
+          { "src": "/assets/img/folio-concept.jpg", "alt": "Folio concept board: onboarding, interests, the daily edition, an article and membership.", "w": 2400, "h": 1600 },
+          { "src": "/assets/img/folio-article.jpg", "alt": "A Folio article: “XRISM sees a pulsar catch stellar wind”.", "w": 740, "h": 1600, "fit": "contain" }
+        ]
+      },
+      {
+        "slug": "ace",
+        "name": "ACE",
+        "outcome": "A music player built around a reel of tape.",
+        "sector": "Music / interaction",
+        "year": "2026",
+        "tags": ["Interaction", "Motion", "App"],
+        "hero": { "src": "/assets/img/ace-reel.png", "alt": "The ACE tape reel.", "w": 2000, "h": 2000, "fit": "contain", "graphic": true },
+        "brief": "Music apps reduce a track to a progress bar. ACE gives it a body again: a tape reel that turns while the music plays, and that you turn to move through it.",
+        "did": [
+          "Made a tape reel the centre of the player, labelled like a tape box: title, date, master format.",
+          "The reel turns with the music: one full turn every twenty seconds.",
+          "Grab the reel and turn it to scrub, forwards or back.",
+          "Kept everything else quiet: one play button, a countdown, a plain track list."
+        ],
+        "result": "A private tool, used every day on one Mac.",
+        "gallery": [
+          { "src": "/assets/img/ace-player.jpg", "alt": "The ACE player: the reel, a play button, the countdown and the tape label.", "w": 1101, "h": 1400, "fit": "contain" }
+        ]
+      }
+    ]
+  },
+  "services": {
+    "title": "Services",
+    "metaDescription": "Brand, digital product, web, motion and photography — one team.",
+    "intro": "Five disciplines, one team. Hire one, or all of them.",
+    "closing": "One team, start to finish — and after.",
+    "cta": "Start a project",
+    "labels": { "what": "What it is", "get": "What you get", "time": "Typical length" },
+    "items": [
+      { "id": "brand", "name": "Brand", "what": "Naming, identity and voice.", "get": "Logo system, type, colour, tone of voice and guidelines.", "time": "4–8 weeks" },
+      { "id": "product", "name": "Digital product", "what": "Apps and tools people use every day.", "get": "Research, UX, UI, build, launch and care.", "time": "8–20 weeks" },
+      { "id": "web", "name": "Web", "what": "Sites and shops that are easy to run.", "get": "Content design, build, hosting, search basics and a care plan.", "time": "4–10 weeks" },
+      { "id": "motion", "name": "Motion & content", "what": "Moving image for screens and social.", "get": "Motion design, video and social templates.", "time": "2–6 weeks" },
+      { "id": "photography", "name": "Photography", "soon": "2027", "what": "Product, space and portrait — in the same eye.", "get": "Opening in 2027. Ask early to book a first shoot.", "time": "—" }
+    ]
+  },
+  "studio": {
+    "title": "Studio",
+    "metaDescription": "Oeuvre is a small studio in Auckland. Designers and engineers on the same brief.",
+    "statement": "We design it, build it, and stay. One team for a brand's whole digital life.",
+    "body": [
+      "A small studio in Auckland. Designers and engineers in the same room, on the same brief.",
+      "No hand-offs between agencies. The people who start your project are the people who look after it.",
+      "We work in English and 中文 today, with te reo Māori on the way."
+    ],
+    "principlesTitle": "Principles",
+    "principles": [
+      { "name": "Whole, not parts.", "text": "Brand, product and web are one experience. We treat them as one." },
+      { "name": "Quiet by default.", "text": "Clear beats loud. We remove until it works." },
+      { "name": "Built to be looked after.", "text": "Launch is the middle, not the end." }
+    ]
+  },
+  "contact": {
+    "title": "Contact",
+    "metaDescription": "Write to Oeuvre: info@bnbmanagement.co.nz.",
+    "lead": "Tell us three things: what you make, what's not working, and when you'd like it fixed.",
+    "copy": "Copy email",
+    "copied": "Copied",
+    "write": "Write to us",
+    "reply": "We reply within two working days."
+  },
+  "notFound": {
+    "title": "Nothing here. Yet.",
+    "text": "This page doesn't exist — or hasn't been made.",
+    "home": "Go home"
+  }
+}
