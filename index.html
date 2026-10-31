@@ -20,18 +20,19 @@
     clip-path:circle(var(--r,0px) at var(--x,50%) var(--y,50%)); pointer-events:none; }
 
   header,footer { display:flex; justify-content:space-between; gap:16px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
-  main { display:grid; align-content:center; gap:28px; }
+  main { display:grid; align-content:center; justify-items:center; text-align:center; gap:28px; }
   h1 { margin:0; font-weight:500; letter-spacing:-.045em; line-height:.9; font-size:clamp(64px,19vw,260px); }
-  .rule { height:1px; background:var(--line); max-width:720px; }
-  p { margin:0; font-size:clamp(16px,2vw,22px); line-height:1.5; max-width:34ch; }
-  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:currentColor; margin-right:10px; animation:pulse 2.4s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity:.2; } }
+  .rule { height:1px; background:var(--line); width:min(720px,100%); }
+  p { margin:0; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:clamp(15px,1.8vw,20px); line-height:1.5; min-height:1.5em; white-space:pre; letter-spacing:0; }
+  .caret { display:inline-block; width:.6em; height:1.1em; background:currentColor; vertical-align:-.2em; margin-left:2px; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .prompt { color:var(--dim); margin-right:.8ch; }
 
   .ring { position:fixed; left:0; top:0; width:44px; height:44px; margin:-22px 0 0 -22px; border:1px solid #fff; border-radius:50%;
     mix-blend-mode:difference; pointer-events:none; will-change:transform; }
   .pip { position:fixed; left:0; top:0; width:6px; height:6px; margin:-3px 0 0 -3px; background:#fff; border-radius:50%;
     mix-blend-mode:difference; pointer-events:none; will-change:transform; }
-  @media (prefers-reduced-motion:reduce) { .dot { animation:none; } }
+  @media (prefers-reduced-motion:reduce) { .caret { animation:none; } }
 </style>
 </head>
 <body>
@@ -40,7 +41,7 @@
     <main>
       <h1>Oeuvre</h1>
       <div class="rule"></div>
-      <p><span class="dot"></span>We&rsquo;re renovating. Back soon.</p>
+      <p><span class="prompt">&gt;</span><span class="type"></span><span class="caret"></span></p>
     </main>
     <footer><span>BNB Management Consulting Ltd t/a Oeuvre</span><span>New Zealand</span></footer>
   </div>
@@ -50,7 +51,7 @@
     <main>
       <h1>Oeuvre</h1>
       <div class="rule"></div>
-      <p><span class="dot"></span>We&rsquo;re renovating. Back soon.</p>
+      <p><span class="prompt">&gt;</span><span class="type"></span><span class="caret"></span></p>
     </main>
     <footer><span>BNB Management Consulting Ltd t/a Oeuvre</span><span>New Zealand</span></footer>
   </div>
@@ -89,6 +90,16 @@
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+
+  var types = document.querySelectorAll(".type"), msg = "We\u2019re renovating. Back soon.", n = 0, dir = 1, wait = 600;
+  function setText(k) { for (var i = 0; i < types.length; i++) types[i].textContent = msg.slice(0, k); }
+  function tick() {
+    if (reduce) { setText(msg.length); return; }
+    n += dir; setText(n); var d = 70 + Math.random() * 60;
+    if (n >= msg.length) { dir = -1; d = 2600; } else if (n <= 0) { dir = 1; d = 700; } else if (dir < 0) d = 30;
+    setTimeout(tick, d);
+  }
+  setTimeout(tick, wait);
 })();
 </script>
 </body>
