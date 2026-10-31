@@ -11,7 +11,7 @@ Status: proposal for discussion. Navigation prototype: `proto/nav.html`. All cop
 ## 1. Sitemap
 
 ```
-/                       Home — the "being" (halftone bust) + four floating words
+/                       Home — the "being" (photographic figure, five identities cycled through particle transitions) + four floating words
 ├── /work               Selected work (index)
 │   ├── /work/beicare   Case study — Bei`Care (operations app)
 │   ├── /work/muzi      Case study — MUZI (garden brand + e-commerce)
