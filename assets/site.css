@@ -55,8 +55,8 @@ html.busy, html.busy * { cursor: progress !important; }
 .p-home { overflow: hidden; height: 100svh; }
 .home { position: relative; height: 100svh; overflow: hidden; }
 .being, .being iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.being { z-index: 1; }
-.being iframe { background: #000; color-scheme: normal; }
+.being { z-index: 1; background: #000; }
+.being iframe { display: block; background: #000; color-scheme: normal; outline: 0; }
 .words ul { list-style: none; margin: 0; padding: 0; }
 .word { position: absolute; left: 0; top: 0; z-index: 5; display: inline-block; white-space: nowrap; text-decoration: none;
         font-size: var(--fs, clamp(2.6rem, 7.6vw, 8.6rem)); font-weight: 500; letter-spacing: -.05em; line-height: .86;
@@ -69,7 +69,10 @@ html.busy, html.busy * { cursor: progress !important; }
 .js .p-home:not(.list) .words .word { width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
                                       visibility: visible; transform: none !important; opacity: 0; transition: none; }
 #menu { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; mix-blend-mode: difference; }
-.word-hit { position: absolute; left: 0; top: 0; z-index: 6; display: block; width: 0; height: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
+/* an invisible click target: nothing drawn here, ever (the word's hover state lives on the canvas, the
+   keyboard focus ring is drawn round the word by the script, and the hit link is out of the tab order) */
+.word-hit { position: absolute; left: 0; top: 0; z-index: 6; display: block; width: 0; height: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+            background: transparent; border: 0; outline: none; box-shadow: none; }
 .no-js #menu, .no-js .word-hit, body.list #menu, body.list .word-hit { display: none; }
 .idx { display: flex; gap: 12px; list-style: none; margin: 0; padding: 0; font-size: 11px; letter-spacing: .1em; font-weight: 500; }
 .idx a { text-decoration: none; opacity: .5; transition: opacity .2s; padding: 6px 0; }

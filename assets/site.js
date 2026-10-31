@@ -192,37 +192,61 @@
 
     /* ---- where each word wants to be, given the face box ---- */
     let fs = 60;
+    // The whole dot cloud stays on screen: the glyph box plus the room its stray dots, breathing and
+    // pointer parallax take (see target/par), inside a gutter of max(24px, 2vw).
+    const gutter = () => Math.max(24, W * 0.02);
+    const marginX = s => s * 0.44 + 20, marginY = s => s * 0.27 + 14;
     function layout(snap) {
       if (body.classList.contains("list")) return;
-      const g = Math.max(16, W * 0.02), top = 74, bottom = H - 70;
+      const g = gutter(), top = 74, bottom = H - 70;
       const wide = W >= 860;
       // The face box runs crown-to-chin, ear-to-ear; the figure's hair reaches past it, so keep
       // words a hair-margin away (sides on wide screens, above the crown on phones).
       const hairX = face.w * 0.2, hairY = face.h * 0.13;
       const room = Math.max(0, face.y - hairY - 6 - top);
-      fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
+      const f = face;
+      if (wide) {
+        // the size the viewport asks for, then shrink (never below 40px) so each word fits in its own
+        // side of the face band before the clamp would push it onto the hair
+        let s = clamp(W * 0.075, 40, 138);
+        words.forEach(w => {
+          const avail = w.i % 2 === 0 ? f.x - hairX - 2 * g - 20 : W - 2 * g - 20 - (f.x + f.w + hairX);
+          s = Math.min(s, avail / (w.gw + 0.44));
+        });
+        fs = Math.max(40, s);
+      } else fs = clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
       nav.style.setProperty("--fs", fs + "px");
       words.forEach(w => { w.w = w.gw * fs; w.h = w.gh * fs; });
-      const f = face;
+      const mx = marginX(fs), my = marginY(fs);
       words.forEach(w => {
         const left = w.i % 2 === 0, upper = w.i < 2;
         let x, y;
         if (wide) {
           x = left ? f.x - hairX - g - w.w : f.x + f.w + hairX + g;
-          if (x < g) x = g; if (x + w.w > W - g) x = W - g - w.w;
           y = upper ? f.y + f.h * (left ? 0.02 : 0.28) - w.h / 2 : f.y + f.h * (left ? 0.72 : 1.0) - w.h / 2;
         } else {
           // phones: all four words above the face, staggered left/right; the band under the face
           // belongs to the figure's talk control
-          x = left ? g : W - g - w.w;
+          x = left ? g + mx : W - g - mx - w.w;
           const lo = top, hi = Math.max(top + 4 * w.h * 0.95, f.y - hairY - 6);
           y = lo + (hi - lo - w.h) * (w.i / 3);
         }
-        y = clamp(y, top, bottom - w.h);
+        // never off screen: a word wider than the viewport sits centred
+        x = clamp(x, g + mx, W - g - mx - w.w);
+        if (w.w + 2 * (g + mx) > W) x = (W - w.w) / 2;
+        y = clamp(y, Math.max(top, g + my), Math.min(bottom, H - g - my) - w.h);
         w.tx = x; w.ty = y;
         if (snap || !w.placed) { w.x = x; w.y = y; w.placed = true; }
       });
       nav.classList.add("placed");
+    }
+    // the drawn origin of a word this frame: its eased position plus parallax, held inside the viewport
+    function origin(w, par) {
+      const g = gutter(), mx = marginX(fs), my = marginY(fs);
+      let x = w.x + par.x, y = w.y + par.y;
+      x = w.w + 2 * (g + mx) > W ? (W - w.w) / 2 : clamp(x, g + mx, W - g - mx - w.w);
+      y = w.h + 2 * (g + my) > H ? (H - w.h) / 2 : clamp(y, g + my, H - g - my - w.h);
+      return { x, y };
     }
 
     /* ---- the cycle: one word holds, then its dots fly into the next ---- */
@@ -253,9 +277,9 @@
     };
     setCurrent(0);
 
-    const target = (w, i, t, par) => {
+    const target = (w, i, t, o) => {
       const p = w.pts[i], q = P[i];
-      let x = w.x + p.x * fs + par.x, y = w.y + p.y * fs + par.y;
+      let x = o.x + p.x * fs, y = o.y + p.y * fs;
       if (!reduced) {
         const j = (1 - sharp * 0.85) * fs * 0.012;          // breathing
         x += Math.sin(t * 0.0011 * q.f + q.ph) * j; y += Math.cos(t * 0.0009 * q.f + q.ph * 1.3) * j;
@@ -269,9 +293,9 @@
     function drawWord(w, t, par, alpha, k) {
       // k: 0..1 flight progress for crossfade/flight; here draws the word at rest
       mctx.globalAlpha = alpha; mctx.beginPath();
-      const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6);
+      const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6), o = origin(w, par);
       for (let i = 0; i < N; i++) {
-        const [x, y] = target(w, i, t, par); pos[i].x = x; pos[i].y = y;
+        const [x, y] = target(w, i, t, o); pos[i].x = x; pos[i].y = y;
         const r = P[i].r * rs * (P[i].stray ? 0.75 : 1);
         mctx.moveTo(x + r, y); mctx.arc(x, y, r, 0, 6.2832);
       }
@@ -279,13 +303,13 @@
     }
     function drawFlight(a, b, t, par, p) {
       const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6);
-      const amp = Math.min(W, H) * 0.09;
+      const amp = Math.min(W, H) * 0.09, oa = origin(a, par), ob = origin(b, par);
       mctx.beginPath(); mctx.globalAlpha = 1;
       for (let i = 0; i < N; i++) {
         const q = P[i];
         // each dot leaves on its own cue, so the old word frays before the new one gathers
         const k = ease(clamp((p - q.d * 0.4) / 0.6));
-        const [ax, ay] = target(a, i, t, par), [bx, by] = target(b, i, t, par);
+        const [ax, ay] = target(a, i, t, oa), [bx, by] = target(b, i, t, ob);
         const s = Math.sin(k * 3.1416);
         const x = ax + (bx - ax) * k + q.dx * amp * s, y = ay + (by - ay) * k + q.dy * amp * s * 0.7 - s * amp * 0.25;
         pos[i].x = x; pos[i].y = y;
@@ -295,8 +319,8 @@
       mctx.fill();
     }
     function placeHit(w, par, on) {
-      const m = Math.max(10, fs * 0.12);
-      hit.style.transform = `translate3d(${(w.x + par.x - m).toFixed(1)}px, ${(w.y + par.y - m).toFixed(1)}px, 0)`;
+      const m = Math.max(10, fs * 0.12), o = origin(w, par);
+      hit.style.transform = `translate3d(${(o.x - m).toFixed(1)}px, ${(o.y - m).toFixed(1)}px, 0)`;
       hit.style.width = (w.w + 2 * m).toFixed(1) + "px"; hit.style.height = (w.h + 2 * m).toFixed(1) + "px";
       hit.style.pointerEvents = on ? "auto" : "none";
     }
@@ -334,9 +358,9 @@
       }
       // keyboard focus ring around the word (the link itself is visually hidden)
       if (focused === cur && nxt < 0 && words[cur].el.matches(":focus-visible")) {
-        const w = words[cur], q = par(w), m = fs * 0.1;
+        const w = words[cur], o = origin(w, par(w)), m = fs * 0.1;
         mctx.globalAlpha = 0.9; mctx.strokeStyle = "#fff"; mctx.lineWidth = 1.5;
-        mctx.strokeRect(w.x + q.x - m, w.y + q.y - m, w.w + 2 * m, w.h + 2 * m);
+        mctx.strokeRect(o.x - m, o.y - m, w.w + 2 * m, w.h + 2 * m);
       }
       mctx.globalAlpha = 1;
     }
@@ -510,11 +534,14 @@
   if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
     const d = document.createElement("div"); d.className = "dot-cursor"; d.setAttribute("aria-hidden", "true"); body.appendChild(d);
     let cx = -50, cy = -50, tx = -50, ty = -50;
-    addEventListener("pointermove", e => { tx = e.clientX; ty = e.clientY; d.classList.add("on"); }, { passive: true });
+    // over the figure and over a menu word the dot stays away: the word already sharpens under the
+    // pointer, and the big dot (white through the difference blend) would sit inside a letter's counter
+    const overWord = el => !!(el && el.closest && el.closest("#wordHit, #being"));
+    addEventListener("pointermove", e => { tx = e.clientX; ty = e.clientY; d.classList.toggle("on", !overWord(e.target)); }, { passive: true });
     document.addEventListener("pointerleave", () => d.classList.remove("on"));
     const fr = $("#being"); if (fr) fr.addEventListener("pointerenter", () => d.classList.remove("on"));
     addEventListener("pointerdown", () => d.classList.add("down")); addEventListener("pointerup", () => d.classList.remove("down"));
-    document.addEventListener("pointerover", e => d.classList.toggle("big", !!(e.target.closest && e.target.closest("a,button,summary"))));
+    document.addEventListener("pointerover", e => d.classList.toggle("big", !overWord(e.target) && !!(e.target.closest && e.target.closest("a,button,summary"))));
     const step = () => { cx += (tx - cx) * 0.25; cy += (ty - cy) * 0.25; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
     requestAnimationFrame(step);
   }
