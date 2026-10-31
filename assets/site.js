@@ -132,7 +132,7 @@
       const d = e.data;
       if (d.type === "oeuvre-face" && [d.x, d.y, d.w, d.h].every(Number.isFinite) && d.w > 10 && d.h > 10) {
         // the frame fills the viewport, so its CSS pixels are ours
-        face = { x: d.x, y: d.y, w: d.w, h: d.h }; haveFace = true;
+        face = { x: d.x, y: d.y, w: d.w, h: d.h }; if (!haveFace) body.setAttribute("data-face", "live"); haveFace = true;
       }
     });
     const post = msg => { try { frame.contentWindow.postMessage(msg, location.origin); } catch (_) { } };
@@ -151,8 +151,8 @@
       if (body.classList.contains("list")) return;
       const g = Math.max(16, W * 0.02), top = 74, bottom = H - 70;
       const wide = W >= 860;
-      const room = Math.max(0, face.y + face.h * 0.1 - top);
-      const fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.9), 30, 72);
+      const room = Math.max(0, face.y - 6 - top);
+      const fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
       nav.style.setProperty("--fs", fs + "px");
       words.forEach(w => { w.w = w.el.offsetWidth; w.h = w.el.offsetHeight; });
       const f = face, cx = f.x + f.w / 2;
@@ -167,7 +167,7 @@
           // phones: all four words above the face, staggered left/right; the band under the face
           // belongs to the figure's talk control
           x = left ? g : W - g - w.w;
-          const lo = top, hi = Math.max(top + 4 * w.h, f.y + f.h * 0.1);
+          const lo = top, hi = Math.max(top + 4 * w.h * 0.95, f.y - 6);
           y = lo + (hi - lo - w.h) * (w.i / 3);
         }
         y = clamp(y, top, bottom - w.h);
@@ -176,6 +176,7 @@
       });
       nav.classList.add("placed");
     }
+    if (isStatic) window.__oeuvre = { get face() { return face; }, get haveFace() { return haveFace; }, words };
     wordCenter = id => { const w = words.find(w => w.id === id); return w ? { x: w.x + w.w / 2, y: w.y + w.h / 2 } : null; };
     let lastFace = "";
     function frameLoop(t) {
