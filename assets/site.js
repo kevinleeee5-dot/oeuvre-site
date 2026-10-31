@@ -138,11 +138,35 @@
       if (d.type === "oeuvre-face" && [d.x, d.y, d.w, d.h].every(Number.isFinite) && d.w > 10 && d.h > 10) {
         // the frame fills the viewport, so its CSS pixels are ours
         face = { x: d.x, y: d.y, w: d.w, h: d.h }; if (!haveFace) body.setAttribute("data-face", "live"); haveFace = true;
+        if (sound) sound.state(d.state);
       }
     });
     const post = msg => { try { frame.contentWindow.postMessage(msg, location.origin); } catch (_) { } };
     onPointer = e => post({ type: "oeuvre-pointer", x: e.clientX, y: e.clientY, w: W, h: H });
     frame.addEventListener("load", () => post({ type: "oeuvre-hello", reduced }));
+
+    /* ---- ambient sound: off until asked, fades in, ducks while the figure speaks, pauses when hidden ---- */
+    const sound = (() => {
+      const btn = $("#soundToggle"), au = $("#ambient");
+      if (!btn || !au || !au.canPlayType) { body.classList.add("no-audio"); return null; }
+      const FULL = 0.55, DUCK = 0.18;
+      let on = false, target = 0, cur = 0, raf = 0, ducked = false;
+      const label = () => { btn.setAttribute("aria-pressed", on); btn.setAttribute("aria-label", on ? btn.dataset.on : btn.dataset.off); };
+      const step = () => {
+        cur += (target - cur) * 0.035;
+        if (Math.abs(target - cur) < 0.004) cur = target;
+        au.volume = Math.max(0, Math.min(1, cur));
+        if (cur !== target) raf = requestAnimationFrame(step); else { raf = 0; if (!on && cur === 0) au.pause(); }
+      };
+      const fade = v => { target = v; if (!raf) raf = requestAnimationFrame(step); };
+      const start = () => { on = true; label(); au.volume = cur; au.play().then(() => fade(ducked ? DUCK : FULL)).catch(() => { on = false; label(); }); try { sessionStorage.setItem("oeuvre-sound", "1"); } catch (_) { } };
+      const stop = () => { on = false; label(); fade(0); try { sessionStorage.removeItem("oeuvre-sound"); } catch (_) { } };
+      btn.addEventListener("click", () => on ? stop() : start());
+      document.addEventListener("visibilitychange", () => { if (!on) return; if (document.hidden) au.pause(); else au.play().catch(() => { }); });
+      let wanted = false; try { wanted = sessionStorage.getItem("oeuvre-sound") === "1"; } catch (_) { }
+      if (wanted) { const once = () => { removeEventListener("pointerdown", once, true); removeEventListener("keydown", once, true); if (!on) start(); }; addEventListener("pointerdown", once, true); addEventListener("keydown", once, true); }
+      return { state(s) { const d = s === "speaking" || s === "listening" || s === "thinking"; if (d === ducked) return; ducked = d; if (on) fade(d ? DUCK : FULL); } };
+    })();
 
     const toggle = $("#indexToggle");
     toggle && toggle.addEventListener("click", () => {

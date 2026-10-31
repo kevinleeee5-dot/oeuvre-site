@@ -30,6 +30,7 @@
   <a class="mark" href="/" aria-label="Oeuvre — Home">Oeuvre</a>
   
   <ol class="idx" aria-label="Sections"><li><a href="/work/" data-i="0" aria-label="Work">01</a></li><li><a href="/services/" data-i="1" aria-label="Services">02</a></li><li><a href="/studio/" data-i="2" aria-label="Studio">03</a></li><li><a href="/contact/" data-i="3" aria-label="Contact">04</a></li></ol>
+  <button class="chip chip-sound" type="button" id="soundToggle" aria-pressed="false" aria-label="Sound on" data-on="Sound off" data-off="Sound on"><span class="snd" aria-hidden="true"><i></i><i></i><i></i></span><span class="lbl">Sound</span></button>
   <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="Float" data-off="Index">Index</button>
 </header>
 <main id="main" class="home">
@@ -49,6 +50,7 @@
   <p class="foot-legal">Oeuvre is a trading name of BNB Management Consulting Ltd.</p>
   <div class="langs" role="group" aria-label="Language"><a href="/" lang="en" hreflang="en" aria-current="true" title="English">EN</a><span aria-disabled="true" lang="zh" title="中文 — Coming soon">中</span><span aria-disabled="true" lang="mi" title="Te reo Māori — Coming soon">MI</span></div>
 </footer>
+<audio id="ambient" loop preload="none"><source src="/assets/audio/ambient.m4a" type="audio/mp4"><source src="/assets/audio/ambient.mp3" type="audio/mpeg"></audio>
 <canvas id="iris" aria-hidden="true"></canvas>
 <div id="live" class="sr-only" aria-live="polite"></div>
 </body>

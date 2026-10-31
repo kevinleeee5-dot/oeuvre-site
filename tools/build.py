@@ -108,7 +108,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <header class="bar">
   <a class="mark" href="{lang_prefix or '/'}" aria-label="{esc(s['name'])} — {esc(s['home'])}">{esc(s['name'])}</a>
   {mini}
-  {idx(c, lang_prefix) + chr(10) + '  ' if page_id == 'home' else ''}{'<button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
+  {idx(c, lang_prefix) + chr(10) + '  ' if page_id == 'home' else ''}{'<button class="chip chip-sound" type="button" id="soundToggle" aria-pressed="false" aria-label="' + esc(s['sound_on']) + '" data-on="' + esc(s['sound_off']) + '" data-off="' + esc(s['sound_on']) + '"><span class="snd" aria-hidden="true"><i></i><i></i><i></i></span><span class="lbl">' + esc(s['sound']) + '</span></button>\n  <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
 </header>
 {body}
 {cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
@@ -116,7 +116,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
   <p class="foot-legal">{esc(s['legal'])}</p>
   <div class="langs" role="group" aria-label="{esc(s['languages'])}">{''.join(langs)}</div>
 </footer>
-<canvas id="iris" aria-hidden="true"></canvas>
+{'<audio id="ambient" loop preload="none"><source src="/assets/audio/ambient.m4a" type="audio/mp4"><source src="/assets/audio/ambient.mp3" type="audio/mpeg"></audio>' + chr(10) if page_id == 'home' else ''}<canvas id="iris" aria-hidden="true"></canvas>
 <div id="live" class="sr-only" aria-live="polite"></div>
 </body>
 </html>
