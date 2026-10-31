@@ -1,0 +1,498 @@
+{
+ "count": 44000,
+ "stride": 14,
+ "layout": [
+  "mx",
+  "my",
+  "mz",
+  "fx",
+  "fy",
+  "fz",
+  "nx",
+  "ny",
+  "nz",
+  "region",
+  "faceW",
+  "headW",
+  "h",
+  "cavity"
+ ],
+ "dtype": "float32 little-endian",
+ "units": "face width (MediaPipe 234-454) = 1",
+ "frame": "x screen-right when facing the figure, y up, z out of the face; origin midpoint of lm234/lm454",
+ "frameNote": "male and female positions are each normalised by their OWN lm234/lm454 (origin + scale), so lm234/lm454 sit at (-0.5,0,0)/(0.5,0,0) in both variants; neutral = 0.5*(male+female).",
+ "anchors": {
+  "lm234": [
+   -0.5,
+   0.0,
+   0.0
+  ],
+  "lm454": [
+   0.5,
+   0.0,
+   0.0
+  ],
+  "lm10": [
+   0.0,
+   0.6436,
+   0.4157
+  ],
+  "lm152": [
+   0.0,
+   -0.6779,
+   0.4823
+  ],
+  "lm1": [
+   0.0,
+   -0.155,
+   0.6727
+  ],
+  "lm13": [
+   0.0,
+   -0.3815,
+   0.5778
+  ],
+  "lm14": [
+   0.0,
+   -0.3914,
+   0.5754
+  ],
+  "mouthL": [
+   0.1627,
+   -0.3961,
+   0.511
+  ],
+  "mouthR": [
+   -0.1627,
+   -0.3961,
+   0.511
+  ],
+  "eyeOuterL": [
+   0.3078,
+   0.1036,
+   0.4296
+  ],
+  "eyeInnerL": [
+   0.1419,
+   0.09,
+   0.4546
+  ],
+  "eyeOuterR": [
+   -0.3078,
+   0.1036,
+   0.4296
+  ],
+  "eyeInnerR": [
+   -0.1419,
+   0.09,
+   0.4546
+  ],
+  "crown": [
+   0.0,
+   0.9031,
+   -0.1472
+  ],
+  "glabella": [
+   0.0,
+   0.2401,
+   0.5554
+  ],
+  "subnasale": [
+   0.0,
+   -0.2483,
+   0.5955
+  ],
+  "earTopL": [
+   0.5878,
+   0.1474,
+   -0.1915
+  ],
+  "earTopR": [
+   -0.5878,
+   0.1474,
+   -0.1915
+  ],
+  "earLobeL": [
+   0.5307,
+   -0.2427,
+   -0.1518
+  ],
+  "earLobeR": [
+   -0.5307,
+   -0.2427,
+   -0.1518
+  ],
+  "shoulderL": [
+   1.2722,
+   -1.2472,
+   -0.482
+  ],
+  "shoulderR": [
+   -1.2722,
+   -1.2472,
+   -0.482
+  ],
+  "eyeCenterL": [
+   0.2156,
+   0.1117,
+   0.3619
+  ],
+  "eyeRadiusL": 0.1155,
+  "eyeCenterR": [
+   -0.2156,
+   0.1117,
+   0.3619
+  ],
+  "eyeRadiusR": 0.1155,
+  "neckPivot": [
+   0.0,
+   -0.1778,
+   -0.1884
+  ],
+  "neckBase": [
+   0.0,
+   -1.0069,
+   -0.3581
+  ]
+ },
+ "anchorsMale": {
+  "lm234": [
+   -0.5,
+   0.0,
+   0.0
+  ],
+  "lm454": [
+   0.5,
+   0.0,
+   0.0
+  ],
+  "lm10": [
+   0.0,
+   0.6227,
+   0.4468
+  ],
+  "lm152": [
+   0.0,
+   -0.7127,
+   0.4993
+  ],
+  "lm1": [
+   0.0,
+   -0.1875,
+   0.6856
+  ],
+  "lm13": [
+   0.0,
+   -0.4102,
+   0.5908
+  ],
+  "lm14": [
+   0.0,
+   -0.4182,
+   0.5923
+  ],
+  "mouthL": [
+   0.1632,
+   -0.4244,
+   0.5237
+  ],
+  "mouthR": [
+   -0.1632,
+   -0.4244,
+   0.5237
+  ],
+  "eyeOuterL": [
+   0.3063,
+   0.093,
+   0.4449
+  ],
+  "eyeInnerL": [
+   0.1467,
+   0.0813,
+   0.4821
+  ],
+  "eyeOuterR": [
+   -0.3063,
+   0.093,
+   0.4449
+  ],
+  "eyeInnerR": [
+   -0.1467,
+   0.0813,
+   0.4821
+  ],
+  "crown": [
+   0.0,
+   0.8901,
+   -0.1002
+  ],
+  "glabella": [
+   0.0,
+   0.222,
+   0.5701
+  ],
+  "subnasale": [
+   0.0,
+   -0.2702,
+   0.607
+  ],
+  "earTopL": [
+   0.5817,
+   0.1554,
+   -0.1872
+  ],
+  "earTopR": [
+   -0.5817,
+   0.1554,
+   -0.1872
+  ],
+  "earLobeL": [
+   0.5318,
+   -0.2453,
+   -0.153
+  ],
+  "earLobeR": [
+   -0.5318,
+   -0.2453,
+   -0.153
+  ],
+  "shoulderL": [
+   1.2764,
+   -1.2449,
+   -0.4574
+  ],
+  "shoulderR": [
+   -1.2764,
+   -1.2449,
+   -0.4574
+  ],
+  "eyeCenterL": [
+   0.2119,
+   0.1076,
+   0.3875
+  ],
+  "eyeRadiusL": 0.1141,
+  "eyeCenterR": [
+   -0.2119,
+   0.1076,
+   0.3875
+  ],
+  "eyeRadiusR": 0.1141,
+  "neckPivot": [
+   0.0,
+   -0.1921,
+   -0.1816
+  ],
+  "neckBase": [
+   0.0,
+   -1.0069,
+   -0.3581
+  ]
+ },
+ "anchorsFemale": {
+  "lm234": [
+   -0.5,
+   0.0,
+   0.0
+  ],
+  "lm454": [
+   0.5,
+   0.0,
+   0.0
+  ],
+  "lm10": [
+   0.0,
+   0.6645,
+   0.3845
+  ],
+  "lm152": [
+   0.0,
+   -0.643,
+   0.4653
+  ],
+  "lm1": [
+   0.0,
+   -0.1225,
+   0.6598
+  ],
+  "lm13": [
+   0.0,
+   -0.3529,
+   0.5648
+  ],
+  "lm14": [
+   0.0,
+   -0.3645,
+   0.5584
+  ],
+  "mouthL": [
+   0.1622,
+   -0.3678,
+   0.4983
+  ],
+  "mouthR": [
+   -0.1622,
+   -0.3678,
+   0.4983
+  ],
+  "eyeOuterL": [
+   0.3094,
+   0.1142,
+   0.4142
+  ],
+  "eyeInnerL": [
+   0.1372,
+   0.0987,
+   0.4271
+  ],
+  "eyeOuterR": [
+   -0.3094,
+   0.1142,
+   0.4142
+  ],
+  "eyeInnerR": [
+   -0.1372,
+   0.0987,
+   0.4271
+  ],
+  "crown": [
+   0.0,
+   0.9161,
+   -0.1942
+  ],
+  "glabella": [
+   0.0,
+   0.2582,
+   0.5407
+  ],
+  "subnasale": [
+   0.0,
+   -0.2263,
+   0.5841
+  ],
+  "earTopL": [
+   0.5939,
+   0.1394,
+   -0.1958
+  ],
+  "earTopR": [
+   -0.5939,
+   0.1394,
+   -0.1958
+  ],
+  "earLobeL": [
+   0.5296,
+   -0.2401,
+   -0.1506
+  ],
+  "earLobeR": [
+   -0.5296,
+   -0.2401,
+   -0.1506
+  ],
+  "shoulderL": [
+   1.2679,
+   -1.2494,
+   -0.5067
+  ],
+  "shoulderR": [
+   -1.2679,
+   -1.2494,
+   -0.5067
+  ],
+  "eyeCenterL": [
+   0.2193,
+   0.1158,
+   0.3363
+  ],
+  "eyeRadiusL": 0.117,
+  "eyeCenterR": [
+   -0.2193,
+   0.1158,
+   0.3363
+  ],
+  "eyeRadiusR": 0.117,
+  "neckPivot": [
+   0.0,
+   -0.1635,
+   -0.1951
+  ],
+  "neckBase": [
+   0.0,
+   -1.0069,
+   -0.3581
+  ]
+ },
+ "measurements": {
+  "male": {
+   "headHeight_chin_crown": 1.603,
+   "headDepth_glabella_back": 1.463,
+   "headDepth_nose_back": 1.578,
+   "neckWidth_min": 0.801,
+   "shoulderWidth_acromion": 2.553,
+   "cropWidth_max": 2.525,
+   "chestDepth_at_armpit": 1.276,
+   "faceHeight_lm10_lm152": 1.335,
+   "mouthWidth": 0.326,
+   "interocular_centres": 0.424
+  },
+  "female": {
+   "headHeight_chin_crown": 1.559,
+   "headDepth_glabella_back": 1.406,
+   "headDepth_nose_back": 1.525,
+   "neckWidth_min": 0.69,
+   "shoulderWidth_acromion": 2.536,
+   "cropWidth_max": 2.494,
+   "chestDepth_at_armpit": 1.351,
+   "faceHeight_lm10_lm152": 1.307,
+   "mouthWidth": 0.324,
+   "interocular_centres": 0.439
+  }
+ },
+ "regions": {
+  "0": "face",
+  "1": "scalp/back of head",
+  "2": "ears",
+  "3": "neck",
+  "4": "torso/shoulders",
+  "5": "eyeball"
+ },
+ "regionCounts": {
+  "0": 8669,
+  "1": 10376,
+  "2": 787,
+  "3": 4861,
+  "4": 17307,
+  "5": 2000
+ },
+ "crop": {
+  "bottomY": -2.2314,
+  "armpitY": -1.6314,
+  "armCutLine_absX_y": [
+   [
+    1.0002,
+    -1.6314
+   ],
+   [
+    1.3869,
+    -1.0314
+   ]
+  ]
+ },
+ "source": {
+  "baseMesh": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/3dobjs/base.obj",
+  "targets": [
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/african-male-young.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/asian-male-young.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/caucasian-male-young.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/african-female-young.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/asian-female-young.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/caucasian-female-young.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/universal-male-young-averagemuscle-averageweight.target",
+   "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/universal-female-young-averagemuscle-averageweight.target"
+  ],
+  "recipe": "male = base + mean(african,asian,caucasian -male-young); female likewise (MakeHuman macro defaults: age 25, race 1/3 each, avg muscle/weight; the universal-*-averagemuscle-averageweight targets are header-only/empty in the repo). Mesh group \"body\" only (13380 verts).",
+  "repo": "https://github.com/makehumancommunity/makehuman (branch master)"
+ },
+ "license": "CC0 1.0 Universal. makehuman/LICENSE.md section C: \"These assets have been released under CC0 1.0 Universal.\" (assets defined there to include \"The base mesh and proxies\" and \"Targets and modifiers\"); full text in LICENSE.ASSETS.md. Each file header (base.obj and every .target): \"This asset was explicitly released as CC0 in september 2020.\""
+}

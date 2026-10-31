@@ -151,7 +151,10 @@
       if (body.classList.contains("list")) return;
       const g = Math.max(16, W * 0.02), top = 74, bottom = H - 70;
       const wide = W >= 860;
-      const room = Math.max(0, face.y - 6 - top);
+      // The face box runs crown-to-chin, ear-to-ear; the figure's hair reaches past it, so keep
+      // words a hair-margin away (sides on wide screens, above the crown on phones).
+      const hairX = face.w * 0.2, hairY = face.h * 0.13;
+      const room = Math.max(0, face.y - hairY - 6 - top);
       const fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
       nav.style.setProperty("--fs", fs + "px");
       words.forEach(w => { w.w = w.el.offsetWidth; w.h = w.el.offsetHeight; });
@@ -160,14 +163,14 @@
         const left = w.i % 2 === 0, upper = w.i < 2;
         let x, y;
         if (wide) {
-          x = left ? f.x - g - w.w : f.x + f.w + g;
+          x = left ? f.x - hairX - g - w.w : f.x + f.w + hairX + g;
           if (x < g) x = g; if (x + w.w > W - g) x = W - g - w.w;
           y = upper ? f.y + f.h * (left ? 0.02 : 0.28) - w.h / 2 : f.y + f.h * (left ? 0.72 : 1.0) - w.h / 2;
         } else {
           // phones: all four words above the face, staggered left/right; the band under the face
           // belongs to the figure's talk control
           x = left ? g : W - g - w.w;
-          const lo = top, hi = Math.max(top + 4 * w.h * 0.95, f.y - 6);
+          const lo = top, hi = Math.max(top + 4 * w.h * 0.95, f.y - hairY - 6);
           y = lo + (hi - lo - w.h) * (w.i / 3);
         }
         y = clamp(y, top, bottom - w.h);

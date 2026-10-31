@@ -1,0 +1,12 @@
+# never commit secrets, logs, counters or review output
+*.log
+*.rtf
+*.key
+.env
+*.y4m
+portrait.jpg
+talk-counters*.json
+review/
+shots/
+.DS_Store
+__pycache__/
