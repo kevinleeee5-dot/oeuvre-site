@@ -2,6 +2,14 @@
 DirectoryIndex index.html
 ErrorDocument 404 /404.html
 Options -Indexes
+
+# /api/talk (what the figure calls) -> api/talk.php; keep repo-only folders and notes off the web
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^api/talk/?$ api/talk.php [L]
+  RewriteRule ^(tools|docs|proto)(/|$) - [R=404,L]
+  RewriteRule (^|/)README\.md$ - [R=404,L]
+</IfModule>
 <IfModule mod_headers.c>
   <FilesMatch "\.(jpg|jpeg|png|svg|webp|bin|woff2)$">
     Header set Cache-Control "public, max-age=2592000"

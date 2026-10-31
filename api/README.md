@@ -90,6 +90,9 @@ precedence over the file. The counters still need the `oeuvre-secrets` folder.
 
 Never commit the key: the repository is public. `oeuvre-secrets/` is outside the repo by design.
 
+The figure posts to `/api/talk` (no extension). The root `.htaccess` rewrites that to
+`api/talk.php` and returns 404 for `tools/`, `docs/`, `proto/` and `README.md` files.
+
 To check it works after deploying:
 
 ```sh
