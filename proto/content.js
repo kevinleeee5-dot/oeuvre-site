@@ -59,7 +59,7 @@ window.OEUVRE_CONTENT = {
           year: "2026",
           tags: ["Brand", "Photography", "E-commerce"],
           placeholder: "rosette",
-          image: null,
+          image: "img/muzi-maifan.jpg",
           brief: "A specialist range of succulent soils, stones and pots needed to look as considered as the plants they hold — on shelf, in store and online.",
           did: [
             "Shaped the identity and the voice.",
@@ -68,7 +68,7 @@ window.OEUVRE_CONTENT = {
             "Built the shop at muzi.co.nz and the retail collateral."
           ],
           result: "Placeholder — add a fact the client is happy to publish.",
-          gallery: ["rosette", "rosette", "rosette"]
+          gallery: ["img/muzi-diatomite.jpg", "img/muzi-stone-mix.jpg", "img/muzi-logo.png"]
         },
         {
           slug: "folio",
@@ -78,7 +78,7 @@ window.OEUVRE_CONTENT = {
           year: "2026",
           tags: ["App", "Editorial", "Audio"],
           placeholder: "page",
-          image: null,
+          image: "img/folio-five-topics.jpg",
           brief: "Reading apps shout. This one had to feel like a well-made paper: a daily edition, read or narrated, then put down.",
           did: [
             "Designed a daily edition with a clear beginning and end.",
@@ -87,7 +87,7 @@ window.OEUVRE_CONTENT = {
             "Kept the whole pipeline small enough to run every day."
           ],
           result: "Placeholder — add a fact you are happy to publish.",
-          gallery: ["page", "page", "page"]
+          gallery: ["img/folio-concept.jpg", "img/folio-article.jpg", "page"]
         },
         {
           slug: "ace",
@@ -97,7 +97,7 @@ window.OEUVRE_CONTENT = {
           year: "2026",
           tags: ["Interaction", "Motion", "App"],
           placeholder: "reel",
-          image: null,
+          image: "img/ace-reel.png",
           brief: "Music apps reduce a track to a progress bar. ACE gives it a body again: a tape reel that turns while the music plays, and that you turn to move through it.",
           did: [
             "Made a tape reel the centre of the player, labelled like a tape box: title, date, master format.",

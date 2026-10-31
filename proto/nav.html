@@ -505,10 +505,10 @@
             <p class="lead" style="margin:0">${esc(p.outcome)}</p>
             <div class="case-meta"><div>${esc(L.sector)}<b>${esc(p.sector)}</b></div><div>${esc(L.role)}<b>${p.tags.map(esc).join(" · ")}</b></div><div>${esc(L.year)}<b>${esc(p.year)}</b></div></div>
           </header>
-          <canvas class="ht hero" data-kind="${p.placeholder}" data-src="${p.image || ""}" data-seed="1" role="img" aria-label="${esc(p.name)} — key image (placeholder)"></canvas>
+          <canvas class="ht hero" data-kind="${p.placeholder}" data-src="${p.image || ""}" data-seed="1" role="img" aria-label="${esc(p.name)} — key image${p.image ? "" : " (placeholder)"}"></canvas>
           <section class="cols"><h2>${esc(L.brief)}</h2><p>${esc(p.brief)}</p></section>
           <section class="cols"><h2>${esc(L.did)}</h2><ol>${p.did.map(d => `<li>${esc(d)}</li>`).join("")}</ol></section>
-          <div class="gallery">${p.gallery.map((k, j) => `<canvas class="ht" data-kind="${k}" data-seed="${j + 2}" role="img" aria-label="${esc(p.name)} — image ${j + 1} (placeholder)"></canvas>`).join("")}</div>
+          <div class="gallery">${p.gallery.map((k, j) => `<canvas class="ht" ${/\.(jpe?g|png|webp)$/i.test(k) ? `data-kind="${p.placeholder}" data-src="${k}"` : `data-kind="${k}"`} data-seed="${j + 2}" role="img" aria-label="${esc(p.name)} — image ${j + 1}"></canvas>`).join("")}</div>
           <section class="cols"><h2>${esc(L.result)}</h2><p>${esc(p.result)}</p></section>
           <a class="next" href="#/work/${nx.slug}"><span>${esc(W_.next)}</span><strong>${esc(nx.name)}</strong></a>
         </article>` };
@@ -613,8 +613,17 @@
     return new Promise(res => {
       const im = new Image(); im.onload = () => {
         const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d");
-        const sc = Math.max(w / im.width, h / im.height); g.filter = "grayscale(1)";
-        g.drawImage(im, (w - im.width * sc) / 2, (h - im.height * sc) / 2, im.width * sc, im.height * sc); res(c);
+        const contain = /\.png$/i.test(src), sc = (contain ? Math.min : Math.max)(w / im.width, h / im.height) * (contain ? 0.86 : 1);
+        g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
+        g.drawImage(im, (w - im.width * sc) / 2, (h - im.height * sc) / 2, im.width * sc, im.height * sc);
+        // Greyscale every image; PNGs are flat graphics on white (logo, reel), so turn them white-on-black.
+        const d = g.getImageData(0, 0, w, h), px = d.data;
+        for (let i = 0; i < px.length; i += 4) {
+          let l = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) / 255;
+          if (contain) l = clamp((0.985 - l) * 25);
+          px[i] = px[i + 1] = px[i + 2] = l * 255; px[i + 3] = 255;
+        }
+        g.putImageData(d, 0, 0); res(c);
       }; im.onerror = () => res(null); im.src = src;
     });
   }

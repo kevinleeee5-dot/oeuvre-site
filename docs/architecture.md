@@ -139,3 +139,18 @@ Closing line: "One team, start to finish — and after." + a button to Contact.
   - Studio: words of the statement go from dotted outline to solid as you scroll.
   - Contact: the cursor leaves a short trail of fading dots.
 - `prefers-reduced-motion`: the iris becomes a 150 ms fade, floating stops, images show sharp at once.
+
+## 7. Images in the repo (`proto/img/`, approved 2026-10-31)
+
+| File | Source | Used in |
+|---|---|---|
+| `muzi-maifan.jpg`, `muzi-diatomite.jpg`, `muzi-stone-mix.jpg` | `~/Downloads/MUZI/Soil/` (resized, ≤1800 px) | MUZI hero + gallery |
+| `muzi-logo.png` | `~/Downloads/MUZI/muzi-logo-520.png` | MUZI gallery |
+| `folio-five-topics.jpg`, `folio-article.jpg` | Folio `outputs/editorial-design-system/` (real app screens; in-image photo credits: NASA, Pexels) | Folio hero + gallery |
+| `folio-concept.jpg` | `~/Documents/Project Name Folio/Image/` (concept board) | Folio gallery |
+| `ace-reel.png` | ACE runtime `app/reel.png` (resized to 2000 px) | ACE hero |
+
+Not used, on purpose: Bei`Care simulator screenshots and mockups (they show real prices, costs, margins and supplier
+spend). Bei`Care needs new screenshots with demo data. ACE has no UI screenshots yet: the app cannot start on this
+Mac right now ("installed engine was moved") — needs a screen recording once it runs.
+All images are shown greyscale on the site; PNG graphics are inverted to white-on-black.
