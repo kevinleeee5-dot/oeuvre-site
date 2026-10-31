@@ -117,12 +117,14 @@
             "alt": "The BeiCare website on a phone.",
             "w": 780,
             "h": 1688,
-            "fit": "contain"
+            "fit": "contain",
+            "span": "half"
           },
           {
             "kind": "dashboard",
             "alt": "Workshop app — screens with demo data to come.",
-            "caption": "Workshop app. Screens with demo data to come."
+            "caption": "Workshop app. Screens with demo data to come.",
+            "span": "half"
           }
         ]
       },
@@ -160,26 +162,30 @@
             "src": "/assets/img/muzi-site-new-in.jpg",
             "alt": "The ‘New in’ row of the MUZI shop: soil bags and granules.",
             "w": 1440,
-            "h": 700
+            "h": 700,
+            "span": "full"
           },
           {
             "src": "/assets/img/muzi-maifan.jpg",
             "alt": "An echeveria top-dressed with 2–4 mm Maifan stone.",
             "w": 1800,
-            "h": 1800
+            "h": 1800,
+            "span": "half"
           },
           {
             "src": "/assets/img/muzi-diatomite.jpg",
             "alt": "Succulents top-dressed with 2–4 mm diatomite.",
             "w": 1800,
-            "h": 1800
+            "h": 1800,
+            "span": "half"
           },
           {
             "src": "/assets/img/muzi-site-mobile.jpg",
             "alt": "The MUZI shop on a phone.",
             "w": 780,
             "h": 1688,
-            "fit": "contain"
+            "fit": "contain",
+            "span": "half"
           },
           {
             "src": "/assets/img/muzi-logo.png",
@@ -187,7 +193,8 @@
             "w": 520,
             "h": 241,
             "fit": "contain",
-            "graphic": true
+            "graphic": true,
+            "span": "half"
           }
         ]
       },
@@ -221,14 +228,16 @@
             "src": "/assets/img/folio-concept.jpg",
             "alt": "Folio concept board: onboarding, interests, the daily edition, an article and membership.",
             "w": 2400,
-            "h": 1600
+            "h": 1600,
+            "span": "full"
           },
           {
             "src": "/assets/img/folio-article.jpg",
             "alt": "A Folio article: “XRISM sees a pulsar catch stellar wind”.",
             "w": 740,
             "h": 1600,
-            "fit": "contain"
+            "fit": "contain",
+            "span": "full"
           }
         ]
       },
@@ -265,7 +274,8 @@
             "alt": "The ACE player: the reel, a play button, the countdown and the tape label.",
             "w": 1101,
             "h": 1400,
-            "fit": "contain"
+            "fit": "contain",
+            "span": "full"
           }
         ]
       }

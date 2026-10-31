@@ -193,7 +193,7 @@ def case(c, P, i):
     nx = W["projects"][(i + 1) % len(W["projects"])]
     link = (f'<div><span>{esc(L["visit"])}</span><b><a href="{esc(p["link"]["href"])}" rel="noopener" target="_blank">{esc(p["link"]["label"])} ↗</a></b></div>'
             if p.get("link") else "")
-    gallery = "".join(figure(g) for g in p["gallery"])
+    gallery = "".join(figure(g, g.get("span", "half")) for g in p["gallery"])
     return f"""<main id="main">
 <article class="wrap case">
   {back(c, P + '/work/')}
@@ -240,7 +240,6 @@ def services(c, P):
   <p class="lead">{esc(V['intro'])}</p>
   <ul class="svc-list">{''.join(rows)}</ul>
   <p class="closing">{esc(V['closing'])}</p>
-  <a class="btn" href="{P}/contact/">{esc(V['cta'])} <span aria-hidden="true">→</span></a>
 </main>"""
 
 

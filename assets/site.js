@@ -12,7 +12,10 @@
   const page = body.dataset.page;
   const section = body.dataset.section || "";
   const reducedMQ = matchMedia("(prefers-reduced-motion: reduce)");
-  let reduced = reducedMQ.matches;
+  // ?static renders the final state at once (used for screenshot checks)
+  const isStatic = /[?&]static\b/.test(location.search);
+  if (isStatic) root.classList.add("static");
+  let reduced = reducedMQ.matches || isStatic;
   reducedMQ.addEventListener && reducedMQ.addEventListener("change", e => { reduced = e.matches; });
   const KEY = "oeuvre-iris";
   const store = {
@@ -100,7 +103,9 @@
   $$(".page-title").forEach(h => {
     if (reduced) return;
     const text = h.textContent; h.setAttribute("aria-label", text);
-    h.innerHTML = [...text].map((ch, i) => `<span class="ch" aria-hidden="true" style="--i:${i}">${ch === " " ? "&nbsp;" : ch.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</span>`).join("");
+    let i = 0;
+    const escc = ch => ch.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    h.innerHTML = text.split(" ").map(w => `<span class="w" aria-hidden="true">${[...w].map(ch => `<span class="ch" style="--i:${i++}">${escc(ch)}</span>`).join("")}</span>`).join(" ");
     if (root.classList.contains("arriving")) h.classList.add("late");
   });
 
@@ -252,7 +257,7 @@
     const ctx = fit(canvas, w, h);
     const tok = (canvas._tok = (canvas._tok || 0) + 1);
     if (reduced) { ctx.drawImage(src, 0, 0, w, h); return; }
-    const start = Math.max(14, Math.min(w, h) / 22);
+    const start = clamp(Math.min(w, h) / 40, 9, 18);
     await tween(700, p => { if (canvas._tok === tok) dots(ctx, src, w, h, start - (start - 3) * ease(p)); });
     if (keep) await tween(300, p => { if (canvas._tok !== tok) return; dots(ctx, src, w, h, 3); ctx.globalAlpha = p; ctx.drawImage(src, 0, 0, w, h); ctx.globalAlpha = 1; });
   }
