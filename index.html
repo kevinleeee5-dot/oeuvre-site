@@ -29,6 +29,7 @@
 <header class="bar">
   <a class="mark" href="/" aria-label="Oeuvre — Home">Oeuvre</a>
   
+  <ol class="idx" aria-label="Sections"><li><a href="/work/" data-i="0" aria-label="Work">01</a></li><li><a href="/services/" data-i="1" aria-label="Services">02</a></li><li><a href="/studio/" data-i="2" aria-label="Studio">03</a></li><li><a href="/contact/" data-i="3" aria-label="Contact">04</a></li></ol>
   <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="Float" data-off="Index">Index</button>
 </header>
 <main id="main" class="home">
@@ -37,6 +38,8 @@
     <iframe id="being" src="/being/index.html" title="A figure made of points that mirrors your face" allow="camera; microphone; autoplay"></iframe>
   </div>
   <nav class="words" aria-label="Main"><ul><li><a class="word" data-i="0" data-id="work" href="/work/">Work<sup aria-hidden="true">01</sup></a></li><li><a class="word" data-i="1" data-id="services" href="/services/">Services<sup aria-hidden="true">02</sup></a></li><li><a class="word" data-i="2" data-id="studio" href="/studio/">Studio<sup aria-hidden="true">03</sup></a></li><li><a class="word" data-i="3" data-id="contact" href="/contact/">Contact<sup aria-hidden="true">04</sup></a></li></ul></nav>
+  <canvas id="menu" aria-hidden="true"></canvas>
+  <a id="wordHit" class="word-hit" href="/work/" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
     <p class="home-statement">One team for a brand&#x27;s whole digital life.</p>
   </div>

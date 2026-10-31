@@ -108,7 +108,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <header class="bar">
   <a class="mark" href="{lang_prefix or '/'}" aria-label="{esc(s['name'])} — {esc(s['home'])}">{esc(s['name'])}</a>
   {mini}
-  {'<button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
+  {idx(c, lang_prefix) + chr(10) + '  ' if page_id == 'home' else ''}{'<button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
 </header>
 {body}
 {cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
@@ -121,6 +121,14 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 </body>
 </html>
 """
+
+
+def idx(c, P):
+    """Tiny always-visible index next to the Index chip: 01-04, one per menu word."""
+    items = "".join(
+        f'<li><a href="{P}{m["href"]}" data-i="{i}" aria-label="{esc(m["label"])}">0{i + 1}</a></li>'
+        for i, m in enumerate(c["menu"]))
+    return f'<ol class="idx" aria-label="{esc(c["site"]["sections"])}">{items}</ol>'
 
 
 def cta(c, P):
@@ -162,6 +170,8 @@ def home(c, P):
     <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
   </div>
   <nav class="words" aria-label="Main"><ul>{words}</ul></nav>
+  <canvas id="menu" aria-hidden="true"></canvas>
+  <a id="wordHit" class="word-hit" href="{P}{c["menu"][0]["href"]}" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
     <p class="home-statement">{esc(s['statement'])}</p>
   </div>

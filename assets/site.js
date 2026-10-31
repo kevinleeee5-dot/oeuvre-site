@@ -114,13 +114,18 @@
   addEventListener("pointermove", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.has = true; onPointer(e); }, { passive: true });
   let onPointer = () => { };
 
-  /* ================= home: words around the face ================= */
+  /* ================= home: the menu words as particle text around the face ================= */
   let words = [], face = null, wordCenter = () => null;
   if (page === "home") initHome();
 
   function initHome() {
-    const frame = $("#being"), nav = $(".words");
-    words = $$(".word").map((el, i) => ({ el, i, id: el.dataset.id, x: 0, y: 0, tx: 0, ty: 0, w: 0, h: 0 }));
+    const frame = $("#being"), nav = $(".words"), menuC = $("#menu"), hit = $("#wordHit");
+    const idxLinks = $$(".idx a");
+    words = $$(".word").map((el, i) => ({
+      el, i, id: el.dataset.id, href: el.href,
+      label: (el.childNodes[0] && el.childNodes[0].textContent || el.textContent).trim(),
+      x: 0, y: 0, tx: 0, ty: 0, w: 0, h: 0, gw: 0, gh: 0, pts: null
+    }));
     const fallback = () => {
       const s = Math.min(W * 0.42, H * 0.5);
       return { x: W / 2 - s * 0.42, y: H * 0.47 - s * 0.62, w: s * 0.84, h: s * 1.1 };
@@ -146,7 +151,47 @@
       if (!on) layout(true);
     });
 
-    // Where each word wants to be, given the face box.
+    /* ---- glyph sampling: each word becomes N points where the ink is ---- */
+    const N = W < 860 ? 720 : 1000, SAMPLE = 240;
+    const R = rng(7);
+    function sampleWord(w) {
+      const c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
+      const font = `500 ${SAMPLE}px ${getComputedStyle(nav).fontFamily}`;
+      g.font = font; const tw = Math.ceil(g.measureText(w.label).width) + 40;
+      c.width = tw; c.height = Math.ceil(SAMPLE * 1.3);
+      g.font = font; if ("letterSpacing" in g) g.letterSpacing = (-0.05 * SAMPLE) + "px";
+      g.fillStyle = "#fff"; g.textBaseline = "top"; g.fillText(w.label, 20, SAMPLE * 0.1);
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      let minx = c.width, maxx = 0, miny = c.height, maxy = 0, area = 0;
+      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 128) {
+        area++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      }
+      if (!area) { w.pts = []; w.gw = w.gh = 0.5; return; }
+      const step = Math.max(2, Math.sqrt(area / (N * 1.08)));
+      const out = [];
+      for (let y = miny; y <= maxy; y += step) for (let x = minx; x <= maxx; x += step) {
+        const px = x + (R() - 0.5) * step * 0.75, py = y + (R() - 0.5) * step * 0.75;
+        const xi = Math.round(px), yi = Math.round(py);
+        if (xi < 0 || yi < 0 || xi >= c.width || yi >= c.height || d[(yi * c.width + xi) * 4 + 3] <= 128) continue;
+        out.push({ x: (px - minx) / SAMPLE, y: (py - miny) / SAMPLE });
+      }
+      // every word gets exactly N points: thin out or double up (with a nudge) so particles map 1:1
+      while (out.length > N) out.splice(Math.floor(R() * out.length), 1);
+      const base = out.length;
+      while (out.length < N && base) { const o = out[Math.floor(R() * base)]; out.push({ x: o.x + (R() - 0.5) * 0.012, y: o.y + (R() - 0.5) * 0.012 }); }
+      // left-to-right order so a flight between two words reads as a flow, not a shuffle
+      out.sort((a, b) => (a.x + a.y * 0.15) - (b.x + b.y * 0.15));
+      w.pts = out; w.gw = (maxx - minx + 1) / SAMPLE; w.gh = (maxy - miny + 1) / SAMPLE;
+    }
+    // per-particle character: size, breathing phase, flight detour, a few strays
+    const P = Array.from({ length: N }, (_, i) => ({
+      r: 0.7 + R() * 0.7, ph: R() * 6.283, f: 0.6 + R() * 0.9, d: R(),
+      dx: (R() - 0.5) * 2, dy: (R() - 0.5) * 2, stray: R() < 0.045, sa: 0.5 + R() * 1.5, sb: R() * 6.283
+    }));
+    const sampleAll = () => words.forEach(sampleWord);
+
+    /* ---- where each word wants to be, given the face box ---- */
+    let fs = 60;
     function layout(snap) {
       if (body.classList.contains("list")) return;
       const g = Math.max(16, W * 0.02), top = 74, bottom = H - 70;
@@ -155,10 +200,10 @@
       // words a hair-margin away (sides on wide screens, above the crown on phones).
       const hairX = face.w * 0.2, hairY = face.h * 0.13;
       const room = Math.max(0, face.y - hairY - 6 - top);
-      const fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
+      fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
       nav.style.setProperty("--fs", fs + "px");
-      words.forEach(w => { w.w = w.el.offsetWidth; w.h = w.el.offsetHeight; });
-      const f = face, cx = f.x + f.w / 2;
+      words.forEach(w => { w.w = w.gw * fs; w.h = w.gh * fs; });
+      const f = face;
       words.forEach(w => {
         const left = w.i % 2 === 0, upper = w.i < 2;
         let x, y;
@@ -179,30 +224,126 @@
       });
       nav.classList.add("placed");
     }
-    if (isStatic) window.__oeuvre = { get face() { return face; }, get haveFace() { return haveFace; }, words };
+
+    /* ---- the cycle: one word holds, then its dots fly into the next ---- */
+    const HOLD = 4000, FLY = reduced ? 700 : 1500;
+    let cur = 0, nxt = -1, flyT0 = 0, holdT0 = performance.now(), pending = -1;
+    let paused = 0, focused = -1, sharp = 0, pos = P.map(() => ({ x: 0, y: 0 }));
+    let mctx = fit(menuC);
+    const goTo = k => { if (k === cur || k < 0) return; if (nxt >= 0) { pending = k; return; } nxt = k; flyT0 = performance.now(); };
+    // hover / touch pauses and sharpens; the hit link navigates (the site-wide click handler runs the iris)
+    hit.addEventListener("pointerenter", () => { paused |= 1; });
+    hit.addEventListener("pointerleave", () => { paused &= ~1; });
+    hit.addEventListener("touchstart", () => { paused |= 1; setTimeout(() => { paused &= ~1; }, 2500); }, { passive: true });
+    // keyboard: focusing a hidden word link brings that word in and holds it
+    nav.addEventListener("focusin", e => { const a = e.target.closest(".word"); if (!a) return; focused = +a.dataset.i; paused |= 2; goTo(focused); });
+    nav.addEventListener("focusout", () => { focused = -1; paused &= ~2; });
+    // the tiny index previews a word on hover/focus and navigates on click
+    idxLinks.forEach(a => {
+      const k = +a.dataset.i;
+      a.addEventListener("pointerenter", () => { paused |= 4; goTo(k); });
+      a.addEventListener("pointerleave", () => { paused &= ~4; });
+      a.addEventListener("focus", () => { paused |= 4; goTo(k); });
+      a.addEventListener("blur", () => { paused &= ~4; });
+    });
+    const setCurrent = k => {
+      cur = k; holdT0 = performance.now();
+      hit.href = words[k].href; hit.setAttribute("aria-label", words[k].label);
+      idxLinks.forEach(a => { +a.dataset.i === k ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current"); });
+    };
+    setCurrent(0);
+
+    const target = (w, i, t, par) => {
+      const p = w.pts[i], q = P[i];
+      let x = w.x + p.x * fs + par.x, y = w.y + p.y * fs + par.y;
+      if (!reduced) {
+        const j = (1 - sharp * 0.85) * fs * 0.012;          // breathing
+        x += Math.sin(t * 0.0011 * q.f + q.ph) * j; y += Math.cos(t * 0.0009 * q.f + q.ph * 1.3) * j;
+        if (q.stray) {                                        // a few dots drift loose around the word
+          const a = fs * 0.22 * q.sa * (1 - sharp * 0.7);
+          x += Math.sin(t * 0.00025 * q.f + q.sb) * a; y += Math.cos(t * 0.0002 * q.f + q.sb * 2.1) * a * 0.6;
+        }
+      }
+      return [x, y];
+    };
+    function drawWord(w, t, par, alpha, k) {
+      // k: 0..1 flight progress for crossfade/flight; here draws the word at rest
+      mctx.globalAlpha = alpha; mctx.beginPath();
+      const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6);
+      for (let i = 0; i < N; i++) {
+        const [x, y] = target(w, i, t, par); pos[i].x = x; pos[i].y = y;
+        const r = P[i].r * rs * (P[i].stray ? 0.75 : 1);
+        mctx.moveTo(x + r, y); mctx.arc(x, y, r, 0, 6.2832);
+      }
+      mctx.fill();
+    }
+    function drawFlight(a, b, t, par, p) {
+      const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6);
+      const amp = Math.min(W, H) * 0.09;
+      mctx.beginPath(); mctx.globalAlpha = 1;
+      for (let i = 0; i < N; i++) {
+        const q = P[i];
+        // each dot leaves on its own cue, so the old word frays before the new one gathers
+        const k = ease(clamp((p - q.d * 0.4) / 0.6));
+        const [ax, ay] = target(a, i, t, par), [bx, by] = target(b, i, t, par);
+        const s = Math.sin(k * 3.1416);
+        const x = ax + (bx - ax) * k + q.dx * amp * s, y = ay + (by - ay) * k + q.dy * amp * s * 0.7 - s * amp * 0.25;
+        pos[i].x = x; pos[i].y = y;
+        const r = q.r * rs * (1 - 0.35 * s) * (q.stray ? 0.75 : 1);
+        mctx.moveTo(x + r, y); mctx.arc(x, y, r, 0, 6.2832);
+      }
+      mctx.fill();
+    }
+    function placeHit(w, par, on) {
+      const m = Math.max(10, fs * 0.12);
+      hit.style.transform = `translate3d(${(w.x + par.x - m).toFixed(1)}px, ${(w.y + par.y - m).toFixed(1)}px, 0)`;
+      hit.style.width = (w.w + 2 * m).toFixed(1) + "px"; hit.style.height = (w.h + 2 * m).toFixed(1) + "px";
+      hit.style.pointerEvents = on ? "auto" : "none";
+    }
+    if (isStatic) window.__oeuvre = { get face() { return face; }, get haveFace() { return haveFace; }, words, get current() { return cur; } };
     wordCenter = id => { const w = words.find(w => w.id === id); return w ? { x: w.x + w.w / 2, y: w.y + w.h / 2 } : null; };
-    let lastFace = "";
+    let lastFace = "", lastSize = "";
     function frameLoop(t) {
       requestAnimationFrame(frameLoop);
       const key = haveFace ? [face.x, face.y, face.w, face.h].map(v => Math.round(v / 4)).join() : "f";
       if (key !== lastFace) { lastFace = key; layout(false); }
-      if (body.classList.contains("list")) return;
+      if (body.classList.contains("list")) { mctx.clearRect(0, 0, W, H); hit.style.pointerEvents = "none"; return; }
+      const sz = W + "x" + H; if (sz !== lastSize) { lastSize = sz; mctx = fit(menuC); }
       const k = reduced ? 1 : 0.08;
-      words.forEach(w => {
-        w.x += (w.tx - w.x) * k; w.y += (w.ty - w.y) * k;
-        let dx = 0, dy = 0;
-        if (!reduced) {
-          dx = Math.sin(t * 0.00035 + w.i * 1.7) * 10 - (ptr.x / W - 0.5) * 28 * (0.6 + 0.2 * w.i);
-          dy = Math.cos(t * 0.0003 + w.i * 2.3) * 8 - (ptr.y / H - 0.5) * 18 * (0.6 + 0.2 * w.i);
-        }
-        w.el.style.transform = `translate3d(${(w.x + dx).toFixed(1)}px, ${(w.y + dy).toFixed(1)}px, 0)`;
-        const d = Math.hypot(ptr.x - (w.x + w.w / 2), ptr.y - (w.y + w.h / 2));
-        w.el.style.setProperty("--o", ptr.has ? (0.5 + 0.5 * clamp(1 - d / 440)).toFixed(3) : 0.7);
-      });
+      words.forEach(w => { w.x += (w.tx - w.x) * k; w.y += (w.ty - w.y) * k; });
+      sharp += ((paused ? 1 : 0) - sharp) * 0.1;
+      // the cycle (?static holds the first word so screenshots are deterministic)
+      if (nxt < 0 && !paused && !isStatic && t - holdT0 > HOLD) goTo((cur + 1) % words.length);
+      let p = 0;
+      if (nxt >= 0) {
+        p = clamp((t - flyT0) / FLY);
+        if (p >= 1) { setCurrent(nxt); nxt = -1; if (pending >= 0 && pending !== cur) { goTo(pending); } pending = -1; }
+      }
+      const par = w => reduced ? { x: 0, y: 0 } : {
+        x: Math.sin(t * 0.00035 + w.i * 1.7) * 6 - (ptr.x / W - 0.5) * 22 * (0.6 + 0.2 * w.i),
+        y: Math.cos(t * 0.0003 + w.i * 2.3) * 5 - (ptr.y / H - 0.5) * 14 * (0.6 + 0.2 * w.i)
+      };
+      mctx.clearRect(0, 0, W, H); mctx.fillStyle = "#fff";
+      const a = words[cur];
+      if (nxt < 0) { drawWord(a, t, par(a), 0.78 + 0.22 * sharp); placeHit(a, par(a), true); }
+      else {
+        const b = words[nxt];
+        if (reduced) { drawWord(a, t, par(a), (1 - p) * 0.9); drawWord(b, t, par(b), p * 0.9); }
+        else drawFlight(a, b, t, par(a), p);
+        placeHit(p < 0.5 ? a : b, par(p < 0.5 ? a : b), false);
+      }
+      // keyboard focus ring around the word (the link itself is visually hidden)
+      if (focused === cur && nxt < 0 && words[cur].el.matches(":focus-visible")) {
+        const w = words[cur], q = par(w), m = fs * 0.1;
+        mctx.globalAlpha = 0.9; mctx.strokeStyle = "#fff"; mctx.lineWidth = 1.5;
+        mctx.strokeRect(w.x + q.x - m, w.y + q.y - m, w.w + 2 * m, w.h + 2 * m);
+      }
+      mctx.globalAlpha = 1;
     }
     addEventListener("resize", () => { if (!haveFace) face = fallback(); layout(true); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layout(true));
-    layout(true);
+    const boot = () => { sampleAll(); layout(true); };
+    boot();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
     requestAnimationFrame(frameLoop);
   }
 

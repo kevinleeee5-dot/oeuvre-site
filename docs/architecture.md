@@ -40,8 +40,17 @@ Four words, one each per quadrant around the face. Short, nouns, no verbs:
 | **Studio** | /studio | Warmer than "About"; says we are a small team, not an agency machine. |
 | **Contact** | /contact | Plain. Everyone knows where it goes. |
 
-The Oeuvre wordmark (top-left, small) always returns home. A small "Index" toggle (bottom-right) switches the
-floating words to a plain vertical list for anyone who finds the floating layout hard to use.
+The words are *particle text*: one word at a time is drawn as a loose cloud of white dots sampled from its
+glyphs (gently breathing, a few strays drifting). It holds for about four seconds, then its dots scatter and
+flow into the next word's shape at that word's own place around the face (left/right of the face box on wide
+screens, all four above the face on phones — see `docs/being-contract.md`). Hover or touch pauses the cycle
+and sharpens the word; click/tap goes to that section. A tiny index (01 02 03 04, next to the Index chip)
+keeps all four reachable at once and previews a word on hover. The four links stay in the DOM, visually
+hidden, for screen readers and the keyboard (focusing one brings it in and holds it); the canvas is
+aria-hidden. With `prefers-reduced-motion` the words crossfade instead of flowing.
+
+The Oeuvre wordmark (top-left, small) always returns home. A small "Index" toggle (top-right) switches the
+particle words to a plain vertical list for anyone who finds the floating layout hard to use.
 
 ## 3. Pages
 

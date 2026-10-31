@@ -64,6 +64,17 @@ html.busy, html.busy * { cursor: progress !important; }
 .words.placed .word { visibility: visible; }
 .word:hover, .word:focus-visible { opacity: 1; }
 .word sup { font-size: max(10px, .14em); letter-spacing: .04em; font-weight: 400; vertical-align: top; margin-left: .35em; opacity: .7; position: relative; top: .25em; }
+/* particle menu (js): the words are drawn as dots on #menu; the links stay in the DOM for
+   screen readers and the keyboard, visually hidden; #wordHit is the click target over the current word */
+.js .p-home:not(.list) .words .word { width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+                                      visibility: visible; transform: none !important; opacity: 0; transition: none; }
+#menu { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; mix-blend-mode: difference; }
+.word-hit { position: absolute; left: 0; top: 0; z-index: 6; display: block; width: 0; height: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
+.no-js #menu, .no-js .word-hit, body.list #menu, body.list .word-hit { display: none; }
+.idx { display: flex; gap: 12px; list-style: none; margin: 0; padding: 0; font-size: 11px; letter-spacing: .1em; font-weight: 500; }
+.idx a { text-decoration: none; opacity: .5; transition: opacity .2s; padding: 6px 0; }
+.idx a:hover, .idx a:focus-visible, .idx a[aria-current] { opacity: 1; }
+.no-js .idx, body.list .idx { display: none; }
 .home-foot { position: absolute; z-index: 6; left: var(--gutter); right: var(--gutter); bottom: max(22px, env(safe-area-inset-bottom));
              display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; mix-blend-mode: difference; pointer-events: none; }
 .home-foot > * { pointer-events: auto; }
