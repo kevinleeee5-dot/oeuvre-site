@@ -158,13 +158,12 @@ def home(c, P):
         for i, m in enumerate(c["menu"]))
     body = f"""<main id="main" class="home">
   <h1 class="sr-only">{esc(s['name'])} — {esc(s['statement'])}</h1>
-  <div class="being" aria-hidden="true">
-    <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; autoplay" tabindex="-1" loading="eager"></iframe>
+  <div class="being">
+    <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
   </div>
   <nav class="words" aria-label="Main"><ul>{words}</ul></nav>
   <div class="home-foot">
     <p class="home-statement">{esc(s['statement'])}</p>
-    <button class="chip see" type="button" id="seeYou" hidden data-on="{esc(s['seeYouOff'])}" data-off="{esc(s['seeYou'])}">{esc(s['seeYou'])}</button>
   </div>
 </main>"""
     return body

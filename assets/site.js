@@ -133,15 +133,10 @@
       if (d.type === "oeuvre-face" && [d.x, d.y, d.w, d.h].every(Number.isFinite) && d.w > 10 && d.h > 10) {
         // the frame fills the viewport, so its CSS pixels are ours
         face = { x: d.x, y: d.y, w: d.w, h: d.h }; haveFace = true;
-      } else if (d.type === "oeuvre-ready") {
-        if (d.camera) $("#seeYou").hidden = false;
-      } else if (d.type === "oeuvre-camera") {
-        const b = $("#seeYou"); b.textContent = d.on ? b.dataset.on : b.dataset.off; b.setAttribute("aria-pressed", !!d.on);
       }
     });
     const post = msg => { try { frame.contentWindow.postMessage(msg, location.origin); } catch (_) { } };
     onPointer = e => post({ type: "oeuvre-pointer", x: e.clientX, y: e.clientY, w: W, h: H });
-    $("#seeYou").addEventListener("click", () => post({ type: "oeuvre-camera", on: $("#seeYou").getAttribute("aria-pressed") !== "true" }));
     frame.addEventListener("load", () => post({ type: "oeuvre-hello", reduced }));
 
     const toggle = $("#indexToggle");
@@ -156,7 +151,8 @@
       if (body.classList.contains("list")) return;
       const g = Math.max(16, W * 0.02), top = 74, bottom = H - 70;
       const wide = W >= 860;
-      const fs = wide ? clamp(W * 0.075, 40, 138) : clamp(W * 0.135, 38, 72);
+      const room = Math.max(0, face.y + face.h * 0.1 - top);
+      const fs = wide ? clamp(W * 0.075, 40, 138) : clamp(Math.min(W * 0.135, room / 4 / 0.9), 30, 72);
       nav.style.setProperty("--fs", fs + "px");
       words.forEach(w => { w.w = w.el.offsetWidth; w.h = w.el.offsetHeight; });
       const f = face, cx = f.x + f.w / 2;
@@ -166,13 +162,13 @@
         if (wide) {
           x = left ? f.x - g - w.w : f.x + f.w + g;
           if (x < g) x = g; if (x + w.w > W - g) x = W - g - w.w;
-          y = upper ? f.y + f.h * (left ? 0.02 : 0.28) - w.h / 2 : f.y + f.h * (left ? 0.78 : 1.06) - w.h / 2;
+          y = upper ? f.y + f.h * (left ? 0.02 : 0.28) - w.h / 2 : f.y + f.h * (left ? 0.72 : 1.0) - w.h / 2;
         } else {
-          // phones: two words in the space above the face, two below, staggered left/right
+          // phones: all four words above the face, staggered left/right; the band under the face
+          // belongs to the figure's talk control
           x = left ? g : W - g - w.w;
-          const lo = upper ? top : f.y + f.h * 0.9, hi = upper ? f.y + f.h * 0.12 : bottom - 40;
-          const span = Math.max(hi - lo - w.h, w.h * 1.2);
-          y = lo + span * (left ? 0.06 : 0.94);
+          const lo = top, hi = Math.max(top + 4 * w.h, f.y + f.h * 0.1);
+          y = lo + (hi - lo - w.h) * (w.i / 3);
         }
         y = clamp(y, top, bottom - w.h);
         w.tx = x; w.ty = y;
@@ -371,6 +367,7 @@
     let cx = -50, cy = -50, tx = -50, ty = -50;
     addEventListener("pointermove", e => { tx = e.clientX; ty = e.clientY; d.classList.add("on"); }, { passive: true });
     document.addEventListener("pointerleave", () => d.classList.remove("on"));
+    const fr = $("#being"); if (fr) fr.addEventListener("pointerenter", () => d.classList.remove("on"));
     addEventListener("pointerdown", () => d.classList.add("down")); addEventListener("pointerup", () => d.classList.remove("down"));
     document.addEventListener("pointerover", e => d.classList.toggle("big", !!(e.target.closest && e.target.closest("a,button,summary"))));
     const step = () => { cx += (tx - cx) * 0.25; cy += (ty - cy) * 0.25; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
