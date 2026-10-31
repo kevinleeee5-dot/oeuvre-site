@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Oeuvre</title>
+<meta name="description" content="Navigation prototype for the Oeuvre site.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --fg: #fff;
+    --dim: rgba(255,255,255,.56);
+    --faint: rgba(255,255,255,.18);
+    --line: rgba(255,255,255,.16);
+    --gutter: clamp(16px, 4vw, 48px);
+    --font: "Inter Tight", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Noto Sans SC", sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); }
+  body { font-weight: 300; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  body.at-home { overflow: hidden; height: 100svh; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+  :focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip { position: fixed; left: 8px; top: -60px; z-index: 50; background: var(--fg); color: var(--bg); padding: 8px 12px; }
+  .skip:focus { top: 8px; }
+
+  /* top bar */
+  .bar { position: fixed; inset: 0 0 auto 0; z-index: 20; display: flex; justify-content: space-between; align-items: center;
+         padding: 18px var(--gutter); mix-blend-mode: difference; pointer-events: none; }
+  .bar > * { pointer-events: auto; }
+  .mark { font-weight: 600; letter-spacing: -.02em; text-decoration: none; font-size: 18px; }
+  .chip { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--fg); border-radius: 99px; padding: 6px 12px; }
+  body:not(.at-home) #indexToggle { display: none; }
+
+  /* home */
+  #home { position: relative; height: 100svh; }
+  #face, #beingFrame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  #beingFrame { pointer-events: none; }
+  #menu { list-style: none; margin: 0; padding: 0; }
+  .word { position: absolute; z-index: 5; display: inline-block; text-decoration: none; white-space: nowrap;
+          font-size: clamp(2.6rem, 8vw, 8.5rem); font-weight: 500; letter-spacing: -.045em; line-height: .9;
+          mix-blend-mode: difference; opacity: var(--o, .62); transition: opacity .25s; will-change: transform; }
+  .word:hover, .word:focus-visible { opacity: 1; }
+  .word sup { font-size: .16em; letter-spacing: .02em; font-weight: 300; vertical-align: top; margin-left: .3em; opacity: .7; }
+  .word[data-i="0"] { left: 6vw; top: 15svh; }
+  .word[data-i="1"] { right: 6vw; top: 27svh; }
+  .word[data-i="2"] { left: 7vw; bottom: 25svh; }
+  .word[data-i="3"] { right: 6vw; bottom: 12svh; }
+  .home-foot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 18px; display: flex; justify-content: space-between;
+               gap: 16px; font-size: 13px; color: var(--dim); mix-blend-mode: difference; z-index: 4; }
+  .home-foot p { margin: 0; }
+  /* plain list mode */
+  body.list .word { position: static; display: block; transform: none !important; opacity: 1; font-size: clamp(2.4rem, 10vw, 5.5rem); margin: .08em 0; }
+  body.list #menu { position: absolute; z-index: 5; left: var(--gutter); top: 50%; transform: translateY(-50%); }
+  body.list #face, body.list #beingFrame { opacity: .22; }
+
+  /* language switch */
+  .langs { position: fixed; right: var(--gutter); bottom: 18px; z-index: 20; display: flex; gap: 10px; font-size: 13px; mix-blend-mode: difference; }
+  .langs button[aria-current="true"] { text-decoration: underline; text-underline-offset: 4px; }
+  .langs button[aria-disabled="true"] { opacity: .4; cursor: not-allowed; }
+  body.at-home .home-foot .place { margin-right: 120px; }
+  @media (max-width: 720px) { .home-foot .place { display: none; } .home-foot p { max-width: 60%; } }
+
+  /* sub-pages */
+  #view { min-height: 100svh; padding: 96px var(--gutter) 120px; outline: none; }
+  .back { display: inline-block; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); text-decoration: none; margin-bottom: 40px; }
+  .back:hover { color: var(--fg); }
+  .page-title { font-size: clamp(3.4rem, 14vw, 13rem); font-weight: 500; letter-spacing: -.055em; line-height: .85; margin: 0 0 .25em; outline: none; }
+  .lead { font-size: clamp(1.15rem, 2.2vw, 1.7rem); line-height: 1.35; max-width: 34ch; margin: 0 0 64px; color: var(--dim); }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  /* work list */
+  .work-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .work-list a { display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; align-items: baseline; padding: 22px 0;
+                 border-bottom: 1px solid var(--line); text-decoration: none; }
+  .work-list .nm { font-size: clamp(2rem, 6vw, 5rem); font-weight: 500; letter-spacing: -.04em; line-height: 1; transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+  .work-list a:hover .nm, .work-list a:focus-visible .nm { transform: translateX(.25em); }
+  .work-list .meta { font-size: 13px; color: var(--dim); text-align: right; letter-spacing: .04em; }
+  .work-list .oc { grid-column: 1 / -1; color: var(--dim); font-size: 15px; }
+  #preview { position: fixed; left: 0; top: 0; z-index: 15; width: 340px; height: 240px; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  #preview.on { opacity: 1; }
+  @media (hover: none) { #preview { display: none; } }
+
+  /* case study */
+  .case-head { display: grid; gap: 24px; margin-bottom: 48px; }
+  .case-meta { display: flex; flex-wrap: wrap; gap: 8px 32px; font-size: 13px; color: var(--dim); }
+  .case-meta b { display: block; color: var(--fg); font-weight: 500; font-size: 15px; }
+  .ht { display: block; width: 100%; background: #000; }
+  .hero { aspect-ratio: 16 / 9; max-height: 78svh; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px 48px; margin: 80px 0; }
+  .cols h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 500; margin: 6px 0 0; }
+  .cols p, .cols li { font-size: clamp(1.1rem, 1.8vw, 1.45rem); line-height: 1.4; margin: 0; }
+  .cols ol { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 14px; }
+  .cols ol li { counter-increment: s; display: grid; grid-template-columns: 3em 1fr; }
+  .cols ol li::before { content: counter(s, decimal-leading-zero); color: var(--dim); font-size: .8em; padding-top: .2em; }
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .gallery .ht { aspect-ratio: 4 / 3; }
+  .gallery .ht:first-child { grid-column: 1 / -1; aspect-ratio: 21 / 9; }
+  .next { display: block; margin-top: 120px; padding-top: 24px; border-top: 1px solid var(--line); text-decoration: none; }
+  .next span { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .next strong { display: block; font-size: clamp(2.6rem, 10vw, 9rem); font-weight: 500; letter-spacing: -.05em; line-height: .95; }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; margin: 56px 0; } .gallery { grid-template-columns: 1fr; } }
+
+  /* services */
+  .svc-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .svc { border-bottom: 1px solid var(--line); }
+  .svc > button { position: relative; width: 100%; display: grid; grid-template-columns: 3.2em 1fr auto; align-items: baseline; gap: 12px;
+                  text-align: left; padding: 26px 0; overflow: hidden; }
+  .svc > button::before { /* dot fill sweep */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(255,255,255,.55) 1.1px, transparent 1.6px); background-size: 7px 7px;
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0,0,0,.35) 60%, transparent 100%);
+            mask-image: linear-gradient(90deg, #000 0%, rgba(0,0,0,.35) 60%, transparent 100%);
+    clip-path: inset(0 100% 0 0); transition: clip-path .6s cubic-bezier(.2,.7,.2,1); }
+  .svc > button:hover::before, .svc > button:focus-visible::before, .svc > button[aria-expanded="true"]::before { clip-path: inset(0 0 0 0); }
+  .svc .n { font-size: 13px; color: var(--dim); position: relative; }
+  .svc .sn { font-size: clamp(1.9rem, 5.5vw, 4.6rem); font-weight: 500; letter-spacing: -.04em; line-height: 1; position: relative; }
+  .svc .pm { position: relative; font-size: 28px; font-weight: 300; transition: transform .3s; }
+  .svc button[aria-expanded="true"] .pm { transform: rotate(45deg); }
+  .svc.soon .sn { color: var(--dim); }
+  .tag { display: inline-block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor;
+         border-radius: 99px; padding: 3px 8px; vertical-align: middle; margin-left: 12px; font-weight: 500; }
+  .svc-body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0 0 32px 3.2em; }
+  .svc-body h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 500; margin: 0 0 8px; }
+  .svc-body p { margin: 0; font-size: 17px; line-height: 1.45; }
+  .svc-body a { text-underline-offset: 4px; }
+  @media (max-width: 720px) { .svc-body { grid-template-columns: 1fr; padding-left: 0; } }
+  .closing { margin-top: 96px; font-size: clamp(1.6rem, 4vw, 3.2rem); letter-spacing: -.03em; font-weight: 500; max-width: 18ch; }
+  .btn { display: inline-block; margin-top: 24px; padding: 14px 22px; border: 1px solid var(--fg); border-radius: 99px; text-decoration: none; font-size: 15px; }
+  .btn:hover { background: var(--fg); color: var(--bg); }
+
+  /* studio */
+  .statement-big { font-size: clamp(2.2rem, 7vw, 6.4rem); font-weight: 500; letter-spacing: -.045em; line-height: 1; margin: 0 0 96px; max-width: 16ch; }
+  .statement-big span { color: var(--faint); transition: color .5s; }
+  .statement-big span.on { color: var(--fg); }
+  .studio-body { display: grid; gap: 20px; max-width: 46ch; font-size: clamp(1.1rem, 1.8vw, 1.4rem); line-height: 1.45; margin-bottom: 96px; }
+  .studio-body p { margin: 0; }
+  .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; border-top: 1px solid var(--line); padding-top: 24px; }
+  .principles h3 { font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-weight: 500; letter-spacing: -.02em; margin: 0 0 8px; }
+  .principles p { margin: 0; color: var(--dim); line-height: 1.45; }
+  .legal { margin-top: 96px; font-size: 13px; color: var(--dim); }
+  @media (max-width: 720px) { .principles { grid-template-columns: 1fr; } }
+
+  /* contact */
+  .mail { display: inline-block; font-size: clamp(1.7rem, 7.4vw, 7.4rem); font-weight: 500; letter-spacing: -.05em; line-height: 1;
+          text-decoration: none; word-break: break-all; margin: 8px 0 32px; }
+  .mail:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .12em; }
+  .contact-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .contact-actions .btn { margin: 0; }
+  .contact-note { color: var(--dim); margin-top: 48px; }
+  #trail { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 14; }
+
+  /* transition overlay */
+  #iris { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+  #fade { position: fixed; inset: 0; background: var(--bg); opacity: 0; pointer-events: none; z-index: 40; transition: opacity .15s; }
+  #fade.on { opacity: 1; }
+  html.busy body { cursor: progress; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before { transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body class="at-home">
+<a class="skip" href="#main" id="skip">Skip to content</a>
+
+<header class="bar">
+  <a class="mark" href="#/" id="mark">Oeuvre</a>
+  <button class="chip" id="indexToggle" aria-pressed="false">Index</button>
+</header>
+
+<main id="main">
+  <section id="home" aria-labelledby="homeTitle">
+    <h1 id="homeTitle" class="sr-only">Oeuvre</h1>
+    <canvas id="face" role="img"></canvas>
+    <nav aria-label="Main"><ul id="menu"></ul></nav>
+    <div class="home-foot"><p id="statement"></p><p class="place" id="place"></p></div>
+  </section>
+  <section id="view" hidden></section>
+</main>
+
+<div class="langs" id="langs" role="group" aria-label="Language"></div>
+<canvas id="preview" aria-hidden="true"></canvas>
+<canvas id="trail" aria-hidden="true"></canvas>
+<canvas id="iris" aria-hidden="true"></canvas>
+<div id="fade" aria-hidden="true"></div>
+<div id="live" class="sr-only" aria-live="polite"></div>
+
+<script src="content.js"></script>
+<script>
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const reducedMQ = matchMedia("(prefers-reduced-motion: reduce)");
+  let reduced = reducedMQ.matches;
+  reducedMQ.addEventListener("change", e => { reduced = e.matches; });
+
+  /* ---------- content + language ---------- */
+  const DATA = window.OEUVRE_CONTENT;
+  let lang = "en";
+  const merge = (base, over) => {
+    if (over === undefined) return base;
+    if (Array.isArray(base) || typeof base !== "object" || base === null) return over;
+    const out = { ...base };
+    for (const k in over) out[k] = merge(base[k], over[k]);
+    return out;
+  };
+  const S = () => merge(DATA.en, DATA[lang] || {});
+
+  function renderChrome() {
+    const s = S();
+    document.documentElement.lang = DATA.languages.find(l => l.code === lang).htmlLang;
+    $("#skip").textContent = s.site.skip;
+    $("#statement").textContent = s.site.statement;
+    $("#place").textContent = s.site.place;
+    $("#face").setAttribute("aria-label", s.being.alt);
+    $("#indexToggle").textContent = document.body.classList.contains("list") ? s.site.indexClose : s.site.index;
+    $("#menu").innerHTML = s.menu.map((m, i) =>
+      `<li><a class="word" data-i="${i}" data-id="${m.id}" href="#/${m.id}">${esc(m.label)}<sup>0${i + 1}</sup></a></li>`).join("");
+    $("#langs").innerHTML = DATA.languages.map(l =>
+      `<button type="button" data-lang="${l.code}" ${l.code === lang ? 'aria-current="true"' : ""} ${l.ready ? "" : `aria-disabled="true" title="${esc(s.site.soon)}"`}>${l.label}</button>`).join("");
+    measureWords();
+  }
+  $("#langs").addEventListener("click", e => {
+    const b = e.target.closest("button[data-lang]");
+    if (!b || b.getAttribute("aria-disabled") === "true") return;
+    lang = b.dataset.lang; renderChrome(); render(parse(location.hash), true);
+  });
+  $("#indexToggle").addEventListener("click", () => {
+    const on = document.body.classList.toggle("list");
+    $("#indexToggle").setAttribute("aria-pressed", on);
+    $("#indexToggle").textContent = on ? S().site.indexClose : S().site.index;
+    measureWords();
+  });
+
+  /* ---------- canvases ---------- */
+  let W = innerWidth, H = innerHeight, DPR = Math.min(devicePixelRatio || 1, 2);
+  function fit(c, w = W, h = H) { c.width = Math.round(w * DPR); c.height = Math.round(h * DPR); const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); return x; }
+  const faceC = $("#face"), irisC = $("#iris"), trailC = $("#trail");
+  let fctx = fit(faceC), ictx = fit(irisC), tctx = fit(trailC);
+  addEventListener("resize", () => {
+    W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
+    fctx = fit(faceC); ictx = fit(irisC); tctx = fit(trailC);
+    measureWords(); if (reduced && atHome) drawFace(performance.now());
+  });
+
+  /* ---------- pointer ---------- */
+  const ptr = { x: W / 2, y: H / 2, has: false };
+  addEventListener("pointermove", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.has = true; if (trailOn) trail.push({ x: e.clientX, y: e.clientY, t: performance.now() }); }, { passive: true });
+
+  /* ---------- the stand-in face (halftone) ---------- */
+  // Being prototype can replace it: nav.html?being  or  nav.html?being=<url>
+  const qs = new URLSearchParams(location.search);
+  if (qs.has("being")) {
+    const f = document.createElement("iframe");
+    f.id = "beingFrame"; f.title = "Being prototype"; f.allow = "camera; autoplay";
+    f.src = qs.get("being") || "http://127.0.0.1:8124/being.html";
+    faceC.replaceWith(f);
+  }
+  const look = { x: 0, y: 0 };
+  let blinkT = 0, nextBlink = 2500;
+  function lum(u, v, t, bl) {
+    const lx = look.x, ly = look.y;
+    const hx = lx * 0.07, hy = -0.12 + ly * 0.04, a = 0.6, b = 0.8;
+    let s = 0;
+    // shoulders + clothes that keep flowing
+    const sx = u / 1.5, sy = (v - 1.62) / 0.78;
+    if (sx * sx + sy * sy < 1 && v > 0.95) {
+      const fold = 0.5 + 0.5 * Math.sin(u * 7 + v * 2.5 - t * 0.0007 + Math.sin(v * 3 + t * 0.0004) * 1.5);
+      s = (0.22 + 0.3 * (1 - Math.abs(sx))) * (0.55 + 0.45 * fold);
+    }
+    // neck
+    if (Math.abs(u - hx * 0.4) < 0.24 && v > 0.45 && v < 1.15) s = Math.max(s, 0.3 - 0.5 * Math.abs(u) + (v > 0.62 ? 0.08 : -0.1));
+    // head
+    const dx = (u - hx) / a, dy = (v - hy) / b, r2 = dx * dx + dy * dy;
+    // hair halo, flowing
+    const hdx = (u - hx) / (a * 1.12), hdy = (v - hy + 0.06) / (b * 1.08);
+    const hair = hdx * hdx + hdy * hdy < 1 && dy < -0.25 + 0.18 * Math.sin(dx * 3.2 + t * 0.0006);
+    if (r2 < 1 || hair) {
+      const nz = Math.sqrt(Math.max(0, 1 - r2));
+      let Lx = -0.42 - lx * 0.35, Ly = -0.5 - ly * 0.2, Lz = 0.75; const Ln = Math.hypot(Lx, Ly, Lz); Lx /= Ln; Ly /= Ln; Lz /= Ln;
+      s = 0.1 + 0.9 * Math.max(0, dx * Lx + dy * Ly + nz * Lz);
+      if (hair) s = (0.12 + 0.55 * s) * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(u * 46 + v * 9 + Math.sin(u * 5 + t * 0.0009) * 2)));
+      else {
+        const fu = hx + lx * 0.16, fv = hy + 0.02 + ly * 0.08;
+        for (const sd of [-1, 1]) {
+          const ex = fu + sd * 0.23, ey = fv - 0.04;
+          const eh = 0.05 * (1 - bl) + 0.004;
+          const e1 = (u - ex) / 0.115, e2 = (v - ey) / eh;
+          if (e1 * e1 + e2 * e2 < 1) {
+            s *= 0.55;
+            const px = u - (ex + lx * 0.045), py = (v - (ey + ly * 0.02));
+            if (bl < 0.6 && px * px + py * py < 0.0014) s = 0.02;
+            if (bl < 0.6 && Math.hypot(px + 0.015, py + 0.015) < 0.012) s = 1;
+          }
+          // brow
+          const by = ey - 0.13 - 0.18 * (u - ex) * (u - ex) * 10 * 0.1;
+          if (Math.abs(u - ex) < 0.15 && Math.abs(v - by) < 0.02) s *= 0.25;
+          // socket shade
+          const so = Math.hypot((u - ex) / 0.17, (v - ey + 0.01) / 0.1);
+          if (so < 1) s *= 0.75 + 0.25 * so;
+        }
+        // nose
+        if (u > fu + 0.015 && u < fu + 0.08 && v > fv && v < fv + 0.25) s *= 0.62;
+        if (Math.hypot((u - fu) / 0.1, (v - fv - 0.27) / 0.028) < 1) s *= 0.45;
+        // mouth
+        const mo = 0.016 + 0.01 * Math.max(0, Math.sin(t * 0.0011) - 0.85) * 6;
+        if (Math.hypot((u - fu) / 0.17, (v - fv - 0.44) / mo) < 1) s *= 0.08;
+        if (Math.hypot((u - fu) / 0.12, (v - fv - 0.5) / 0.03) < 1) s *= 1.15;
+        // signals travelling inside the head
+        for (let i = 0; i < 4; i++) {
+          const w = 0.00035 + i * 0.00011, ph = i * 1.9;
+          const sx2 = hx + 0.38 * Math.cos(t * w + ph) * Math.cos(t * w * 0.6 + i);
+          const sy2 = hy - 0.28 + 0.22 * Math.sin(t * w * 1.3 + ph);
+          const d = Math.hypot(u - sx2, v - sy2);
+          if (d < 0.07) s = Math.max(s, 1 - d / 0.07);
+        }
+      }
+    }
+    return clamp(s);
+  }
+  function drawFace(t) {
+    const cx = W / 2, cy = H * 0.47, sc = Math.min(W * 0.46, H * 0.36);
+    const step = clamp(W / 160, 6, 10), maxR = step * 0.52;
+    fctx.clearRect(0, 0, W, H);
+    fctx.fillStyle = "#fff"; fctx.beginPath();
+    const bl = blinkT;
+    const x0 = Math.max(0, cx - 1.7 * sc), x1 = Math.min(W, cx + 1.7 * sc);
+    const y0 = Math.max(0, cy - 1.15 * sc), y1 = Math.min(H, cy + 2.6 * sc);
+    for (let y = y0 - (y0 % step) + step / 2; y < y1; y += step) {
+      const v = (y - cy) / sc;
+      for (let x = x0 - (x0 % step) + step / 2; x < x1; x += step) {
+        let s = lum((x - cx) / sc, v, t, bl);
+        if (y > H - 90) s *= clamp((H - y) / 90);
+        if (s < 0.03) continue;
+        const r = maxR * Math.sqrt(s);
+        if (r < 0.35) continue;
+        fctx.moveTo(x + r, y); fctx.arc(x, y, r, 0, 6.2832);
+      }
+    }
+    fctx.fill();
+  }
+
+  /* ---------- floating words ---------- */
+  let words = [];
+  function measureWords() {
+    words = $$(".word").map(el => {
+      const prev = el.style.transform; el.style.transform = "none";
+      const r = el.getBoundingClientRect(); el.style.transform = prev;
+      return { el, cx: r.left + r.width / 2, cy: r.top + r.height / 2, depth: 0.6 + 0.25 * (+el.dataset.i % 3) };
+    });
+  }
+  function wordCenter(id) {
+    const w = words.find(w => w.el.dataset.id === id);
+    return w ? { x: w.cx, y: w.cy } : { x: W / 2, y: H / 2 };
+  }
+  function floatWords(t) {
+    const list = document.body.classList.contains("list");
+    for (const [i, w] of words.entries()) {
+      const d = Math.hypot(ptr.x - w.cx, ptr.y - w.cy);
+      w.el.style.setProperty("--o", ptr.has ? (0.5 + 0.5 * clamp(1 - d / 420)).toFixed(3) : 0.62);
+      if (list || reduced) { w.el.style.transform = "none"; continue; }
+      const px = (ptr.x / W - 0.5), py = (ptr.y / H - 0.5);
+      const dx = Math.sin(t * 0.00037 + i * 1.7) * 12 - px * 34 * w.depth;
+      const dy = Math.cos(t * 0.00031 + i * 2.3) * 9 - py * 22 * w.depth;
+      w.el.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0)`;
+    }
+  }
+
+  /* ---------- home loop ---------- */
+  let atHome = true, raf = 0;
+  function loop(t) {
+    raf = requestAnimationFrame(loop);
+    const tx = ptr.has ? clamp((ptr.x / W - 0.5) * 2, -1, 1) : Math.sin(t * 0.0003) * 0.4;
+    const ty = ptr.has ? clamp((ptr.y / H - 0.47) * 2, -1, 1) : Math.sin(t * 0.0002) * 0.2;
+    look.x += (tx - look.x) * 0.06; look.y += (ty - look.y) * 0.06;
+    if (t > nextBlink) { const k = (t - nextBlink) / 180; blinkT = k < 1 ? Math.sin(k * Math.PI) : 0; if (k >= 1) nextBlink = t + 2500 + Math.random() * 4000; }
+    drawFace(t); floatWords(t);
+  }
+  function startHome() {
+    cancelAnimationFrame(raf);
+    if (reduced) { drawFace(performance.now()); floatWords(0); addEventListener("pointermove", reducedHover, { passive: true }); }
+    else raf = requestAnimationFrame(loop);
+  }
+  function reducedHover() { if (atHome) floatWords(0); }
+  function stopHome() { cancelAnimationFrame(raf); removeEventListener("pointermove", reducedHover); }
+
+  /* ---------- the one transition: halftone iris ---------- */
+  let busy = false;
+  const ease = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  function drawIris(o, p, grow) {
+    const step = 26, maxR = step * 0.74, feather = Math.max(W, H) * 0.28;
+    const D = Math.max(Math.hypot(o.x, o.y), Math.hypot(W - o.x, o.y), Math.hypot(o.x, H - o.y), Math.hypot(W - o.x, H - o.y));
+    const front = p * (D + feather);
+    ictx.clearRect(0, 0, W, H); ictx.fillStyle = "#fff"; ictx.beginPath();
+    for (let y = step / 2; y < H + step; y += step) for (let x = step / 2; x < W + step; x += step) {
+      const k = ease(clamp((front - Math.hypot(x - o.x, y - o.y)) / feather));
+      const r = maxR * (grow ? k : 1 - k);
+      if (r < 0.4) continue;
+      ictx.moveTo(x + r, y); ictx.arc(x, y, r, 0, 6.2832);
+    }
+    ictx.fill();
+  }
+  function tween(ms, fn) {
+    return new Promise(res => {
+      const t0 = performance.now();
+      const f = now => { const p = clamp((now - t0) / ms); fn(p); p < 1 ? requestAnimationFrame(f) : res(); };
+      requestAnimationFrame(f);
+    });
+  }
+  async function transition(origin, swap) {
+    busy = true; document.documentElement.classList.add("busy");
+    if (reduced) {
+      const fd = $("#fade"); fd.classList.add("on");
+      await new Promise(r => setTimeout(r, 160)); swap(); fd.classList.remove("on");
+      await new Promise(r => setTimeout(r, 160));
+    } else {
+      await tween(520, p => drawIris(origin, p, true));
+      swap();
+      await tween(620, p => drawIris(origin, p, false));
+      ictx.clearRect(0, 0, W, H);
+    }
+    busy = false; document.documentElement.classList.remove("busy");
+    if (location.hash !== renderedHash) go(); // a newer route arrived mid-transition
+  }
+
+  /* ---------- router ---------- */
+  const parse = h => { const p = (h || "").replace(/^#\/?/, "").split("/").filter(Boolean); return { section: p[0] || "", slug: p[1] || "" }; };
+  let renderedHash = null, current = parse(""), pendingOrigin = null;
+
+  document.addEventListener("click", e => {
+    const a = e.target.closest('a[href^="#/"]');
+    if (!a) return;
+    if (e.detail === 0 || !e.clientX) { const r = a.getBoundingClientRect(); pendingOrigin = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+    else pendingOrigin = { x: e.clientX, y: e.clientY };
+    if (a.getAttribute("href") === location.hash || (a.getAttribute("href") === "#/" && !location.hash)) e.preventDefault();
+  });
+  addEventListener("hashchange", go);
+  addEventListener("keydown", e => {
+    if (e.key !== "Escape" || atHome) return;
+    pendingOrigin = null;
+    location.hash = current.slug ? `#/${current.section}` : "#/";
+  });
+
+  function go() {
+    if (busy) return;
+    const next = parse(location.hash);
+    const from = current;
+    let origin = pendingOrigin;
+    if (!origin) origin = next.section === "" ? wordCenter(from.section) : { x: W / 2, y: H / 2 };
+    pendingOrigin = null;
+    transition(origin, () => render(next));
+  }
+
+  function render(route, keepFocus) {
+    renderedHash = location.hash;
+    const prev = current; current = route;
+    const s = S(), view = $("#view");
+    teardownPage();
+    if (!route.section) {
+      view.hidden = true; view.innerHTML = ""; $("#home").hidden = false;
+      document.body.classList.add("at-home"); atHome = true; document.title = s.site.name;
+      measureWords(); startHome();
+      if (!keepFocus) { const w = words.find(w => w.el.dataset.id === prev.section); (w ? w.el : $("#mark")).focus({ preventScroll: true }); }
+      $("#live").textContent = s.site.name;
+      return;
+    }
+    stopHome(); atHome = false;
+    $("#home").hidden = true; document.body.classList.remove("at-home");
+    const page = PAGES[route.section];
+    let html, title;
+    if (page) ({ html, title } = page(s, route)); else ({ html, title } = notFound(s));
+    view.innerHTML = html; view.hidden = false; scrollTo(0, 0);
+    document.title = `${title} — ${s.site.name}`;
+    const h = $(".page-title", view); if (h && !keepFocus) h.focus({ preventScroll: true });
+    $("#live").textContent = title;
+    (INITS[route.section] || (() => {}))(s, route);
+  }
+
+  /* ---------- page templates ---------- */
+  const backLink = (s, href = "#/") => `<a class="back" href="${href}">← ${esc(s.site.back)}</a>`;
+  const notFound = s => ({ title: "404", html: `<div class="wrap">${backLink(s)}<h1 class="page-title" tabindex="-1">Nothing here. Yet.</h1></div>` });
+  const PAGES = {
+    work(s, r) {
+      const W_ = s.work;
+      if (r.slug) {
+        const i = W_.projects.findIndex(p => p.slug === r.slug);
+        if (i < 0) return notFound(s);
+        const p = W_.projects[i], nx = W_.projects[(i + 1) % W_.projects.length], L = W_.labels;
+        return { title: p.name, html: `<article class="wrap">
+          ${backLink(s, "#/work")}
+          <header class="case-head">
+            <h1 class="page-title" tabindex="-1">${esc(p.name)}</h1>
+            <p class="lead" style="margin:0">${esc(p.outcome)}</p>
+            <div class="case-meta"><div>${esc(L.sector)}<b>${esc(p.sector)}</b></div><div>${esc(L.role)}<b>${p.tags.map(esc).join(" · ")}</b></div><div>${esc(L.year)}<b>${esc(p.year)}</b></div></div>
+          </header>
+          <canvas class="ht hero" data-kind="${p.placeholder}" data-src="${p.image || ""}" data-seed="1" role="img" aria-label="${esc(p.name)} — key image (placeholder)"></canvas>
+          <section class="cols"><h2>${esc(L.brief)}</h2><p>${esc(p.brief)}</p></section>
+          <section class="cols"><h2>${esc(L.did)}</h2><ol>${p.did.map(d => `<li>${esc(d)}</li>`).join("")}</ol></section>
+          <div class="gallery">${p.gallery.map((k, j) => `<canvas class="ht" data-kind="${k}" data-seed="${j + 2}" role="img" aria-label="${esc(p.name)} — image ${j + 1} (placeholder)"></canvas>`).join("")}</div>
+          <section class="cols"><h2>${esc(L.result)}</h2><p>${esc(p.result)}</p></section>
+          <a class="next" href="#/work/${nx.slug}"><span>${esc(W_.next)}</span><strong>${esc(nx.name)}</strong></a>
+        </article>` };
+      }
+      return { title: W_.title, html: `<div class="wrap">${backLink(s)}
+        <h1 class="page-title" tabindex="-1">${esc(W_.title)}</h1><p class="lead">${esc(W_.intro)}</p>
+        <ol class="work-list">${W_.projects.map(p => `<li><a href="#/work/${p.slug}" data-kind="${p.placeholder}" data-src="${p.image || ""}">
+          <span class="nm">${esc(p.name)}</span><span class="meta">${p.tags.map(esc).join(" · ")} — ${esc(p.year)}</span><span class="oc">${esc(p.outcome)}</span></a></li>`).join("")}</ol></div>` };
+    },
+    services(s) {
+      const V = s.services, L = V.labels;
+      return { title: V.title, html: `<div class="wrap">${backLink(s)}
+        <h1 class="page-title" tabindex="-1">${esc(V.title)}</h1><p class="lead">${esc(V.intro)}</p>
+        <ul class="svc-list">${V.items.map((it, i) => `<li class="svc${it.soon ? " soon" : ""}" id="${it.id}">
+          <button type="button" aria-expanded="false" aria-controls="svc-${it.id}"><span class="n">0${i + 1}</span>
+            <span class="sn">${esc(it.name)}${it.soon ? `<span class="tag">2027</span>` : ""}</span><span class="pm" aria-hidden="true">+</span></button>
+          <div class="svc-body" id="svc-${it.id}" hidden>
+            <div><h3>${esc(L.what)}</h3><p>${esc(it.what)}</p></div>
+            <div><h3>${esc(L.get)}</h3><p>${esc(it.get)}${it.soon ? ` <a href="#/contact">${esc(s.contact.write)} →</a>` : ""}</p></div>
+            <div><h3>${esc(L.time)}</h3><p>${esc(it.time)}</p></div>
+          </div></li>`).join("")}</ul>
+        <p class="closing">${esc(V.closing)}</p><a class="btn" href="#/contact">${esc(V.cta)} →</a></div>` };
+    },
+    studio(s) {
+      const V = s.studio;
+      return { title: V.title, html: `<div class="wrap">${backLink(s)}
+        <h1 class="page-title" tabindex="-1">${esc(V.title)}</h1>
+        <p class="statement-big">${V.statement.split(" ").map(w => `<span>${esc(w)}</span>`).join(" ")}</p>
+        <div class="studio-body">${V.body.map(p => `<p>${esc(p)}</p>`).join("")}</div>
+        <h2 class="sr-only">${esc(V.principlesTitle)}</h2>
+        <div class="principles">${V.principles.map(p => `<div><h3>${esc(p.name)}</h3><p>${esc(p.text)}</p></div>`).join("")}</div>
+        <p class="legal">${esc(s.site.legal)}</p></div>` };
+    },
+    contact(s) {
+      const V = s.contact, m = s.site.email;
+      return { title: V.title, html: `<div class="wrap">${backLink(s)}
+        <h1 class="page-title" tabindex="-1">${esc(V.title)}</h1><p class="lead">${esc(V.lead)}</p>
+        <a class="mail" href="mailto:${esc(m)}">${esc(m)}</a>
+        <div class="contact-actions"><a class="btn" href="mailto:${esc(m)}">${esc(V.write)} →</a><button class="btn" type="button" id="copyMail">${esc(V.copy)}</button></div>
+        <p class="contact-note">${esc(V.reply)}<br>${esc(s.site.place)}</p></div>` };
+    }
+  };
+
+  /* ---------- halftone images (placeholders until real images are approved) ---------- */
+  function rng(seed) { let x = seed * 9301 + 49297; return () => ((x = (x * 9301 + 49297) % 233280) / 233280); }
+  function makeSource(kind, w, h, seed) {
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); const R = rng(seed);
+    g.fillStyle = "#000"; g.fillRect(0, 0, w, h);
+    const grad = (x0, y0, x1, y1, a, b) => { const q = g.createLinearGradient(x0, y0, x1, y1); q.addColorStop(0, a); q.addColorStop(1, b); return q; };
+    if (kind === "dashboard") {
+      const pad = w * 0.06, cols = 3, rows = 2, gw = (w - pad * 2 - pad * 0.5 * (cols - 1)) / cols, gh = (h - pad * 2 - pad * 0.5 * (rows - 1)) / rows;
+      for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+        const x = pad + k * (gw + pad * 0.5), y = pad + r * (gh + pad * 0.5);
+        g.fillStyle = grad(x, y, x + gw, y + gh, "#5a5a5a", "#2a2a2a"); g.beginPath(); g.roundRect(x, y, gw, gh, 10); g.fill();
+        g.fillStyle = "#ddd"; g.fillRect(x + 12, y + 12, gw * 0.4, 6);
+        if ((r + k + seed) % 2) { for (let b = 0; b < 6; b++) { const bh = (0.2 + R() * 0.6) * gh * 0.6; g.fillStyle = "#bbb"; g.fillRect(x + 14 + b * gw * 0.14, y + gh - 12 - bh, gw * 0.08, bh); } }
+        else { g.strokeStyle = "#fff"; g.lineWidth = 3; g.beginPath(); for (let p = 0; p <= 10; p++) { const px = x + 12 + p * (gw - 24) / 10, py = y + gh * 0.4 + R() * gh * 0.45; p ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); }
+      }
+    } else if (kind === "rosette") {
+      const cx = w / 2 + (R() - 0.5) * w * 0.2, cy = h / 2, rad = Math.min(w, h) * 0.46;
+      const bg = g.createRadialGradient(cx, cy, 0, cx, cy, rad * 1.4); bg.addColorStop(0, "#333"); bg.addColorStop(1, "#000"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      for (let ring = 5; ring >= 1; ring--) {
+        const n = 5 + ring * 3, len = rad * ring / 5;
+        for (let i = 0; i < n; i++) {
+          const a = i / n * Math.PI * 2 + ring * 0.37 + seed;
+          g.save(); g.translate(cx, cy); g.rotate(a);
+          g.fillStyle = grad(0, 0, len, 0, `hsl(0 0% ${30 + ring * 4}%)`, `hsl(0 0% ${70 + ring * 5}%)`);
+          g.beginPath(); g.ellipse(len * 0.55, 0, len * 0.5, len * 0.16, 0, 0, 7); g.fill(); g.restore();
+        }
+      }
+    } else if (kind === "page") {
+      g.fillStyle = "#e6e6e6"; const px = w * 0.2, pw = w * 0.6; g.fillRect(px, h * 0.06, pw, h * 0.94);
+      g.fillStyle = "#111"; g.fillRect(px + pw * 0.08, h * 0.13, pw * 0.7, h * 0.06); g.fillRect(px + pw * 0.08, h * 0.21, pw * 0.5, h * 0.06);
+      g.fillStyle = grad(0, h * 0.32, 0, h * 0.6, "#555", "#999"); g.fillRect(px + pw * 0.08, h * 0.32, pw * 0.84, h * 0.26);
+      g.fillStyle = "#444"; for (let l = 0; l < 7; l++) g.fillRect(px + pw * 0.08, h * (0.64 + l * 0.045), pw * (0.6 + R() * 0.24), h * 0.016);
+    } else { // turntable
+      const cx = w / 2, cy = h / 2, rad = Math.min(w, h) * 0.44;
+      g.fillStyle = "#222"; g.fillRect(0, 0, w, h);
+      g.fillStyle = "#0a0a0a"; g.beginPath(); g.arc(cx, cy, rad, 0, 7); g.fill();
+      for (let r = rad * 0.4; r < rad; r += 5) { g.strokeStyle = `rgba(255,255,255,${0.06 + 0.1 * Math.abs(Math.sin(r * 0.11 + seed))})`; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke(); }
+      const sh = g.createLinearGradient(cx - rad, cy - rad, cx + rad, cy + rad); sh.addColorStop(0.3, "rgba(255,255,255,0)"); sh.addColorStop(0.5, "rgba(255,255,255,.35)"); sh.addColorStop(0.7, "rgba(255,255,255,0)");
+      g.fillStyle = sh; g.beginPath(); g.arc(cx, cy, rad, 0, 7); g.fill();
+      g.fillStyle = "#ddd"; g.beginPath(); g.arc(cx, cy, rad * 0.3, 0, 7); g.fill(); g.fillStyle = "#000"; g.beginPath(); g.arc(cx, cy, 5, 0, 7); g.fill();
+      g.strokeStyle = "#eee"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(cx + rad * 1.05, cy - rad * 0.9); g.lineTo(cx + rad * 0.9, cy + rad * 0.2); g.lineTo(cx + rad * 0.55, cy + rad * 0.45); g.stroke();
+    }
+    return c;
+  }
+  function loadSource(src, w, h) {
+    return new Promise(res => {
+      const im = new Image(); im.onload = () => {
+        const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d");
+        const sc = Math.max(w / im.width, h / im.height); g.filter = "grayscale(1)";
+        g.drawImage(im, (w - im.width * sc) / 2, (h - im.height * sc) / 2, im.width * sc, im.height * sc); res(c);
+      }; im.onerror = () => res(null); im.src = src;
+    });
+  }
+  // Draws `src` into `canvas` as halftone, then resolves the dots into the image.
+  async function resolveInto(canvas, kind, src, seed, instant) {
+    const r = canvas.getBoundingClientRect(), w = Math.max(40, Math.round(r.width)), h = Math.max(40, Math.round(r.height));
+    const ctx = fit(canvas, w, h);
+    const source = (src && await loadSource(src, w, h)) || makeSource(kind, w, h, seed);
+    const px = source.getContext("2d").getImageData(0, 0, w, h).data;
+    const dots = step => {
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.beginPath();
+      for (let y = step / 2; y < h; y += step) for (let x = step / 2; x < w; x += step) {
+        const i = ((y | 0) * w + (x | 0)) * 4, l = px[i] / 255; const rr = step * 0.55 * Math.sqrt(l);
+        if (rr > 0.3) { ctx.moveTo(x + rr, y); ctx.arc(x, y, rr, 0, 6.2832); }
+      }
+      ctx.fill();
+    };
+    if (instant || reduced) { ctx.drawImage(source, 0, 0, w, h); return; }
+    const token = (canvas._tok = (canvas._tok || 0) + 1);
+    await tween(560, p => { if (canvas._tok !== token) return; dots(18 - 15 * ease(p)); });
+    await tween(260, p => { if (canvas._tok !== token) return; dots(3); ctx.globalAlpha = p; ctx.drawImage(source, 0, 0, w, h); ctx.globalAlpha = 1; });
+  }
+
+  /* ---------- page behaviours ---------- */
+  let cleanups = [], trailOn = false, trail = [];
+  function teardownPage() { cleanups.forEach(f => f()); cleanups = []; }
+  const on = (el, ev, fn, opt) => { el.addEventListener(ev, fn, opt); cleanups.push(() => el.removeEventListener(ev, fn, opt)); };
+
+  const INITS = {
+    work(s, r) {
+      if (r.slug) {
+        const io = new IntersectionObserver(es => es.forEach(e => {
+          if (!e.isIntersecting) return; io.unobserve(e.target);
+          resolveInto(e.target, e.target.dataset.kind, e.target.dataset.src, +e.target.dataset.seed);
+        }), { threshold: 0.25 });
+        $$("#view canvas.ht").forEach(c => io.observe(c)); cleanups.push(() => io.disconnect());
+        return;
+      }
+      const pv = $("#preview"); let shown = null;
+      const pos = (x, y) => { pv.style.transform = `translate(${Math.min(x + 24, W - 360)}px, ${Math.min(Math.max(y - 120, 70), H - 260)}px)`; };
+      const show = (a, x, y) => {
+        if (shown === a) return; shown = a; pos(x, y); pv.classList.add("on");
+        resolveInto(pv, a.dataset.kind, a.dataset.src, $$(".work-list a").indexOf(a) + 1);
+      };
+      const hide = () => { shown = null; pv.classList.remove("on"); };
+      $$(".work-list a").forEach(a => {
+        on(a, "pointerenter", e => { if (e.pointerType === "mouse") show(a, e.clientX, e.clientY); });
+        on(a, "pointerleave", hide);
+        on(a, "focus", () => { const b = a.getBoundingClientRect(); show(a, Math.min(b.right - 380, W - 380), b.top + b.height / 2); });
+        on(a, "blur", hide);
+      });
+      on(window, "pointermove", e => { if (shown) pos(e.clientX, e.clientY); }, { passive: true });
+      cleanups.push(hide);
+    },
+    services() {
+      $$(".svc > button").forEach(b => on(b, "click", () => {
+        const open = b.getAttribute("aria-expanded") !== "true";
+        b.setAttribute("aria-expanded", open); $("#" + b.getAttribute("aria-controls")).hidden = !open;
+      }));
+      if (location.hash.includes("photography")) { /* deep link placeholder */ }
+    },
+    studio() {
+      const spans = $$(".statement-big span");
+      const box = $(".statement-big");
+      const upd = () => {
+        const r = box.getBoundingClientRect();
+        const p = reduced ? 1 : clamp((innerHeight * 0.85 - r.top) / (r.height + innerHeight * 0.35));
+        const n = Math.round(p * spans.length);
+        spans.forEach((sp, i) => sp.classList.toggle("on", i < n));
+      };
+      upd(); on(window, "scroll", upd, { passive: true });
+    },
+    contact(s) {
+      on($("#copyMail"), "click", async () => {
+        try { await navigator.clipboard.writeText(s.site.email); } catch (_) { }
+        $("#copyMail").textContent = s.contact.copied; $("#live").textContent = s.contact.copied;
+        setTimeout(() => { const b = $("#copyMail"); if (b) b.textContent = s.contact.copy; }, 1800);
+      });
+      if (reduced) return;
+      trailOn = true; trail = []; let tr;
+      const draw = now => {
+        tr = requestAnimationFrame(draw); tctx.clearRect(0, 0, W, H);
+        trail = trail.filter(p => now - p.t < 700); tctx.fillStyle = "#fff"; tctx.beginPath();
+        for (let i = 1; i < trail.length; i++) {
+          const a = trail[i - 1], b = trail[i], d = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.floor(d / 9));
+          for (let k = 0; k < n; k++) {
+            const x = a.x + (b.x - a.x) * k / n, y = a.y + (b.y - a.y) * k / n, life = 1 - (now - a.t) / 700, rr = 3.2 * life;
+            if (rr > 0.3) { tctx.moveTo(x + rr, y); tctx.arc(x, y, rr, 0, 6.2832); }
+          }
+        }
+        tctx.fill();
+      };
+      tr = requestAnimationFrame(draw);
+      cleanups.push(() => { trailOn = false; cancelAnimationFrame(tr); tctx.clearRect(0, 0, W, H); });
+    }
+  };
+
+  /* ---------- boot ---------- */
+  renderChrome();
+  render(parse(location.hash), true);
+  if (!location.hash) history.replaceState(null, "", "#/");
+  renderedHash = location.hash;
+})();
+</script>
+</body>
+</html>
