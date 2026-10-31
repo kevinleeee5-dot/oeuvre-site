@@ -91,6 +91,7 @@
   body.embed .pill { padding:8px 12px; letter-spacing:.08em; background:rgba(0,0,0,.6); }
   body.embed #say { padding:8px 14px; background:rgba(0,0,0,.6); }
   body.embed #fine { font-size:9px; line-height:1.45; max-width:62ch; color:#8a8a85; }
+  #fine .fs { display:none; } body.embed #fine .fl { display:none; } body.embed #fine .fs { display:inline; } body.embed #fine { color:#6d6d68; }
   /* a soft pool of black behind the controls, so they read over the shoulders' line screen */
   body.embed #talk::before { content:""; position:absolute; inset:-40px -70px -48px; z-index:-1; pointer-events:none;
     background:radial-gradient(closest-side, rgba(0,0,0,.95) 64%, rgba(0,0,0,.7) 82%, rgba(0,0,0,0)); }
@@ -120,8 +121,8 @@
       <input id="say" type="text" maxlength="500" autocomplete="off" spellcheck="false" enterkeyhint="send" placeholder="or type to it, then enter" aria-label="type to it">
       <button id="go" class="pill" type="button"><span class="dot"></span><span id="golabel">let it see you</span></button>
     </div>
-    <p id="fine">if you let it see you, it uses only the movement of your face: no picture is drawn, kept or sent.
-      what you say or type is sent to oeuvre so it can answer; in some browsers (e.g. chrome) speech is turned into text by the browser's maker.</p>
+    <p id="fine"><span class="fl">if you let it see you, it uses only the movement of your face: no picture is drawn, kept or sent.
+      what you say or type is sent to oeuvre so it can answer; in some browsers (e.g. chrome) speech is turned into text by the browser's maker.</span><span class="fs">face movement only, no picture kept · what you say goes to oeuvre · some browsers transcribe speech</span></p>
   </section>
 
 <script type="module">
@@ -1888,8 +1889,8 @@
   for (var di = 0; di < DUST; di++) { DX[di] = RNG(); DY[di] = RNG(); DV[di] = 0.2 + RNG(); }
   var mouthPrev = 0, eyeWasOpen = true, activity = 0;
   var styleOrder = SNAMES.slice(); for (var so = styleOrder.length - 1; so > 0; so--) { var sw2 = RNG() * (so + 1) | 0, st2 = styleOrder[so]; styleOrder[so] = styleOrder[sw2]; styleOrder[sw2] = st2; }
-  // the long and bob styles still print as a helmet of combed lines: kept for ?hair=, left out of its own rotation
-  styleOrder = styleOrder.filter(function (n) { return n !== "long" && n !== "bob"; });
+  // long, bob and buzz still print as a helmet or loose strokes: kept for ?hair=, left out of its own rotation
+  styleOrder = styleOrder.filter(function (n) { return n !== "long" && n !== "bob" && n !== "buzz"; });
   if (PARAM.hair) styleOrder = [PARAM.hair];
   var styleIdx = 0, styleT0 = 0;
   var clothIdx = PARAM.cloth === null ? 0 : PARAM.cloth, clothT0 = 0, curStyle = "", curCloth = "", gender = 0, fadeV = 0, styleMix = 0;
