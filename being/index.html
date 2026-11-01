@@ -124,10 +124,16 @@
   // orientation, centred, with the face width ≈ 1 (the camera read is mirrored, like a mirror).
   // ===========================================================================
   // @pure-begin
-  var NL = 478, DEG = Math.PI / 180, YAW_MAX = 20 * DEG, PITCH_MAX = 12 * DEG, ROLL_MAX = 10 * DEG, Z_SCALE = 0.5;
+  var NL = 478, DEG = Math.PI / 180, YAW_MAX = 15 * DEG, PITCH_MAX = 10 * DEG, ROLL_MAX = 8 * DEG, Z_SCALE = 0.5;
+  // expression limits (face widths): any landmark's delta, the brows' lift, the inner lips' gap; the lower face drops no more than
+  // 1.15x the lower lip (the chin never elongates). Camera-driven extremes are softened by EXPR_GAIN_CAM; its own face keeps gain 1.
+  var DELTA_MAX = 0.09, BROW_MAX = 0.05, MOUTH_MAX = 0.065, CHIN_OVER = 1.15, EXPR_GAIN_CAM = 0.7;
   var IDS = ["a", "b", "c", "d", "e"];
   function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
   function smooth(x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); }
+  // a soft cap: identity below 0.6·m, then eased into m (never reached, never a kink). softLimit is the signed version.
+  function softCap(x, m) { var k = 0.6 * m; if (x <= k) return x < 0 ? 0 : x; return k + (m - k) * Math.tanh((x - k) / (m - k)); }
+  function softLimit(x, m) { return x < 0 ? -softCap(-x, m) : softCap(x, m); }
   function mulberry32(a) {
     a = a >>> 0;
     return function () { a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -149,6 +155,7 @@
     var to = (q.get("to") || "").toLowerCase(); o.to = IDS.indexOf(to) >= 0 && to !== o.id ? to : null;
     var tt = num("t"); o.t = o.to ? clamp(tt === null ? 0.5 : tt, 0, 1) : null; if (o.to) o.cycle = false;
     var rg = (q.get("region") || "").toLowerCase(); o.region = REGION_NAMES.indexOf(rg) >= 0 ? rg : null;
+    o.dust = q.get("dust") !== "0";                                                   // ?dust=0 draws a transition without its particles (to measure their coverage)
     return o;
   }
   function blinkCurve(t) {
@@ -202,7 +209,7 @@
     var ux = R[0] * cy - R[6] * sy, uy = R[3] / Math.max(1e-6, Math.cos(out[1]));
     out[2] = Math.atan2(uy, ux);
   }
-  function clampPose(p) { p[0] = clamp(p[0], -YAW_MAX, YAW_MAX); p[1] = clamp(p[1], -PITCH_MAX, PITCH_MAX); p[2] = clamp(p[2], -ROLL_MAX, ROLL_MAX); return p; }
+  function clampPose(p) { p[0] = softLimit(p[0], YAW_MAX); p[1] = softLimit(p[1], PITCH_MAX); p[2] = softLimit(p[2], ROLL_MAX); return p; }   // eased into the limits, never clipped
 
   // --- landmark groups (MediaPipe 478). Lids are index-aligned pairs, outer -> inner corner, eye 33 (screen left) then eye 263.
   var UPPER_LID = [246, 161, 160, 159, 158, 157, 173, 466, 388, 387, 386, 385, 384, 398];
@@ -221,6 +228,15 @@
     [33, 263], [133, 362], [468, 473], [469, 476], [471, 474], [470, 475], [472, 477], [234, 454], [10, 10], [152, 152], [1, 1]];
   var INNER_UP = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308], INNER_LO = [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308];   // corner to corner
   var EYE_UP = [159, 386], EYE_DN = [145, 374], EYE_IN = [133, 362], EYE_OUT = [33, 263], IRIS = [468, 473];
+  // the features that change in one beat during a transition (never half an eye, never two mouths): each eye with its lids,
+  // creases and iris, and the whole mouth with its corners. FEAT_OF: 0 none, 1 eye 33.., 2 eye 263.., 3 mouth; FEAT_C: a centre landmark each
+  var EYE_FEAT = [EYE_LOOP[0].concat(UPPER_CREASE.slice(0, 7), LOWER_CREASE.slice(0, 7), [468, 469, 470, 471, 472]), EYE_LOOP[1].concat(UPPER_CREASE.slice(7), LOWER_CREASE.slice(7), [473, 474, 475, 476, 477])];
+  var MOUTH_FEAT = UPPER_LIP.concat(LOWER_LIP, INNER_LIP, [61, 291, 62, 292, 76, 306, 77, 307, 78, 308]);
+  // the nose (bridge, tip, alae, nostrils): high relief, so its old shadows would otherwise sit as dark fragments on the arriving nose
+  var NOSE_FEAT = [1, 2, 4, 5, 6, 19, 20, 44, 45, 48, 49, 51, 64, 94, 97, 98, 99, 115, 129, 131, 134, 166, 168, 174, 195, 196, 197, 198, 209, 217, 218, 219, 220, 235, 236, 237, 238, 239, 240, 241, 242, 248,
+    274, 275, 278, 279, 281, 294, 326, 327, 328, 331, 344, 358, 360, 363, 392, 399, 412, 420, 429, 437, 438, 439, 440, 455, 456, 457, 458, 459, 460, 461, 462];
+  var FEAT_OF = new Int8Array(NL), FEAT_C = [468, 473, 13, 4];
+  EYE_FEAT[0].forEach(function (l) { FEAT_OF[l] = 1; }); EYE_FEAT[1].forEach(function (l) { FEAT_OF[l] = 2; }); MOUTH_FEAT.forEach(function (l) { FEAT_OF[l] = 3; }); NOSE_FEAT.forEach(function (l) { FEAT_OF[l] = 4; });
 
   // --- the identity: rest landmarks + the extended mesh, prepared once
   function prepIdentity(idData, mesh) {
@@ -252,10 +268,25 @@
     var chinY = L[152 * 3 + 1], ringF = [0.96, 0.74, 0.38, 0];
     for (var r = 0; r < mesh.rings; r++) for (k = 0; k < mesh.ringSize; k++) ring[mesh.ringIndex[r][k]] = r;
     for (i = 0; i < 4; i++) ring[mesh.cornerIndex[i]] = 3;
+    // ringK/ringW: the four nearest oval landmarks (slots into mesh.faceOval) with gaussian weights, so a ring vertex takes a
+    // smooth blend of the oval's expression instead of snapping to one landmark (adjacent vertices never alternate: no zig-zag);
+    // ringRest: the vertex's rest position (world) at the blended depth of those landmarks, so a turn moves a ring as one smooth map
+    // the turn's depth parallax fades towards the sides of the face (full over the nose, eyes and mouth, 15 % at the oval): in the
+    // photo the foreshortened cheek sides sit a few px apart, and with their full depth a turn slides the inner ones past the silhouette (a fold)
+    var par = new Float32Array(NL);
+    for (i = 0; i < NL; i++) par[i] = 1 - 0.85 * smooth((Math.abs(L[i * 3]) / (0.5 * fw) - 0.5) / 0.45);
+    var NO = mesh.faceOval.length, ringK = new Int32Array(n * 4), ringW = new Float32Array(n * 4), ringRest = new Float32Array(n * 3), ringPar = new Float32Array(n), zr = 0, sig = 0.14 * fw;
+    for (k = 0; k < NO; k++) zr += L[mesh.faceOval[k] * 3 + 2] / NO;
+    var dd = new Float64Array(NO);
     for (i = NL; i < n; i++) {
       var best2 = -1, bd2 = 1e30;
-      for (k = 0; k < mesh.faceOval.length; k++) { var o = mesh.faceOval[k], ddx = L[o * 3] - L[i * 3], ddy = L[o * 3 + 1] - L[i * 3 + 1], d2 = ddx * ddx + ddy * ddy; if (d2 < bd2) { bd2 = d2; best2 = o; } }
+      for (k = 0; k < NO; k++) { var o = mesh.faceOval[k], ddx = L[o * 3] - L[i * 3], ddy = L[o * 3 + 1] - L[i * 3 + 1], d2 = ddx * ddx + ddy * ddy; dd[k] = d2; if (d2 < bd2) { bd2 = d2; best2 = o; } }
       ringOval[i] = best2;
+      var wsum = 0, q;
+      for (q = 0; q < 4; q++) { var bk = -1, bv = 1e30; for (k = 0; k < NO; k++) { var used = false; for (var q2 = 0; q2 < q; q2++) if (ringK[i * 4 + q2] === k) used = true; if (!used && dd[k] < bv) { bv = dd[k]; bk = k; } }
+        ringK[i * 4 + q] = bk; ringW[i * 4 + q] = Math.exp(-(bv - bd2) / (2 * sig * sig)); wsum += ringW[i * 4 + q]; }
+      var zb = 0, pb = 0; for (q = 0; q < 4; q++) { ringW[i * 4 + q] /= wsum; var ok = mesh.faceOval[ringK[i * 4 + q]]; zb += ringW[i * 4 + q] * L[ok * 3 + 2]; pb += ringW[i * 4 + q] * par[ok]; }
+      worldOf(T, L[i * 3], L[i * 3 + 1], zb, ringRest, i * 3); ringPar[i] = pb;   // its own x, y at the blended depth (and parallax) of the oval beside it: the hairline turns with the forehead, smoothly along the ring
       var f = ringF[ring[i] < 0 ? 3 : ring[i]];
       var below = smooth((chinY - L[i * 3 + 1]) / (0.35 * fh));                 // under the chin: neck, shoulders
       follow[i] = f * (1 - 0.6 * below); followX[i] = f * (1 - 0.3 * below);
@@ -274,20 +305,56 @@
       var ir = 0; for (i = 1; i <= 4; i++) ir += Math.hypot(img[(c + i) * 3] - img[c * 3], img[(c + i) * 3 + 1] - img[c * 3 + 1]) / 4;
       eyes.push({ cu: img[c * 3] / W, cv: img[c * 3 + 1] / H, ru: ir / W, rv: ir / H, ew: ew, gap: Math.abs(img[EYE_DN[k] * 3 + 1] - img[EYE_UP[k] * 3 + 1]) });
     }
+    // the feature ellipses (centre and semi-axes in uv): the padded box of each eye cluster and of the mouth; the transition
+    // shaders flip everything inside one as a unit. Never flatter than 0.55 (an eye) / 0.5 (the mouth) of its width: the lids are in
+    function featEllipse(list, pad, minAsp) {
+      var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      list.forEach(function (l) { var u = img[l * 3] / W, v = img[l * 3 + 1] / H; if (u < x0) x0 = u; if (u > x1) x1 = u; if (v < y0) y0 = v; if (v > y1) y1 = v; });
+      var rx = (x1 - x0) / 2 * pad + 0.004, ry = Math.max((y1 - y0) / 2 * pad, rx * minAsp * W / H) + 0.004;
+      return [(x0 + x1) / 2, (y0 + y1) / 2, rx, ry];
+    }
+    var feat = [featEllipse(EYE_FEAT[0], 1.3, 0.55), featEllipse(EYE_FEAT[1], 1.3, 0.55), featEllipse(MOUTH_FEAT, 1.2, 0.5), featEllipse(NOSE_FEAT, 1.12, 0)];
     // index buffers: the shared mesh, the two eye fans (centre = iris landmark), the mouth cavity fan
     var tris = Uint16Array.from(mesh.tris), eyeTris = [], j;
     for (k = 0; k < 2; k++) { var loop = EYE_LOOP[k]; for (j = 0; j < loop.length; j++) eyeTris.push(IRIS[k], loop[j], loop[(j + 1) % loop.length]); }
     var fb = idData.faceBox;
     return { n: n, img: img, uv: uv, W: W, H: H, T: T, L: L, fw: fw, fh: fh, mirror: mirror, ring: ring, ringOval: ringOval, follow: follow, followX: followX,
-      N: N, eyes: eyes, tris: tris, eyeTris: Uint16Array.from(eyeTris), oval: Int32Array.from(mesh.faceOval), faceBox: [fb.x, fb.y, fb.w, fb.h],
+      ringK: ringK, ringW: ringW, ringRest: ringRest, ringPar: ringPar, zr: zr, par: par,
+      N: N, eyes: eyes, feat: feat, tris: tris, eyeTris: Uint16Array.from(eyeTris), oval: Int32Array.from(mesh.faceOval), faceBox: [fb.x, fb.y, fb.w, fb.h],
       centre: [T[0] - 0.05 * fw * T[9], T[1] - 0.05 * fw * T[10], T[2] - 0.05 * fw * T[11]] };
   }
 
+  // --- expression limits on the identity's local landmarks (loc = rest L + the driver's deltas; lids are left to the blink):
+  // every delta soft-capped at DELTA_MAX; the brows' lift at BROW_MAX; the inner lips' gap eased into MOUTH_MAX by scaling the
+  // vertical motion of the mouth and everything below it; the lower face drops at most CHIN_OVER x the lower lip (no long jaw)
+  function limitExpression(loc, ID, LID) {
+    var L = ID.L, fw = ID.fw, i, o, s, ex, ey, ez, el;
+    var yLip = L[164 * 3 + 1], eyeY = (L[159 * 3 + 1] + L[386 * 3 + 1]) / 2, browY = eyeY + 0.07 * fw;
+    for (i = 0; i < NL; i++) {
+      if (LID[i]) continue;
+      o = i * 3; ex = loc[o] - L[o]; ey = loc[o + 1] - L[o + 1]; ez = loc[o + 2] - L[o + 2]; el = Math.hypot(ex, ey, ez);
+      if (el > DELTA_MAX * 0.6 * fw) { s = softCap(el / fw, DELTA_MAX) * fw / el; ex *= s; ey *= s; ez *= s; }
+      if (L[o + 1] > browY && ey > 0) ey = softCap(ey / fw, BROW_MAX) * fw;
+      loc[o] = L[o] + ex; loc[o + 1] = L[o + 1] + ey; loc[o + 2] = L[o + 2] + ez;
+    }
+    var open = ((loc[13 * 3 + 1] - loc[14 * 3 + 1]) - (L[13 * 3 + 1] - L[14 * 3 + 1])) / fw;
+    if (open > 1e-6) {
+      s = softCap(open, MOUTH_MAX) / open;
+      if (s < 1) for (i = 0; i < NL; i++) { o = i * 3; if (LID[i] || L[o + 1] > yLip) continue; loc[o + 1] = L[o + 1] + (loc[o + 1] - L[o + 1]) * s; }
+    }
+    var lipY = L[14 * 3 + 1], lipDrop = lipY - loc[14 * 3 + 1], maxDrop = Math.max(0, lipDrop) * CHIN_OVER;
+    for (i = 0; i < NL; i++) {
+      o = i * 3; if (LID[i] || L[o + 1] >= lipY) continue;
+      var drop = L[o + 1] - loc[o + 1];
+      if (drop > maxDrop) loc[o + 1] = L[o + 1] - (maxDrop + softCap((drop - maxDrop) / fw, 0.01) * fw);
+    }
+    return loc;
+  }
   // --- the retarget: driver landmarks D (478·3, world orientation, face width ≈ 1) and their neutral Nn -> posed, expressive identity
   function makeRetarget(ID) {
     var n = ID.n, FM = new Float64Array(12), NFM = new Float64Array(12), LIVE = new Float32Array(NL * 3), NEUT = new Float32Array(NL * 3);
     var R = new Float64Array(9), RW = new Float64Array(9), RT = new Float64Array(9), P = new Float64Array(3), PS = new Float64Array([0, 0, 0]);
-    var loc = new Float32Array(n * 3), wld = new Float32Array(n * 3), rest = new Float32Array(n * 3), ringD = new Float32Array(n * 3), BL = new Float64Array(2), GZ = new Float64Array(2);
+    var loc = new Float32Array(n * 3), wld = new Float32Array(n * 3), rest = new Float32Array(n * 3), ringD = new Float32Array(n * 3), BL = new Float64Array(2), GZ = new Float64Array(2), OVE = new Float32Array(ID.oval.length * 2);
     var out = { pos: new Float32Array(n * 2), depth: new Float32Array(n), shade: new Float32Array(n), pose: new Float64Array(3), blink: BL, gaze: GZ,
       mouthOpen: 0, faceBox: [0, 0, 0, 0], irisC: new Float32Array(4), cavity: new Float32Array(INNER_UP.length * 4), present: 0 };
     var LID = new Uint8Array(NL); UPPER_LID.concat(LOWER_LID, UPPER_CREASE, LOWER_CREASE, EYE_CORNERS).forEach(function (l) { LID[l] = 1; });
@@ -320,6 +387,7 @@
         loc[o] += dx; loc[o + 2] += dz;
         if (LID[i] === 1) loc[o + 1] += dy * 0.5; else loc[o + 1] += dy;          // lid rows: the blink below sets them
       }
+      limitExpression(loc, ID, LID);
       // blink and gaze per eye. The driver is mirrored: its eye 33.. (now on screen right) drives the identity's 263.. eye
       var b1 = eyeRead(0, G0), b0 = eyeRead(1, G1);
       BL[0] += (b0 - BL[0]) * ease(b0 > BL[0] ? 0.8 : 0.5, dt); BL[1] += (b1 - BL[1]) * ease(b1 > BL[1] ? 0.8 : 0.5, dt);
@@ -346,14 +414,23 @@
       var C = ID.centre, tx = (opt.trans ? opt.trans[0] : 0) * ID.fw, ty = (opt.trans ? opt.trans[1] : 0) * ID.fw;
       for (i = 0; i < NL; i++) {
         o = i * 3; worldOf(ID.T, loc[o], loc[o + 1], loc[o + 2], wld, o); worldOf(ID.T, ID.L[o], ID.L[o + 1], ID.L[o + 2], rest, o);
-        var x = wld[o] - C[0], y = wld[o + 1] - C[1], z = (wld[o + 2] - C[2]) * Z_SCALE;      // a flatter head: one photo stays one head
+        var x = wld[o] - C[0], y = wld[o + 1] - C[1], z = (wld[o + 2] - C[2]) * Z_SCALE * ID.par[i];      // a flatter head: one photo stays one head; flatter again at its sides
         wld[o] = C[0] + RW[0] * x + RW[1] * y + RW[2] * z + tx; wld[o + 1] = C[1] + RW[3] * x + RW[4] * y + RW[5] * z + ty; wld[o + 2] = C[2] + RW[6] * x + RW[7] * y + RW[8] * z;
       }
-      // the rings: a reduced, damped share of what their nearest oval landmark did (hair most, the border none)
-      var rk = ease(0.3, dt);
+      // the rings (hair, collar, chest; the border none): a reduced, damped share of the head's motion. The turn is applied to
+      // each ring vertex's own rest position at one depth (an affine map of the whole ring: nothing buckles, nothing folds); the
+      // expression part is a gaussian blend of what the four nearest oval landmarks did beyond the turn (no snapping to one)
+      var rk = ease(0.3, dt), NO = ID.oval.length;
+      for (k = 0; k < NO; k++) {
+        i = ID.oval[k]; o = i * 3; x = rest[o] - C[0]; y = rest[o + 1] - C[1]; z = (rest[o + 2] - C[2]) * Z_SCALE * ID.par[i];
+        OVE[k * 2] = wld[o] - (C[0] + RW[0] * x + RW[1] * y + RW[2] * z + tx); OVE[k * 2 + 1] = wld[o + 1] - (C[1] + RW[3] * x + RW[4] * y + RW[5] * z + ty);
+      }
       for (i = NL; i < n; i++) {
-        o = i * 3; var ov = ID.ringOval[i] * 3, f = ID.follow[i], fx = ID.followX[i];
-        var tdx = (wld[ov] - rest[ov]) * fx, tdy = (wld[ov + 1] - rest[ov + 1]) * f;
+        o = i * 3; var f = ID.follow[i], fx = ID.followX[i], q4 = i * 4;
+        x = ID.ringRest[o] - C[0]; y = ID.ringRest[o + 1] - C[1]; z = (ID.ringRest[o + 2] - C[2]) * Z_SCALE * ID.ringPar[i];
+        var rdx = RW[0] * x + RW[1] * y + RW[2] * z - x, rdy = RW[3] * x + RW[4] * y + RW[5] * z - y, edx = 0, edy = 0;
+        for (k = 0; k < 4; k++) { var qk = ID.ringK[q4 + k] * 2, qw = ID.ringW[q4 + k]; edx += OVE[qk] * qw; edy += OVE[qk + 1] * qw; }
+        var tdx = (rdx + edx + tx) * fx, tdy = (rdy + edy + ty) * f;
         ringD[o] += (tdx - ringD[o]) * rk; ringD[o + 1] += (tdy - ringD[o + 1]) * rk;
         wld[o] = ID.img[o] + ringD[o]; wld[o + 1] = -ID.img[o + 1] + ringD[o + 1]; wld[o + 2] = 0;
       }
@@ -492,9 +569,10 @@
       springTo(AU.E, 0, smT, 2 * Math.PI * 0.9, 1, dt); springTo(AU.E, 2, brT, 2 * Math.PI * 1.6, 0.9, dt); springTo(AU.E, 4, leanT, 2 * Math.PI * 0.5, 1, dt);
       var mt = env.mouth || MT; if (env.expr === "open") { mt = MT; MT[0] = 0.85; MT[1] = 0.2; MT[2] = 0; }
       springTo(AU.M, 0, mt[0], 2 * Math.PI * 6.5, 0.85, dt); springTo(AU.M, 2, mt[1], 2 * Math.PI * 5, 0.9, dt); springTo(AU.M, 4, mt[2], 2 * Math.PI * 5, 0.9, dt);
-      // a real jaw: up to 0.13 face widths of drop (the chin and jawline follow through AJAW); a real smile: corners out and
-      // up ~0.09 fw at full, the cheeks rising and the lower lids squinting with them (Duchenne)
-      var J = 0.13 * clamp(AU.M[0], 0, 1), rd = clamp(AU.M[2], 0, 1), spr = clamp(AU.M[4], 0, 1), sm = AU.E[0], br = AU.E[2];
+      // a real jaw: up to 0.085 face widths of drop (the chin and jawline follow through AJAW; the retarget eases the gap into
+      // MOUTH_MAX, so the visemes keep their range below it); a real smile: corners out and up ~0.09 fw at full, the cheeks
+      // rising and the lower lids squinting with them (Duchenne)
+      var J = 0.085 * clamp(AU.M[0], 0, 1), rd = clamp(AU.M[2], 0, 1), spr = clamp(AU.M[4], 0, 1), sm = AU.E[0], br = AU.E[2];
       // compose the face
       var P = AWORK; P.set(AREST);
       for (i = 0; i < 468; i++) {
@@ -522,13 +600,19 @@
   }
 
   // --- composition: the picture on the screen so the face box is a share of the width, the head upper-middle
+  // The face box is FACE_FRAC of the width (desktop 24 %, phone 45 %); the whole head, hair included (taken as half a face
+  // height above the face box, never above the picture), stays in frame with HEADROOM of the height above it, and the head
+  // plus the talk control under the chin fit the height: on a short wide screen the scale gives way, never the framing.
+  var FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.45, HEADROOM = 0.05;
+  function headTop(faceBox) { return Math.max(0, faceBox[1] - 0.5 * faceBox[3]); }
   function layout(W, H, faceBox, ID) {
-    var phone = W <= 640, frac = phone ? 0.58 : W < 1000 ? 0.34 : 0.25;         // a phone is chest-up: the face most of the width, the crown may run into the top vignette
-    var S = frac * W / faceBox[2];
-    var maxS = (H * 1.08) / ID.H; if (!phone && S > maxS) S = maxS;             // the head never leaves the frame on short wide screens
+    var phone = W <= 640, frac = phone ? FACE_FRAC_PHONE : FACE_FRAC;
+    var S = frac * W / faceBox[2], top = headTop(faceBox);
+    var maxS = (phone ? 0.82 : 0.78) * H / ((faceBox[1] + faceBox[3] * 1.12) - top); if (S > maxS) S = maxS;   // head + room for the talk control
     var cxI = faceBox[0] + faceBox[2] / 2, cyI = faceBox[1] + faceBox[3] / 2;
-    var ox = W / 2 - cxI * S, oy = (phone ? 0.36 : 0.42) * H - cyI * S;
-    return { S: S, ox: ox, oy: oy };
+    var ox = W / 2 - cxI * S, oy = (phone ? 0.38 : 0.42) * H - cyI * S;
+    var oyTop = HEADROOM * H - top * S; if (oy < oyTop) oy = oyTop;              // the crown never runs off the top
+    return { S: S, ox: ox, oy: oy, frac: faceBox[2] * S / W };
   }
   // camera landmarks (normalised picture coordinates) -> centred, in face widths, mirrored like a mirror
   function readLandmarks(lm, asp, out, pos, a, a2) {
@@ -547,12 +631,20 @@
   // --- identity cycling. The front field lives in the head frame (x across, y up, face widths): a seed region, a distance
   // with fbm noise on top (the shader has the same noise). The front radius R grows to RMAX over FRONT_END of the transition;
   // particles lift when it passes their home and land ~LIFE later. Geometry blends over a wider, smooth band than the texture.
-  var REGIONS = { cheek: [0.3, -0.15], jaw: [0.3, -0.55], neck: [0.3, -1.1], forehead: [0.05, 0.42], temple: [0.5, 0.2] };
+  // the neck region starts at the throat, under the jaw, and spreads out from there
+  var REGIONS = { cheek: [0.3, -0.15], jaw: [0.3, -0.55], neck: [0.3, -0.95], forehead: [0.05, 0.42], temple: [0.5, 0.2] };
   var REGION_NAMES = ["cheek", "jaw", "neck", "forehead", "temple"];
-  // The front eases in (R = RMAX·(t/FRONT_END)^FRONT_POW): it lingers on the face, where the two identities meet, and
-  // sweeps the rest late. The rings' field scale (RING_FIELD, and less again under the chin) brings the hair, collar
-  // and chest along with the face they frame instead of leaving "a new face in the old wig" and dust on the chest.
-  var FRONT_END = 0.85, FRONT_POW = 1.8, HOLD_MIN = 8000, HOLD_MAX = 14000, DUR_MIN = 3500, DUR_MAX = 5000, FIELD_AMP = 0.32, FIELD_BAND = 0.35, GEO_BAND = 0.35, GEO_STEEP = 2.2;
+  // The front is in two pieces: it eases in over the face (R = RFACE·(t/FRONT_T1)^FRONT_POW, FRONT_T1 of the transition:
+  // the region starts to disintegrate slowly and the two identities share the face for most of it), then sweeps the hair,
+  // collar and chest to RMAX by FRONT_END; the last grains land before 1. The rings' field scale (RING_FIELD, and less again
+  // under the chin) brings the hair, collar and chest along with the face they frame instead of leaving "a new face in the
+  // old wig" and dust on the chest. A transition takes 4.5-6 s.
+  var FRONT_END = 0.82, FRONT_T1 = 0.6, FRONT_POW = 1.55, FRONT_POW2 = 1.0, FACE_SHARE = 0.6, HOLD_MIN = 8000, HOLD_MAX = 14000, DUR_MIN = 4500, DUR_MAX = 6000, FIELD_AMP = 0.32, FIELD_BAND = 0.3, GEO_BAND = 0.3, GEO_STEEP = 1.0;
+  // the texture's band (~0.3 face widths, up to 1.3x wider over a hard contrast, 0.75x on the rings) is an erosion, not a
+  // dither: a fine grain pattern fixed to the surface sets the order in which it thins into 1-4 px holes, and the new identity
+  // shows through the holes only. The geometry's weight is the share of the band's texels gone (GEO_STEEP 1: it never leads the
+  // surface). A feature (an eye, the mouth) is one cluster: all its texels share the threshold FEAT_N and go in one beat FEAT_SOFT wide
+  var ERODE_SOFT = 0.035, FEAT_N = 0.5, FEAT_SOFT = 0.12;
   var RING_FIELD = [0.8, 0.86, 0.93, 1];
   function shuffle(a, rng) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   // a seeded random order through all the ids, re-shuffled each lap, never the same id twice in a row; each transition gets a region and a noise offset
@@ -576,8 +668,20 @@
   }
   // the field's smooth part (no noise) at a head-frame point, for the geometry blend and RMAX
   function fieldDist(x, y, seed) { var dx = x - seed[0], dy = (y - seed[1]) * 1.15; return Math.sqrt(dx * dx + dy * dy); }
-  function frontRadius(t, rmax) { return t < FRONT_END ? rmax * Math.pow(t / FRONT_END, FRONT_POW) : 1e3; }
-  function frontTime(phi, rmax) { return FRONT_END * Math.pow(clamp(phi / rmax, 0, 1), 1 / FRONT_POW); }   // when the front passes a field value
+  // rface: the field value past which the whole face is new (fieldMaxFace); without one, FACE_SHARE of rmax
+  // rmin: the field value where the face begins (fieldMinFace; 0 without one): the front starts there, so a seed under the chin
+  // does not spend the face's time under the chin and the first holes open at once (the neck is a ring: it goes after the face edge whatever the seed)
+  function frontRadius(t, rmax, rface, rmin) {
+    rface = rface || rmax * FACE_SHARE; rmin = rmin || 0;
+    if (t >= FRONT_END) return 1e3;
+    if (t <= FRONT_T1) return rmin + (rface - rmin) * Math.pow(t / FRONT_T1, FRONT_POW);
+    return rface + (rmax - rface) * Math.pow((t - FRONT_T1) / (FRONT_END - FRONT_T1), FRONT_POW2);
+  }
+  function frontTime(phi, rmax, rface, rmin) {                                       // when the front passes a field value (the inverse)
+    rface = rface || rmax * FACE_SHARE; rmin = rmin || 0;
+    if (phi <= rface) return FRONT_T1 * Math.pow(clamp((phi - rmin) / (rface - rmin), 0, 1), 1 / FRONT_POW);
+    return FRONT_T1 + (FRONT_END - FRONT_T1) * Math.pow(clamp((phi - rface) / Math.max(1e-6, rmax - rface), 0, 1), 1 / FRONT_POW2);
+  }
   // the same noise as the shaders (an integer hash, exact in both), so the geometry blend follows the texture's front grain for grain
   function hashI(ix, iy) { var h = Math.imul(ix | 0, 1597334677) ^ Math.imul(iy | 0, 3812015801 | 0); h = Math.imul(h ^ (h >>> 16), 2246822519 | 0); h = Math.imul(h ^ (h >>> 13), 3266489917 | 0); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
   function vnoise(x, y) {
@@ -586,35 +690,49 @@
     return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fy;
   }
   function fbm(x, y) { var v = 0, a = 0.5; for (var k = 0; k < 4; k++) { v += a * vnoise(x, y); x = x * 2.07 + 19.3; y = y * 2.07 + 19.3; a *= 0.5; } return v; }
-  function fieldAt(x, y, sc, seed, noff) { return fieldDist(x, y, seed) * sc + FIELD_AMP * (fbm(x * 2.6 + noff[0], y * 2.6 + noff[1]) - 0.5) * 2 + 0.06 * FIELD_AMP * (vnoise(x * 14 + noff[0], y * 14 + noff[1]) - 0.5); }
+  function fieldAt(x, y, sc, seed, noff, off) { return fieldDist(x, y, seed) * sc + FIELD_AMP * (fbm(x * 2.6 + noff[0], y * 2.6 + noff[1]) - 0.5) * 2 + 0.06 * FIELD_AMP * (vnoise(x * 14 + noff[0], y * 14 + noff[1]) - 0.5) + (off || 0); }
   // the mesh's canonical field coordinates: head-frame xy in face widths, from one identity (the topology is shared)
-  // The rings (hair, collar, chest, border) are folded in: a ring vertex sits RING_STEP·(ring+1) face widths outside its nearest
-  // face-oval landmark, whatever its real distance, so the hair and collar erode right after the face edge they frame, in the same
-  // window for every identity (a bob and a buzz cut alike), never a new face left in an old wig or a wisp of old hair outside the new head
+  // The rings (hair, collar, chest, border) are folded in: a ring vertex takes the field coordinates of the face-oval landmarks
+  // beside it (the gaussian blend of its four nearest), and its field is theirs plus a per-ring offset (fieldScale), so the hair
+  // and collar erode right after the face edge they frame, in the same window for every identity (a bob and a buzz cut alike),
+  // and the rings always go in order, collar before chest, whatever the seed: never a new face left in an old wig, never a dark
+  // collar left as a hole over an arriving chest
   var RING_STEP = 0.18;
   function fieldCoords(ID) {
-    var F = new Float32Array(ID.n * 2), i;
+    var F = new Float32Array(ID.n * 2), i, q;
     for (i = 0; i < ID.n; i++) { F[i * 2] = ID.L[i * 3] / ID.fw; F[i * 2 + 1] = ID.L[i * 3 + 1] / ID.fw; }
     for (i = NL; i < ID.n; i++) {
-      var o = ID.ringOval[i], r = ID.ring[i] < 0 ? 3 : ID.ring[i], ox = F[o * 2], oy = F[o * 2 + 1], dx = F[i * 2] - ox, dy = F[i * 2 + 1] - oy, l = Math.hypot(dx, dy) || 1;
-      F[i * 2] = ox + dx / l * RING_STEP * (r + 1); F[i * 2 + 1] = oy + dy / l * RING_STEP * (r + 1);
+      var x = 0, y = 0;
+      for (q = 0; q < 4; q++) { var o = ID.oval[ID.ringK[i * 4 + q]], w = ID.ringW[i * 4 + q]; x += F[o * 2] * w; y += F[o * 2 + 1] * w; }
+      F[i * 2] = x; F[i * 2 + 1] = y;
     }
     return F;
   }
-  // per-vertex field scale: 1 on the face, less on the rings (hair, collar) and less again below the chin (neck, chest)
+  // per-vertex field (scale, offset) pairs: the face at scale 1 and no offset; a ring vertex RING_STEP·(ring+1)·RING_FIELD[ring]
+  // face widths after the oval beside it, less again below the chin (neck, chest come along with the face); the offsets grow
+  // with the ring, so the rings erode in order
   function fieldScale(ID) {
-    var S = new Float32Array(ID.n), chinY = ID.L[152 * 3 + 1];
-    for (var i = 0; i < ID.n; i++) { var s = i < NL ? 1 : RING_FIELD[ID.ring[i] < 0 ? 3 : ID.ring[i]]; s *= 1 - 0.35 * smooth((chinY - ID.L[i * 3 + 1]) / (0.4 * ID.fh)); S[i] = s; }
+    var S = new Float32Array(ID.n * 2), chinY = ID.L[152 * 3 + 1];
+    for (var i = 0; i < ID.n; i++) {
+      var r = ID.ring[i] < 0 ? 3 : ID.ring[i];
+      S[i * 2] = 1; S[i * 2 + 1] = i < NL ? 0 : RING_STEP * (r + 1) * RING_FIELD[r] * (1 - 0.35 * smooth((chinY - ID.L[i * 3 + 1]) / (0.4 * ID.fh)));
+    }
     return S;
   }
-  function fieldMax(F, ID, seed, FSC) { var m = 0; for (var i = 0; i < ID.n; i++) { if (i >= NL && ID.ring[i] > 2) continue; var d = fieldDist(F[i * 2], F[i * 2 + 1], seed) * (FSC ? FSC[i] : 1); if (d > m) m = d; } return m + FIELD_AMP + FIELD_BAND + 0.05; }
+  function fieldMax(F, ID, seed, FSC) { var m = 0; for (var i = 0; i < ID.n; i++) { if (i >= NL && ID.ring[i] > 2) continue; var d = fieldDist(F[i * 2], F[i * 2 + 1], seed) * (FSC ? FSC[i * 2] : 1) + (FSC ? FSC[i * 2 + 1] : 0); if (d > m) m = d; } return m + FIELD_AMP + FIELD_BAND + 0.05; }
+  // the field value past which every face vertex (the landmarks only) is new, held under the rings' RMAX
+  // the field value where the face begins: the nearest landmark, less a little, so the first holes open in the first frames
+  function fieldMinFace(F, seed) { var m = 1e9; for (var i = 0; i < NL; i++) { var d = fieldDist(F[i * 2], F[i * 2 + 1], seed); if (d < m) m = d; } return Math.max(0, m - 0.1); }
+  function fieldMaxFace(F, seed, rmax) { var m = 0; for (var i = 0; i < NL; i++) { var d = fieldDist(F[i * 2], F[i * 2 + 1], seed); if (d > m) m = d; } return Math.min(m + FIELD_AMP + FIELD_BAND + 0.05, rmax * 0.85); }
   // particle homes: triangles of the face and the first three rings (hair, collar, chest), area-weighted; each particle = triangle corners + barycentric + 4 randoms
-  function particleHomes(ID, F, count, rng) {
-    var tris = ID.tris, nt = tris.length / 3, area = new Float64Array(nt), cum = new Float64Array(nt), total = 0, t, i, G = ID.img;   // area in the picture (the field coords fold the rings in)
+  // ringW: the rings' weight against the face (points: 0.3, the rings erode in one short window so fewer grains each; streaks: 1,
+  // so the hair edges, collar and shoulders break into streaks)
+  function particleHomes(ID, F, count, rng, ringW) {
+    var tris = ID.tris, nt = tris.length / 3, area = new Float64Array(nt), cum = new Float64Array(nt), total = 0, t, i, G = ID.img, rw = ringW === undefined ? 0.3 : ringW;   // area in the picture (the field coords fold the rings in)
     for (t = 0; t < nt; t++) {
       var a = tris[t * 3], b = tris[t * 3 + 1], c = tris[t * 3 + 2];
       if ((a >= NL && ID.ring[a] > 2) || (b >= NL && ID.ring[b] > 2) || (c >= NL && ID.ring[c] > 2)) { area[t] = 0; }
-      else area[t] = Math.abs((G[b * 3] - G[a * 3]) * (G[c * 3 + 1] - G[a * 3 + 1]) - (G[c * 3] - G[a * 3]) * (G[b * 3 + 1] - G[a * 3 + 1])) / 2 * (a >= NL || b >= NL || c >= NL ? 0.3 : 1);   // the rings erode in one short window: fewer grains each
+      else area[t] = Math.abs((G[b * 3] - G[a * 3]) * (G[c * 3 + 1] - G[a * 3 + 1]) - (G[c * 3] - G[a * 3]) * (G[b * 3 + 1] - G[a * 3 + 1])) / 2 * (a >= NL || b >= NL || c >= NL ? rw : 1);
       total += area[t]; cum[t] = total;
     }
     var out = new Float32Array(count * 9);
@@ -709,16 +827,33 @@
     "  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); }\n" +
     "float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int k = 0; k < 4; k++) { v += a * vnoise(p); p = p * 2.07 + 19.3; a *= 0.5; } return v; }\n" +
     "uniform vec2 uSeed; uniform vec2 uNoff; uniform float uAmp;\n" +
-    "float field(vec2 p, float sc){ vec2 d = (p - uSeed) * vec2(1.0, 1.15); return length(d) * sc + uAmp * (fbm(p * 2.6 + uNoff) - 0.5) * 2.0 + 0.06 * uAmp * (vnoise(p * 14.0 + uNoff) - 0.5); }\n";
+    "float field(vec2 p, vec2 so){ vec2 d = (p - uSeed) * vec2(1.0, 1.15); return length(d) * so.x + uAmp * (fbm(p * 2.6 + uNoff) - 0.5) * 2.0 + 0.06 * uAmp * (vnoise(p * 14.0 + uNoff) - 0.5) + so.y; }\n" +   // so: (scale, offset) of the vertex
+    // the erosion pattern, fixed to the surface through the old picture's uv (1536 x 2048 px; a desktop face is ~345 css px, so a
+    // css px is ~2.2 picture px): a two-octave grain at ~2.5 css px over a soft fbm of ~10 px clusters, never the 25 px blotches
+    // that read as flaking paint. The order, 0..1, in which the pixels of the old surface go as the front's band passes over
+    // them; the smoothstep is the sum's own distribution (mean ~0.49, sd ~0.08), so the order is spread evenly over the band:
+    // holes open from its leading edge on, not all at once in the middle
+    "float erode(vec2 uv){ vec2 q = uv * vec2(280.0, 373.0) + uNoff * 1.7; float fine = 0.65 * vnoise(q) + 0.35 * vnoise(q * 2.07 + 19.3);\n" +
+    "  float coarse = fbm(uv * vec2(70.0, 93.0) - uNoff * 0.9); return smoothstep(0.30, 0.64, 0.5 * fine + 0.5 * coarse); }\n" +
+    // the feature clusters (the old picture's uv): an ellipse round each eye and the mouth; inside one every texel takes the
+    // cluster's field (uFeatF: the field at its centre landmark) and the one threshold uFeatN, and goes in one beat uFeatSoft wide
+    "uniform vec4 uFeatL; uniform vec4 uFeatR; uniform vec4 uFeatM; uniform vec4 uFeatNs; uniform vec4 uFeatF; uniform float uFeatN; uniform float uFeatSoft;\n" +
+    "float ell(vec2 uv, vec4 e){ vec2 d = (uv - e.xy) / e.zw; return 1.0 - smoothstep(0.85, 1.15, length(d)); }\n" +
+    "vec2 featOf(vec2 uv){ float mL = ell(uv, uFeatL), mR = ell(uv, uFeatR), mM = ell(uv, uFeatM), mN = ell(uv, uFeatNs), s = mL + mR + mM + mN;\n" +   // (mask 0..1, the cluster's field)
+    "  return vec2(clamp(s, 0.0, 1.0), (mL * uFeatF.x + mR * uFeatF.y + mM * uFeatF.z + mN * uFeatF.w) / max(1e-4, s)); }\n" +
+    // the picture's own edges: the sides fade wider the lower down (the width grows with the square of the depth: a curve opening
+    // downwards, no corner), the bottom over its last fifth; the face and the grains alike (no dust off the picture's edge)
+    "float edges(vec2 uv){ float t = smoothstep(0.3, 1.0, uv.y); float sw = mix(0.03, 0.36, t * t); float fv = 1.0 - smoothstep(0.78, 1.0, uv.y);\n" +
+    "  return fv * smoothstep(0.0, sw, uv.x) * smoothstep(1.0, 1.0 - sw, uv.x) * smoothstep(0.0, 0.02, uv.y); }\n";
   var VS = "#version 300 es\nprecision highp float;\n" +
-    "in vec2 aPos; in vec2 aUv; in vec2 aUvB; in float aShade; in vec2 aFld; in float aFsc; uniform vec2 uView; uniform vec3 uMap;\n" +   // uMap: scale, ox, oy (css px -> device px)
-    "out vec2 vUv; out vec2 vUvB; out float vShade; out vec2 vScr; out vec2 vFld; out float vFsc;\n" +
+    "in vec2 aPos; in vec2 aUv; in vec2 aUvB; in float aShade; in vec2 aFld; in vec2 aFsc; uniform vec2 uView; uniform vec3 uMap;\n" +   // uMap: scale, ox, oy (css px -> device px)
+    "out vec2 vUv; out vec2 vUvB; out float vShade; out vec2 vScr; out vec2 vFld; out vec2 vFsc;\n" +
     "void main(){ vec2 s = aPos * uMap.x + uMap.yz; vScr = s; vUv = aUv; vUvB = aUvB; vShade = aShade; vFld = aFld; vFsc = aFsc;\n" +
     "  gl_Position = vec4(s.x / uView.x * 2.0 - 1.0, 1.0 - s.y / uView.y * 2.0, 0.0, 1.0); }";
   var FS = "#version 300 es\nprecision highp float;\n" +
-    "in vec2 vUv; in vec2 vUvB; in float vShade; in vec2 vScr; in vec2 vFld; in float vFsc; uniform sampler2D uTex; uniform sampler2D uTexB; uniform vec2 uView; uniform int uEye;\n" +
+    "in vec2 vUv; in vec2 vUvB; in float vShade; in vec2 vScr; in vec2 vFld; in vec2 vFsc; uniform sampler2D uTex; uniform sampler2D uTexB; uniform vec2 uView; uniform int uEye;\n" +
     "uniform vec4 uIrisL; uniform vec4 uIrisR; uniform vec4 uIrisLB; uniform vec4 uIrisRB; uniform vec2 uGaze; uniform float uFade; uniform float uTop;\n" +
-    "uniform int uTrans; uniform float uR; uniform float uBand; uniform float uSteep; uniform float uDpr; out vec4 o;\n" + NOISE +
+    "uniform int uTrans; uniform float uR; uniform float uBand; uniform float uSoft; uniform float uDpr; out vec4 o;\n" + NOISE +
     "vec3 eye(sampler2D T, vec2 uv, vec4 ir){ vec2 c = ir.xy, r = ir.zw; vec2 g = uGaze * r * 2.2;\n" +           // the iris slides over the sclera
     "  vec2 dn = (uv - (c + g)) / r; float ln = length(dn); vec2 d0 = (uv - c) / r; float l0 = length(d0);\n" +
     "  vec3 moved = texture(T, uv - g, -0.5).rgb;\n" +
@@ -728,104 +863,144 @@
     "  float lid = texture(T, uv).g / max(0.02, texture(T, uv - g).g); col *= mix(1.0, clamp(lid, 0.55, 1.15), 0.35 * inIris);\n" +
     "  return col; }\n" +
     "vec3 pick(sampler2D T, vec2 uv, vec4 iL, vec4 iR){ if (uEye == 1) return eye(T, uv, uv.x < 0.5 ? iL : iR); return texture(T, uv, -0.5).rgb; }\n" +
-    // the picture's own edges: the sides fade wider lower down (the shoulders never end in a hard line), the bottom over its last 15 %
-    // the sides fade wider the lower down (the width grows with the square of the depth: a curve opening downwards, no corner), the bottom over its last fifth
-    "float edges(vec2 uv){ float t = smoothstep(0.3, 1.0, uv.y); float sw = mix(0.03, 0.36, t * t); float fv = 1.0 - smoothstep(0.78, 1.0, uv.y);\n" +
-    "  return fv * smoothstep(0.0, sw, uv.x) * smoothstep(1.0, 1.0 - sw, uv.x) * smoothstep(0.0, 0.02, uv.y); }\n" +
-    "void main(){ vec3 col = pick(uTex, vUv, uIrisL, uIrisR); float fe = edges(vUv);\n" +
+    "void main(){ vec3 col = pick(uTex, vUv, uIrisL, uIrisR); float fe = edges(vUv);\n" +                      // edges(): in NOISE, shared with the grains
     "  if (uTrans == 1) {\n" +
-    // k < 0: still the old face; k > 1: the new one; between (a band uBand wide, the same weight as the geometry, steepened the
-    // same way) the old surface gives way to the new one, grain by grain (a per-pixel threshold), with a faint sparse pitting
-    // where grains have lifted. Neither face is darkened: the light is in the particles drawn over this.
-    // where the two pictures differ most (skin tone, hairline, collar) the band is up to 2.2x wider, and under the grain there is
-    // always a plain cross-dissolve (45 % of the mix): no bare hard edge between the two surfaces is ever exposed
+    // k < 0: still the old face; k > 1: the new one; between (a band uBand wide, up to 1.3x wider where the two pictures differ)
+    // the old surface is eroded: a pixel goes when k passes its place n in the erosion pattern, over a soft edge uSoft wide, so
+    // the surface thins into holes (the low spots of the pattern first) and the new identity shows through the holes. No
+    // cross-dissolve anywhere (hair included): every pixel is the old surface or the new one. A thin rim on the old side of a
+    // hole is a touch darker, the surface lifting there; the light is in the particles drawn over this. 12 % per-pixel grain
+    // breaks the soft edge's banding, no more.
     "    vec3 colB = pick(uTexB, vUvB, uIrisLB, uIrisRB); float feB = edges(vUvB);\n" +
-    "    float dl = abs(dot(col - colB, vec3(0.3, 0.59, 0.11))), band = uBand * (1.0 + 0.6 * smoothstep(0.0, 0.5, dl));\n" +
-    "    float f = field(vFld, vFsc), k = clamp((uR - f) / band, 0.0, 1.0), w = k * k * (3.0 - 2.0 * k);\n" +
-    "    float h = hash21(floor(vScr) + 0.37); float ws = clamp((w - 0.5) * uSteep + 0.5, 0.0, 1.0); float m = mix(ws, step(h, ws), 0.45);\n" +
-    "    float pit = step(h, 0.3) * (1.0 - abs(2.0 * w - 1.0)) * step(0.001, w) * step(w, 0.999);\n" +
-    "    col = mix(col, colB, m) * (1.0 - 0.12 * pit); fe = mix(fe, feB, m); }\n" +
+    "    float dl = abs(dot(col - colB, vec3(0.3, 0.59, 0.11))), band = uBand * (1.0 + 0.3 * smoothstep(0.0, 0.5, dl)) * mix(1.0, 0.75, step(0.01, vFsc.y));\n" +   // narrower on the rings
+    "    vec2 ft = featOf(vUv); float f = mix(field(vFld, vFsc), ft.y, ft.x), k = (uR - f) / band, n = mix(erode(vUv), uFeatN, ft.x), soft = mix(uSoft, uFeatSoft, ft.x);\n" +
+    "    float m = smoothstep(n - soft, n + soft, k); float h = hash21(floor(vScr) + 0.37); m = mix(m, step(h, m), 0.12 * (1.0 - ft.x));\n" +
+    "    float rim = (1.0 - m) * (1.0 - smoothstep(0.0, 0.06, n - k)) * step(0.0, k);\n" +
+    "    col = mix(col * (1.0 - 0.08 * rim), colB, m); fe = mix(fe, feB, m); }\n" +
     "  col *= vShade;\n" +
     "  float lum = dot(col, vec3(0.3, 0.59, 0.11)); col *= smoothstep(0.03, 0.09, lum);\n" +            // the photo's near-black ground becomes the page's black
     "  col = mix(col, col * vec3(0.9, 0.84, 0.79), smoothstep(0.72, 1.0, lum));\n" +                   // the wettest highlights roll off warm, never chalk
     "  float fy = smoothstep(uView.y, uView.y * uFade, vScr.y) * mix(1.0, smoothstep(0.0, uView.y * 0.08, vScr.y), uTop);\n" +   // the bottom of the frame fades to black (and the top, when the crown runs past it)
     "  o = vec4(col * fy * fe, 1.0); }";
-  // particles: point sprites (and short two-vertex streaks) whose home is a barycentric point of a mesh triangle, read from a
-  // mesh texture (row 0: css pos, shade; row 1: uv of the old and new identity; row 2: field coords, fake normal).
+  // particles: point sprites and short streak quads whose home is a barycentric point of a mesh triangle, read from a mesh
+  // texture (row 0: css pos, shade; row 1: uv of the old and new identity; row 2: field coords, fake normal; row 3: field scale, ring).
+  // A grain is a piece of the surface. It lifts off the moment its home pixel erodes (the same erosion pattern, band and feature
+  // clusters as the face shader, so every pixel that leaves the surface is seen leaving), along the (screen) normal by 2-6 px,
+  // then drifts 10-30 px outward (half along the head's normal, half away from the front's seed) stirred by curl noise and
+  // sinking a little, and settles back on the same spot of the mesh carrying the new identity's colour, all in 360-1000 ms.
+  // In the air it is lit as dust: its own colour, every grain catching a little of the key light from the upper left and the
+  // grains whose normal faces it up to +70 %, with a slow tumble, and up to 8 % of its light left additive in the fragment
+  // shader; never a tint on the skin, never a sparkle. A dark grain (hair, a black collar) is floored to a warm grey in the
+  // air (lum ~0.2: a glint, never a black fleck), flies at 0.7 size and 0.55 alpha and takes the new colour only at the landing
   var VS_P = "#version 300 es\nprecision highp float;\n" +
     "in vec3 aTri; in vec2 aBary; in vec4 aRnd; in float aEnd; uniform sampler2D uMesh; uniform sampler2D uTex; uniform sampler2D uTexB;\n" +
-    "uniform vec2 uView; uniform float uDpr; uniform float uT; uniform float uFrontEnd; uniform float uFrontPow; uniform float uRmax; uniform float uFw; uniform float uMot; uniform float uFade; uniform float uTop;\n" +
-    "out vec3 vCol; out float vA; out float vLine; out vec2 vQ;\n" + NOISE +
+    "uniform vec2 uView; uniform float uDpr; uniform float uT; uniform float uFrontEnd; uniform float uT1; uniform float uPow1; uniform float uPow2; uniform float uRmax; uniform float uRface; uniform float uRmin; uniform float uBand;\n" +
+    "uniform float uFw; uniform float uMot; uniform float uFade; uniform float uTop;\n" +
+    "out vec3 vCol; out float vA; out float vLine; out vec2 vQ; out float vAir;\n" + NOISE +
     "vec2 curl(vec2 p){ float e = 0.02; return vec2(vnoise(p + vec2(0.0, e)) - vnoise(p - vec2(0.0, e)), vnoise(p - vec2(e, 0.0)) - vnoise(p + vec2(e, 0.0))) / (2.0 * e); }\n" +
-    // a grain's flight (face widths): along the skin first, lifting off it later, stirred by curl noise, settling under a little gravity
-    "vec2 flight(float age, float amp, vec2 n2, vec2 t2, vec2 fld, vec4 rnd){ float h = sin(3.14159 * pow(clamp(age, 0.0, 1.0), 0.8)), lift = smoothstep(0.1, 0.7, age);\n" +
-    "  vec2 cu = curl(fld * 2.2 + uNoff * 0.37 + vec2(uT * 0.9, rnd.y * 4.0)) * 0.12;\n" +
-    "  return t2 * amp * h * 0.7 + n2 * amp * h * lift * (0.5 + 0.4 * rnd.y) + cu * amp * h * 2.0 + vec2(0.0, -0.9 * amp * age * age) + vec2(0.25 * amp * age * (rnd.w - 0.5), 0.0); }\n" +
+    // when the front passes a field value (the page's frontTime: the face piece, then the rings')
+    "float frontTime(float phi){ if (phi <= uRface) return uT1 * pow(clamp((phi - uRmin) / (uRface - uRmin), 0.0, 1.0), 1.0 / uPow1);\n" +
+    "  return uT1 + (uFrontEnd - uT1) * pow(clamp((phi - uRface) / max(1e-4, uRmax - uRface), 0.0, 1.0), 1.0 / uPow2); }\n" +
+    // the flight (face widths). Every term is windowed by h (0 at lift-off and at landing), so the grain re-gathers where it left:
+    // the lift along the normal first (liftPx), then the outward drift (the normal n2 and the field's outward direction g2, with
+    // a sideways share t2) with the curl turbulence (about a third of the drift, different for every grain), a scatter and gravity
+    "vec2 flight(float age, float amp, float liftPx, vec2 n2, vec2 g2, vec2 t2, vec2 fld, vec4 rnd){ float a1 = clamp(age, 0.0, 1.0), h = sin(3.14159 * pow(a1, 0.85)), drift = smoothstep(0.06, 0.55, a1);\n" +
+    "  vec2 cu = curl(fld * 2.2 + uNoff * 0.37 + vec2(uT * 0.9, rnd.y * 4.0)) * 0.35;\n" +
+    "  vec2 d = n2 * (liftPx / uFw) * smoothstep(0.0, 0.3, a1) + ((n2 * 0.45 + g2 * (0.5 + 0.3 * rnd.y) + t2 * 0.3) * amp + cu * amp * 2.0 + vec2(0.3 * amp * (rnd.w - 0.5), 0.5 * amp * a1)) * drift;\n" +
+    "  return d * h; }\n" +
     "void main(){ vec3 b = vec3(aBary, 1.0 - aBary.x - aBary.y); ivec3 ix = ivec3(aTri);\n" +
     "  vec4 p0 = texelFetch(uMesh, ivec2(ix.x, 0), 0), p1 = texelFetch(uMesh, ivec2(ix.y, 0), 0), p2 = texelFetch(uMesh, ivec2(ix.z, 0), 0);\n" +
     "  vec4 u0 = texelFetch(uMesh, ivec2(ix.x, 1), 0), u1 = texelFetch(uMesh, ivec2(ix.y, 1), 0), u2 = texelFetch(uMesh, ivec2(ix.z, 1), 0);\n" +
     "  vec4 f0 = texelFetch(uMesh, ivec2(ix.x, 2), 0), f1 = texelFetch(uMesh, ivec2(ix.y, 2), 0), f2 = texelFetch(uMesh, ivec2(ix.z, 2), 0);\n" +
-    "  float fsc = texelFetch(uMesh, ivec2(ix.x, 3), 0).x * b.x + texelFetch(uMesh, ivec2(ix.y, 3), 0).x * b.y + texelFetch(uMesh, ivec2(ix.z, 3), 0).x * b.z;\n" +
+    "  vec4 s0 = texelFetch(uMesh, ivec2(ix.x, 3), 0); vec2 fsc = s0.xy * b.x + texelFetch(uMesh, ivec2(ix.y, 3), 0).xy * b.y + texelFetch(uMesh, ivec2(ix.z, 3), 0).xy * b.z;\n" +   // (scale, offset); s0.z: the ring (0 face, 1 hair, 2 collar, 3 chest)
+    "  float hair = s0.z > 0.5 && s0.z < 1.5 ? 1.0 : 0.0, onRing = step(0.5, s0.z);\n" +
     "  vec2 home = p0.xy * b.x + p1.xy * b.y + p2.xy * b.z; float sh = p0.z * b.x + p1.z * b.y + p2.z * b.z;\n" +
-    "  vec4 uv = u0 * b.x + u1 * b.y + u2 * b.z; vec4 fl = f0 * b.x + f1 * b.y + f2 * b.z; vec2 fld = fl.xy, nrm = normalize(fl.zw + vec2(0.0, 1e-4));\n" +
-    // a grain lives 0.09-0.2 of the transition (~350-900 ms): the band of grains in flight is narrow, the arriving face reads through it
-    "  float phi = field(fld, fsc), tp = uFrontEnd * pow(clamp(phi / uRmax, 0.0, 1.0), 1.0 / uFrontPow), life = mix(0.09, 0.2, aRnd.x);\n" +
+    "  vec4 uv = u0 * b.x + u1 * b.y + u2 * b.z; vec4 fl = f0 * b.x + f1 * b.y + f2 * b.z; vec2 fld = fl.xy, nraw = fl.zw, nrm = normalize(nraw + vec2(0.0, 1e-4));\n" +
+    "  vec3 cA = textureLod(uTex, uv.xy, 1.0).rgb, cB = textureLod(uTexB, uv.zw, 1.0).rgb; float lumA = dot(cA, vec3(0.3, 0.59, 0.11)), lumB = dot(cB, vec3(0.3, 0.59, 0.11)), lum = max(lumA, lumB);\n" +
+    // the grain lifts when its home pixel erodes: the front's band (as wide as the face shader's: 1.3x over a contrast, 0.75x on
+    // the rings) has reached its place in the erosion pattern; inside a feature cluster, at the cluster's one beat. One in
+    // sixteen goes early, 0.1-0.2 fw ahead of the front, at half alpha: the surface starts to loosen before it opens. A grain
+    // lives 0.08-0.17 of the transition (360-1020 ms): the band in flight stays narrow, the arriving face reads through it
+    "  float dl = abs(lumA - lumB) + 0.3 * length(cA - cB), band = uBand * (1.0 + 0.3 * smoothstep(0.0, 0.5, dl)) * mix(1.0, 0.75, onRing);\n" +
+    "  vec2 ft = featOf(uv.xy); float f = mix(field(fld, fsc), ft.y, ft.x), n = mix(erode(uv.xy), uFeatN, ft.x);\n" +
+    "  float early = step(aRnd.y, 0.06) * (1.0 - ft.x); float phi = f + n * band, tp = frontTime(phi) - 0.06 * early, life = mix(0.08, 0.17, aRnd.x);\n" +
     "  float isLine = aEnd >= 0.0 ? 1.0 : 0.0, along = isLine > 0.5 ? mod(aEnd, 2.0) : 0.0, side = isLine > 0.5 ? (aEnd >= 2.0 ? 1.0 : -1.0) : 0.0;\n" +   // a streak quad's corner
     "  float age = (uT - tp) / life;\n" +
-    "  vec3 cA = textureLod(uTex, uv.xy, 1.5).rgb, cB = textureLod(uTexB, uv.zw, 1.5).rgb; float lumA = dot(cA, vec3(0.3, 0.59, 0.11)), lumB = dot(cB, vec3(0.3, 0.59, 0.11)), lum = max(lumA, lumB);\n" +
-    "  float bokeh = step(0.93, aRnd.w) * (1.0 - isLine), h = 0.0, lift = 0.0;\n" +           // one in fourteen is a large soft grain in front of the face, for depth
-    "  vec2 n2 = vec2(nrm.x, -nrm.y), t2 = vec2(-n2.y, n2.x) * (aRnd.y > 0.5 ? 1.0 : -1.0); vec2 pos = home - n2 * uFw * 0.003; vec3 col = cA * sh; float size = 2.2 * uDpr; vec2 vel = t2;\n" +
+    "  float bokeh = step(0.98, aRnd.w) * (1.0 - isLine), h = 0.0, air = 0.0, dark = step(lumA, 0.12);\n" +         // one in fifty is a large soft grain in front of the face, for depth
+    "  vec2 n2 = vec2(nrm.x, -nrm.y), t2 = vec2(-n2.y, n2.x) * (aRnd.y > 0.5 ? 1.0 : -1.0);\n" +
+    "  vec2 gh = (fld - uSeed) * vec2(1.0, 1.15) + vec2(1e-4, 0.0); gh /= length(gh); vec2 g2 = vec2(gh.x, -gh.y);\n" +   // away from the seed, on the screen (the head frame's y is up)
+    "  vec2 pos = home; vec3 col = cA * sh; float size = 3.0 * uDpr; vec2 vel = t2;\n" +
     "  if (age >= 0.0) {\n" +
-    "    h = sin(3.14159 * pow(clamp(age, 0.0, 1.0), 0.8)); lift = smoothstep(0.1, 0.7, age); float big = step(0.8, aRnd.w) + isLine;\n" +
-    "    float amp = (big > 0.5 ? mix(0.08, 0.2, aRnd.z) : mix(0.03, 0.09, aRnd.z)) * uMot;\n" +
-    "    vec2 d0 = flight(age, amp, n2, t2, fld, aRnd); vel = d0 - flight(max(0.0, age - 0.05), amp, n2, t2, fld, aRnd);\n" +
+    "    float a1 = clamp(age, 0.0, 1.0); h = sin(3.14159 * pow(a1, 0.85)); air = h * smoothstep(0.04, 0.35, a1);\n" +
+    "    float amp = mix(0.03, 0.09, aRnd.z) * (isLine > 0.5 ? 1.3 : 1.0) * (1.0 + 0.4 * hair) * uMot, liftPx = mix(2.0, 6.0, aRnd.w) * uMot;\n" +   // 10-30 px of drift at a 340 px face, 2-6 px of lift; hair strands drift further
+    "    vec2 d0 = flight(age, amp, liftPx, n2, g2, t2, fld, aRnd); vel = d0 - flight(max(0.0, age - 0.04), amp, liftPx, n2, g2, t2, fld, aRnd);\n" +
     "    pos = home + d0 * uFw;\n" +
-    // a grain is a piece of the surface: it carries the sampled skin (the new identity's from mid-flight), a touch brighter while it
-    // is in the air, with only a faint warm glow (<= 0.08) on the lifted phase and none on what is already bright (blonde hair, wet highlights)
-    "    col = mix(cA, cB, smoothstep(0.42, 0.7, age)) * sh; float lm = dot(col, vec3(0.3, 0.59, 0.11));\n" +
-    "    col = col * (1.0 + 0.08 * h * lift) + vec3(0.06, 0.045, 0.03) * h * lift * (1.0 - smoothstep(0.45, 0.6, lm));\n" +
-    "    size = mix(2.2, 3.6, aRnd.x) * (1.0 + 0.3 * h) * uDpr;\n" +
+    // the sampled surface, the new identity's from mid-flight (a dark grain's only at the landing), a dark grain floored to a
+    // warm grey in the air; the key light from the upper left on every grain, most on those whose normal faces it, with a slow
+    // tumble, and a faint neutral lift: dust catches the light the face is lit by instead of vanishing against the skin
+    "    vec3 c = mix(cA, cB, smoothstep(0.55, 0.8, a1)) * sh;\n" +
+    "    c = mix(c, max(c, vec3(0.30, 0.27, 0.25) * sh), dark * 0.7 * air);\n" +                       // a dark grain: its luminance floored in the air (a glint), its hue kept
+    "    float facing = dot(vec2(nraw.x, -nraw.y), vec2(-0.85, -0.35)), lit = clamp(0.35 + 1.4 * facing, 0.0, 1.0) * (0.75 + 0.25 * sin(a1 * 7.0 + aRnd.z * 6.28));\n" +
+    "    col = c * (1.0 + 0.35 * air * lit) + vec3(0.03, 0.029, 0.027) * air * lit;\n" +
+    "    size = mix(3.6, 5.6, aRnd.x) * (1.0 + 0.15 * h) * uDpr * mix(1.0, 0.7, dark);\n" +   // a gaussian disc: 1.9-3 css px across at half height
     "  }\n" +
-    "  if (bokeh > 0.5) size = mix(7.0, 11.0, aRnd.x) * uDpr * (0.6 + 0.4 * h);\n" +
-    // a streak: a quad <= 0.02 fw long, 2.4 css px wide, lying along its own velocity, its tail behind the head
-    "  if (isLine > 0.5) { float vl = length(vel); vec2 dir = vl > 1e-6 ? vel / vl : t2; float len = min(0.024, 0.004 + vl * 3.0) * uFw;\n" +
-    "    pos += dir * len * (along - 1.0) + vec2(-dir.y, dir.x) * side * 1.3; }\n" +
-    // the alpha: a few grains sit proud just ahead of the front (only within ~a third of a face width of it: the untouched head stays
-    // clean), the rest lift as it passes, many stream off for good, and all are gone within ~150 ms of settling
-    "  float a; if (age < 0.0) a = step(aRnd.y, 0.05) * smoothstep(-0.3, -0.08, age) * 0.4 * (1.0 - isLine) * (1.0 - smoothstep(0.15, 0.3, phi - uRmax * pow(clamp(uT / uFrontEnd, 0.0, 1.0), uFrontPow)));\n" +
-    "  else { a = smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.72, 1.0, age)) * step(age, 1.0);\n" +
-    "    if (aRnd.y > 0.62) a *= 1.0 - smoothstep(0.25, 0.6, age); }\n" +
-    // the grains thin where the two pictures agree and crowd where they differ (a dark face meeting a light neck, a hairline, a collar):
-    // the front is always owned by particles where it would otherwise show as an edge
-    "  float dl = abs(lumA - lumB) + 0.3 * length(cA - cB); float keep = step(fract(aRnd.x * 7.31 + aRnd.w * 3.17), 0.2 + 2.2 * dl);\n" +
-    "  a *= keep * (bokeh > 0.5 ? 0.3 : 1.0);\n" +
+    "  if (bokeh > 0.5) size = mix(10.0, 16.0, aRnd.x) * uDpr * (0.6 + 0.4 * h);\n" +
+    // a streak: a quad lying along its own velocity (the normal lift + the outward drift), its length the speed (up to 0.05 fw,
+    // hair strands 1.5x), ~2 css px wide, the tail behind the head; drawn only once the grain is clear of the surface (air > 0.3)
+    // and only for the fast ones (the slow fifth of a streak's life shows nothing), so it reads as the motion blur of dust in
+    // flight, never a scratch lying on the skin
+    "  if (isLine > 0.5) { float vl = length(vel); vec2 dir = vl > 1e-6 ? vel / vl : t2; float len = clamp(vl * 6.0, 0.004, 0.05) * (1.0 + 0.5 * hair) * uFw;\n" +
+    "    pos += dir * len * (along - 1.0) + vec2(-dir.y, dir.x) * side * 1.0; }\n" +
+    // the alpha: ahead of the front the head is intact; a grain lifts as its pixel erodes, one in five streams off for good, all are
+    // gone by the time they settle; early grains at half alpha, dark grains at 0.55, streaks at 0.45 (hair 0.35) and only in the air
+    "  float a = 0.0; if (age >= 0.0) { a = smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.85, 1.0, age)) * step(age, 1.0);\n" +
+    "    if (aRnd.y > 0.8) a *= 1.0 - smoothstep(0.35, 0.65, age); }\n" +
+    "  a *= mix(1.0, 0.5, early) * mix(1.0, 0.55, dark);\n" +
+    "  if (isLine > 0.5) { float spd = clamp(length(vel) * 6.0 / 0.05, 0.0, 1.0); a *= (0.45 - 0.1 * hair) * smoothstep(0.15, 0.4, air) * smoothstep(0.25, 0.7, spd); }\n" +
+    // sparse: a third of the homes where the two pictures agree, up to 55 % where they differ (a dark face meeting a light
+    // neck, a hairline, a collar): the front is owned by grains where it would otherwise show as an edge, never silted up.
+    // Half as many inside a feature cluster (its texels all go in one beat: no burst over an eye) and on the chest (under the fade)
+    "  float chest = step(2.5, s0.z) * (1.0 - step(3.5, s0.z));\n" +
+    "  float keep = step(fract(aRnd.x * 7.31 + aRnd.w * 3.17), clamp(0.32 + 0.3 * dl, 0.0, 0.55) * mix(1.0, 0.45, max(ft.x, chest)));\n" +
+    "  a *= keep * (bokeh > 0.5 ? 0.12 : 0.6);\n" +
     "  if (lum < 0.08) a = 0.0;\n" +                                                            // nothing lifts off the black ground
-    "  if (aRnd.z > 0.99 && lumA > 0.85) { col *= 1.3; size *= 1.2; }\n" +                      // one in a hundred, off a wet highlight, catches the light
+    "  if (phi > 0.96 * uRmax) a = 0.0;\n" +                                                    // nothing leaves the picture's outer edge
+    "  a *= edges(uv.xy);\n" +                                                                  // and nothing off the picture's faded sides and bottom
     "  vec2 s = pos * uDpr; a *= smoothstep(uView.y, uView.y * uFade, s.y) * mix(1.0, smoothstep(0.0, uView.y * 0.08, s.y), uTop);\n" +   // no dust in the vignettes
-    "  vCol = col; vA = a; vLine = isLine; vQ = vec2(along, side); gl_PointSize = size;\n" +
+    "  if (isLine > 0.5) { float l = dot(col, vec3(0.3, 0.59, 0.11)); col = mix(col, vec3(l), 0.2); }\n" +                              // a streak is 20 % desaturated: motion blur, not a fibre
+    "  vCol = col; vA = a; vLine = isLine; vQ = vec2(along, side); vAir = air; gl_PointSize = size;\n" +
     "  gl_Position = a > 0.001 ? vec4(s.x / uView.x * 2.0 - 1.0, 1.0 - s.y / uView.y * 2.0, 0.0, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); }";
-  // a soft sprite, part additive (its alpha covers less than its light): the band glows instead of silting up
-  // a soft gaussian disc (no square sprite edge at any DPR); a streak fades along its tail and across its width (motion blur)
-  var FS_P = "#version 300 es\nprecision highp float;\nin vec3 vCol; in float vA; in float vLine; in vec2 vQ; out vec4 o;\n" +
-    "void main(){ float a = vA; if (vLine < 0.5) { vec2 d = gl_PointCoord - 0.5; a *= exp(-dot(d, d) * 14.0); }\n" +
-    "  else a *= smoothstep(0.0, 0.7, vQ.x) * (1.0 - vQ.y * vQ.y);\n" +
-    "  if (a < 0.01) discard; o = vec4(vCol * a, a * 0.94); }";                             // almost plain 'over': grains never pile up into gold
+  // a soft gaussian disc (no square sprite edge at any DPR; half height at 0.53 of the point size); a streak is brightest at its
+  // head, rounds off there and fades to nothing at its tail, falling off across its width (motion blur). Plain 'over', except
+  // that up to 8 % of an airborne grain's light is left additive: a glow only while it flies, never a pile of gold on the skin
+  var FS_P = "#version 300 es\nprecision highp float;\nin vec3 vCol; in float vA; in float vLine; in vec2 vQ; in float vAir; out vec4 o;\n" +
+    "void main(){ float a = vA; if (vLine < 0.5) { vec2 d = gl_PointCoord - 0.5; a *= exp(-dot(d, d) * 10.0); }\n" +
+    "  else a *= vQ.x * vQ.x * smoothstep(1.0, 0.88, vQ.x) * exp(-vQ.y * vQ.y * 2.5);\n" +
+    "  if (a < 0.01) discard; o = vec4(vCol * a, a * (1.0 - 0.08 * vAir)); }";
   var FS_CAV = "#version 300 es\nprecision highp float;\nin vec2 vUv; in float vShade; in vec2 vScr; uniform float uOpen; out vec4 o;\n" +
     "void main(){ float v = vUv.y, e = abs(v - 0.5) * 2.0, c = 1.0 - abs(vUv.x - 0.5) * 2.0;\n" +   // wet, dark red at the lips, near black in the middle; darker towards the corners
     "  vec3 edge = vec3(0.30, 0.10, 0.09), deep = vec3(0.04, 0.011, 0.011);\n" +
-    "  float fw = max(fwidth(v), 1e-4), soft = smoothstep(0.0, 2.5 * fw, min(v, 1.0 - v)) * smoothstep(0.0, 0.06, c);\n" +   // the inner-lip boundary feathered by ~1-2 px, the corners dark
+    "  float fw = max(fwidth(v), 1e-4), soft = smoothstep(0.0, 3.5 * fw, min(v, 1.0 - v)) * smoothstep(0.0, 0.08, c);\n" +   // the inner-lip boundary feathered by ~2-3 px, the corners dark
     "  vec3 col = mix(deep, edge, pow(e, 2.4) * (0.5 + 0.5 * c)) * mix(0.6, 1.0, uOpen);\n" +
-    // the upper teeth: a pale strip under the upper lip once the jaw is well open, its edge scalloped tooth by tooth, shaded towards the corners
-    "  float teeth = smoothstep(0.3, 0.6, uOpen) * smoothstep(0.0, 0.05, v) * (1.0 - smoothstep(0.22 + 0.04 * cos(vUv.x * 56.0), 0.3 + 0.04 * cos(vUv.x * 56.0), v)) * smoothstep(0.1, 0.4, c);\n" +
-    "  vec3 tooth = vec3(0.78, 0.72, 0.64) * (0.55 + 0.45 * c) * (0.85 + 0.15 * cos(vUv.x * 56.0)) * (0.7 + 0.3 * smoothstep(0.3, 0.05, v));\n" +
-    "  col = mix(col, tooth, teeth) * soft; o = vec4(col, 1.0); }";
+    // a dark oral cavity: the only hint of teeth is a soft, blurred, slightly lighter band under the upper lip once the mouth is well
+    // open (a warm grey shape with no edge, never a drawn tooth), fading towards the corners
+    "  float band = smoothstep(0.3, 0.75, uOpen) * exp(-pow((v - 0.17) / 0.11, 2.0)) * smoothstep(0.1, 0.5, c);\n" +
+    "  col = mix(col, vec3(0.40, 0.34, 0.31), 0.45 * band) * soft; o = vec4(col, 1.0); }";
   function shader(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
   function program(vs, fs) { var p = gl.createProgram(); gl.attachShader(p, shader(gl.VERTEX_SHADER, vs)); gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; }
   var PRG = program(VS, FS), PRC = program(VS, FS_CAV), PRP = program(VS_P, FS_P);
   var U = {}, UC = {}, UP = {};
-  ["uView", "uMap", "uTex", "uTexB", "uEye", "uIrisL", "uIrisR", "uIrisLB", "uIrisRB", "uGaze", "uFade", "uTop", "uTrans", "uR", "uBand", "uSteep", "uDpr", "uSeed", "uNoff", "uAmp"].forEach(function (k) { U[k] = gl.getUniformLocation(PRG, k); });
+  var FEAT_U = ["uFeatL", "uFeatR", "uFeatM", "uFeatNs", "uFeatF", "uFeatN", "uFeatSoft"];
+  ["uView", "uMap", "uTex", "uTexB", "uEye", "uIrisL", "uIrisR", "uIrisLB", "uIrisRB", "uGaze", "uFade", "uTop", "uTrans", "uR", "uBand", "uSoft", "uDpr", "uSeed", "uNoff", "uAmp"].concat(FEAT_U).forEach(function (k) { U[k] = gl.getUniformLocation(PRG, k); });
   ["uView", "uMap", "uOpen"].forEach(function (k) { UC[k] = gl.getUniformLocation(PRC, k); });
-  ["uMesh", "uTex", "uTexB", "uView", "uDpr", "uT", "uFrontEnd", "uFrontPow", "uRmax", "uFw", "uMot", "uFade", "uTop", "uSeed", "uNoff", "uAmp"].forEach(function (k) { UP[k] = gl.getUniformLocation(PRP, k); });
+  ["uMesh", "uTex", "uTexB", "uView", "uDpr", "uT", "uFrontEnd", "uT1", "uPow1", "uPow2", "uRmax", "uRface", "uRmin", "uBand", "uFw", "uMot", "uFade", "uTop", "uSeed", "uNoff", "uAmp"].concat(FEAT_U).forEach(function (k) { UP[k] = gl.getUniformLocation(PRP, k); });
+  // the feature clusters of the identity leaving (its uv ellipses, the field at their centres) for a transition's shaders
+  function featUniforms(Ux) {
+    var ft = ID.feat;
+    gl.uniform4f(Ux.uFeatL, ft[0][0], ft[0][1], ft[0][2], ft[0][3]); gl.uniform4f(Ux.uFeatR, ft[1][0], ft[1][1], ft[1][2], ft[1][3]);
+    gl.uniform4f(Ux.uFeatM, ft[2][0], ft[2][1], ft[2][2], ft[2][3]); gl.uniform4f(Ux.uFeatNs, ft[3][0], ft[3][1], ft[3][2], ft[3][3]);
+    gl.uniform4f(Ux.uFeatF, DV[FEAT_C[0]], DV[FEAT_C[1]], DV[FEAT_C[2]], DV[FEAT_C[3]]); gl.uniform1f(Ux.uFeatN, FEAT_N); gl.uniform1f(Ux.uFeatSoft, FEAT_SOFT);
+  }
   var vao = gl.createVertexArray(), bPos = gl.createBuffer(), bUv = gl.createBuffer(), bUvB = gl.createBuffer(), bSh = gl.createBuffer(), bFld = gl.createBuffer(), bFsc = gl.createBuffer(), bIdx = gl.createBuffer(), bEye = gl.createBuffer();
   var vaoC = gl.createVertexArray(), bPosC = gl.createBuffer(), bUvC = gl.createBuffer(), bShC = gl.createBuffer();
   var vaoP = gl.createVertexArray(), bP = gl.createBuffer(), vaoL = gl.createVertexArray(), bL = gl.createBuffer(), bLI = gl.createBuffer(), meshTex = gl.createTexture(), MESH_TW = 1024;
@@ -833,7 +1008,7 @@
   function attrib(prg, name, buf, size) { var a = gl.getAttribLocation(prg, name); if (a < 0) return; gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, size, gl.FLOAT, false, 0, 0); }
   function bindAttribs(prg, pos, uv, sh, uvB, fld, fsc) {
     attrib(prg, "aPos", pos, 2); attrib(prg, "aUv", uv, 2); attrib(prg, "aShade", sh, 1);
-    if (uvB) attrib(prg, "aUvB", uvB, 2); if (fld) attrib(prg, "aFld", fld, 2); if (fsc) attrib(prg, "aFsc", fsc, 1);
+    if (uvB) attrib(prg, "aUvB", uvB, 2); if (fld) attrib(prg, "aFld", fld, 2); if (fsc) attrib(prg, "aFsc", fsc, 2);
   }
   // particle buffers: 9 floats per particle (triangle corners, barycentric uv, 4 randoms) + aEnd (-1 point, 0 streak head, 1 streak tail)
   // particle buffers: 9 floats per particle (triangle corners, barycentric uv, 4 randoms) + aEnd (-1 a point; a streak is a quad of 4 vertices,
@@ -913,17 +1088,18 @@
     bindAttribs(PRG, bPos, bUv, bSh, bUvB, bFld, bFsc);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ID.tris, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
-    // the mesh texture the particles read: row 0 pos/shade (per frame), row 1 uv old/new (per transition), row 2 field coords + normal, row 3 field scale (static)
+    // the mesh texture the particles read: row 0 pos/shade (per frame), row 1 uv old/new (per transition), row 2 field coords + normal, row 3 field scale + ring (static)
     gl.bindTexture(gl.TEXTURE_2D, meshTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, MESH_TW, 4, 0, gl.RGBA, gl.FLOAT, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     MROW.fill(0); for (var q = 0; q < ID.n; q++) { MROW[q * 4] = FLD[q * 2]; MROW[q * 4 + 1] = FLD[q * 2 + 1]; MROW[q * 4 + 2] = ID.N[q * 3]; MROW[q * 4 + 3] = ID.N[q * 3 + 1]; }
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 2, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
-    MROW.fill(0); for (q = 0; q < ID.n; q++) MROW[q * 4] = FSC[q];
+    MROW.fill(0); for (q = 0; q < ID.n; q++) { MROW[q * 4] = FSC[q * 2]; MROW[q * 4 + 1] = FSC[q * 2 + 1]; MROW[q * 4 + 2] = q < NL ? 0 : (ID.ring[q] < 0 ? 4 : ID.ring[q] + 1); }
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 3, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
-    // the particles: fewer on a phone
-    var phone = W <= 640, prng = mulberry32(7919), homesP = particleHomes(ID, FLD, phone ? 11000 : 28000, prng), homesL = particleHomes(ID, FLD, phone ? 1000 : 2600, prng);
+    // the particles: 48k grains + 9.6k streak homes (a fifth) so 3-5 grains lift from every eroding cluster and the band in
+    // flight covers about a third of its area (it reads as dust, the arriving face through it); a third as many on a phone
+    var phone = W <= 640, prng = mulberry32(7919), homesP = particleHomes(ID, FLD, phone ? 16000 : 48000, prng), homesL = particleHomes(ID, FLD, phone ? 3200 : 9600, prng, 1);
     NP = bindParticles(vaoP, bP, homesP, homesP.length / 9, false); NLN = bindParticles(vaoL, bL, homesL, homesL.length / 9 * 4, true, bLI);
     // the mouth cavity: a fan over the inner lip loop, drawn behind the face
     var m = INNER_UP.length, i;
@@ -954,23 +1130,23 @@
   function prepTransition(plan) {
     var b = IDENT[plan.to], a = IDENT[CUR_ID]; if (!b || !a || plan.to === CUR_ID) return false;
     var i;
-    for (i = 0; i < ID.n; i++) DV[i] = fieldAt(FLD[i * 2], FLD[i * 2 + 1], FSC[i], plan.seed, plan.noff);   // the noisy field at each vertex: the geometry follows the texture's front
+    for (i = 0; i < ID.n; i++) DV[i] = fieldAt(FLD[i * 2], FLD[i * 2 + 1], FSC[i * 2], plan.seed, plan.noff, FSC[i * 2 + 1]);   // the noisy field at each vertex: the geometry follows the texture's front
     gl.bindBuffer(gl.ARRAY_BUFFER, bUv); gl.bufferData(gl.ARRAY_BUFFER, a.ID.uv, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, bUvB); gl.bufferData(gl.ARRAY_BUFFER, b.ID.uv, gl.STATIC_DRAW);
     MROW.fill(0); for (i = 0; i < ID.n; i++) { MROW[i * 4] = a.ID.uv[i * 2]; MROW[i * 4 + 1] = a.ID.uv[i * 2 + 1]; MROW[i * 4 + 2] = b.ID.uv[i * 2]; MROW[i * 4 + 3] = b.ID.uv[i * 2 + 1]; }
     gl.bindTexture(gl.TEXTURE_2D, meshTex); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 1, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
-    PRE = { plan: plan, from: CUR_ID, rmax: fieldMax(FLD, ID, plan.seed, FSC), steps: 0 };
+    var rmax = fieldMax(FLD, ID, plan.seed, FSC); PRE = { plan: plan, from: CUR_ID, rmax: rmax, rface: fieldMaxFace(FLD, plan.seed, rmax), rmin: fieldMinFace(FLD, plan.seed), steps: 0 };
     return true;
   }
   function preStep() {                                                               // one retarget pre-step of the arriving identity (its eye state taken over, its ring damping settling)
     var b = IDENT[PRE.plan.to], a = IDENT[CUR_ID];
     if (PRE.steps === 0) { b.RT.out.blink[0] = a.RT.out.blink[0]; b.RT.out.blink[1] = a.RT.out.blink[1]; b.RT.out.gaze[0] = a.RT.out.gaze[0]; b.RT.out.gaze[1] = a.RT.out.gaze[1]; }
-    b.RT.step(D, Nn, { dt: 33, pose: FIXED, trans: TRN }); PRE.steps++;
+    b.RT.step(D, Nn, { dt: 33, pose: FIXED, trans: TRN, gain: OPT.gain }); PRE.steps++;
   }
   function beginTransition(plan, t) {
     if (!PRE || PRE.plan !== plan || PRE.from !== CUR_ID) { PRE = null; if (!prepTransition(plan)) return false; }
     while (PRE.steps < 6) preStep();
-    TR = { from: CUR_ID, to: plan.to, region: plan.region, seed: plan.seed, noff: plan.noff, t0: t, dur: plan.dur, p: 0, rmax: PRE.rmax };
+    TR = { from: CUR_ID, to: plan.to, region: plan.region, seed: plan.seed, noff: plan.noff, t0: t, dur: plan.dur, p: 0, rmax: PRE.rmax, rface: PRE.rface, rmin: PRE.rmin };
     PRE = null;
     return true;
   }
@@ -996,7 +1172,13 @@
     var n = ID.n, i, k, m = INNER_UP.length, w = 0, ax, ay, bx, by;
     for (i = 0; i < n; i++) {
       ax = La.ox + Oa.pos[i * 2] * La.S; ay = La.oy + Oa.pos[i * 2 + 1] * La.S;
-      if (Ob) { w = WV[i] = clamp((smooth((R - DV[i]) / GEO_BAND) - 0.5) * GEO_STEEP + 0.5, 0, 1); bx = Lb.ox + Ob.pos[i * 2] * Lb.S; by = Lb.oy + Ob.pos[i * 2 + 1] * Lb.S; ax += (bx - ax) * w; ay += (by - ay) * w; GSH[i] = Oa.shade[i] + (Ob.shade[i] - Oa.shade[i]) * w; }
+      if (Ob) {
+        // the weight is the share of the band's texels already gone at this vertex (the erosion order is spread evenly over the
+        // band), so the shape never leads the surface; a feature's vertices share their cluster's one beat (as its texels do)
+        var fi = i < NL ? FEAT_OF[i] : 0, kk = (R - DV[fi ? FEAT_C[fi - 1] : i]) / GEO_BAND;
+        w = WV[i] = fi ? smooth((kk - (FEAT_N - FEAT_SOFT)) / (2 * FEAT_SOFT)) : clamp((smooth(kk) - 0.5) * GEO_STEEP + 0.5, 0, 1);
+        bx = Lb.ox + Ob.pos[i * 2] * Lb.S; by = Lb.oy + Ob.pos[i * 2 + 1] * Lb.S; ax += (bx - ax) * w; ay += (by - ay) * w; GSH[i] = Oa.shade[i] + (Ob.shade[i] - Oa.shade[i]) * w;
+      }
       else GSH[i] = Oa.shade[i];
       GPOS[i * 2] = ax; GPOS[i * 2 + 1] = ay;
     }
@@ -1344,7 +1526,7 @@
   var NZT = null; try { NZT = new Intl.DateTimeFormat("en-NZ", { timeZone: "Pacific/Auckland", hour: "2-digit", minute: "2-digit", hour12: false }); } catch (e) {}
   var clockT = 0;
   function clock(t) { if (t - clockT < 1000) return; clockT = t; try { clockEl.textContent = NZT ? NZT.format(new Date()) : ""; } catch (e) {} }
-  var ENV = { st: "idle", cursor: null, reduce: false, still: false, expr: null, mouth: MOUTH }, CUR = [0, 0], FIXED = null, TRN = [0, 0];
+  var ENV = { st: "idle", cursor: null, reduce: false, still: false, expr: null, mouth: MOUTH }, CUR = [0, 0], FIXED = null, TRN = [0, 0], OPT = { dt: 16.67, pose: null, trans: TRN, gain: 1 };
   if (PARAM.yaw !== null) FIXED = [PARAM.yaw, PARAM.pitch, 0];
   var stateT = 0;
   function stateName() { return convo !== "idle" ? convo : camW > 0.5 ? "mirroring" : "autonomous"; }
@@ -1373,8 +1555,9 @@
     var f0 = POS0[2] || 1, cw = smooth(camW);
     TRN[0] = cw * 0.1 * Math.tanh((POS[0] - POS0[0]) / f0 * 0.35 / 0.1); TRN[1] = cw * 0.07 * Math.tanh((POS[1] - POS0[1]) / f0 * 0.35 / 0.07);
     cycleStep(t);                                                                      // identity transitions start and end here
-    var opt = { dt: dt, pose: FIXED, trans: TRN }, O = RT.step(D, Nn, opt), Ob = null, R = 0, gw = 0;
-    if (TR) { TR.p = PARAM.t !== null ? PARAM.t : clamp((t - TR.t0) / TR.dur, 0, 1); Ob = IDENT[TR.to].RT.step(D, Nn, opt); R = frontRadius(TR.p, TR.rmax); gw = smooth(TR.p); }
+    OPT.dt = dt; OPT.pose = FIXED; OPT.trans = TRN; OPT.gain = 1 - (1 - EXPR_GAIN_CAM) * cw;   // camera-driven extremes softened; its own face at full gain
+    var opt = OPT, O = RT.step(D, Nn, opt), Ob = null, R = 0, gw = 0;
+    if (TR) { TR.p = PARAM.t !== null ? PARAM.t : clamp((t - TR.t0) / TR.dur, 0, 1); Ob = IDENT[TR.to].RT.step(D, Nn, opt); R = frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin); gw = smooth(TR.p); }
     var mouthNow = compose(O, IDENT[CUR_ID].lay, Ob, TR ? IDENT[TR.to].lay : null, R, gw);
     draw(O, mouthNow, TR ? IDENT[TR.to] : null, R);
     // the face box in css px, for the parent and the cursor
@@ -1385,8 +1568,8 @@
     clock(t);
     if (PARAM.perf) perf(t, performance.now() - t0);
     window.__being3 = window.__being3 || {}; var B = window.__being3; B.pose = [O.pose[0] / DEG, O.pose[1] / DEG, O.pose[2] / DEG]; B.blink = [O.blink[0], O.blink[1]]; B.gaze = [O.gaze[0], O.gaze[1]];
-    B.mouthOpen = O.mouthOpen; B.face = faceCss.slice(); B.camW = camW; B.live = live; B.hasFace = hasFace; B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY;
-    B.transition = TR ? { from: TR.from, to: TR.to, t: TR.p, region: TR.region } : null; B.loaded = Object.keys(IDENT); B.next = pending ? pending.to : null; B.holdIn = pending ? Math.max(0, holdUntil - t) : null;
+    B.mouthOpen = O.mouthOpen; B.face = faceCss.slice(); B.camW = camW; B.live = live; B.hasFace = hasFace; B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY; B.gain = OPT.gain; B.faceFrac = GFB[2] / W;
+    B.transition = TR ? { from: TR.from, to: TR.to, t: TR.p, region: TR.region, R: +frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin).toFixed(3), rmax: +TR.rmax.toFixed(3), rface: +TR.rface.toFixed(3), rmin: +TR.rmin.toFixed(3), chin: +DV[152].toFixed(3), brow: +DV[10].toFixed(3) } : null; B.loaded = Object.keys(IDENT); B.next = pending ? pending.to : null; B.holdIn = pending ? Math.max(0, holdUntil - t) : null;
   }
   function perf(t, ms) {
     PERF.n++; PERF.sum += ms; if (ms > PERF.max) PERF.max = ms; PERF.frames++;
@@ -1401,7 +1584,7 @@
     cavPos.set(GCAV);
     gl.useProgram(PRC); gl.bindVertexArray(vaoC);
     gl.bindBuffer(gl.ARRAY_BUFFER, bPosC); gl.bufferSubData(gl.ARRAY_BUFFER, 0, cavPos);
-    gl.uniform2f(UC.uView, vw, vh); gl.uniform3f(UC.uMap, DPR, 0, 0); gl.uniform1f(UC.uOpen, clamp(mouthOpen / 0.12, 0, 1));
+    gl.uniform2f(UC.uView, vw, vh); gl.uniform3f(UC.uMap, DPR, 0, 0); gl.uniform1f(UC.uOpen, clamp(mouthOpen / MOUTH_MAX, 0, 1));
     gl.drawElements(gl.TRIANGLES, cavIdx.length, gl.UNSIGNED_SHORT, 0);
     // the face and the picture around it (two textures while an identity arrives)
     gl.useProgram(PRG); gl.bindVertexArray(vao);
@@ -1414,22 +1597,23 @@
     var e0 = ID.eyes[0], e1 = ID.eyes[1], f0 = next ? next.ID.eyes[0] : e0, f1 = next ? next.ID.eyes[1] : e1;
     gl.uniform4f(U.uIrisL, e0.cu, e0.cv, e0.ru, e0.rv); gl.uniform4f(U.uIrisR, e1.cu, e1.cv, e1.ru, e1.rv); gl.uniform2f(U.uGaze, O.gaze[0], -O.gaze[1]);
     gl.uniform4f(U.uIrisLB, f0.cu, f0.cv, f0.ru, f0.rv); gl.uniform4f(U.uIrisRB, f1.cu, f1.cv, f1.ru, f1.rv);
-    gl.uniform1i(U.uTrans, trans); gl.uniform1f(U.uR, R); gl.uniform1f(U.uBand, FIELD_BAND); gl.uniform1f(U.uSteep, GEO_STEEP); gl.uniform1f(U.uDpr, DPR); gl.uniform1f(U.uAmp, FIELD_AMP);
+    gl.uniform1i(U.uTrans, trans); gl.uniform1f(U.uR, R); gl.uniform1f(U.uBand, FIELD_BAND); gl.uniform1f(U.uSoft, ERODE_SOFT); gl.uniform1f(U.uDpr, DPR); gl.uniform1f(U.uAmp, FIELD_AMP);
     gl.uniform2f(U.uSeed, TR ? TR.seed[0] : 0, TR ? TR.seed[1] : 0); gl.uniform2f(U.uNoff, TR ? TR.noff[0] : 0, TR ? TR.noff[1] : 0);
+    if (trans) featUniforms(U);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx); gl.drawElements(gl.TRIANGLES, ID.tris.length, gl.UNSIGNED_SHORT, 0);
     gl.uniform1i(U.uEye, 1);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EYE_IDX); gl.drawElements(gl.TRIANGLES, ID.eyeTris.length, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx);
     gl.bindVertexArray(null);
-    if (!trans) return;
+    if (!trans || !PARAM.dust) return;
     // the particles: the mesh row they sit on, then points and streaks, premultiplied over the face
     for (k = 0; k < ID.n; k++) { MROW[k * 4] = GPOS[k * 2]; MROW[k * 4 + 1] = GPOS[k * 2 + 1]; MROW[k * 4 + 2] = GSH[k]; MROW[k * 4 + 3] = WV[k]; }
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, meshTex); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
     gl.useProgram(PRP);
     gl.uniform1i(UP.uMesh, 2); gl.uniform1i(UP.uTex, 0); gl.uniform1i(UP.uTexB, 1);
-    gl.uniform2f(UP.uView, vw, vh); gl.uniform1f(UP.uDpr, DPR); gl.uniform1f(UP.uT, TR.p); gl.uniform1f(UP.uFrontEnd, FRONT_END); gl.uniform1f(UP.uFrontPow, FRONT_POW); gl.uniform1f(UP.uRmax, TR.rmax);
+    gl.uniform2f(UP.uView, vw, vh); gl.uniform1f(UP.uDpr, DPR); gl.uniform1f(UP.uT, TR.p); gl.uniform1f(UP.uFrontEnd, FRONT_END); gl.uniform1f(UP.uT1, FRONT_T1); gl.uniform1f(UP.uPow1, FRONT_POW); gl.uniform1f(UP.uPow2, FRONT_POW2); gl.uniform1f(UP.uRmax, TR.rmax); gl.uniform1f(UP.uRface, TR.rface); gl.uniform1f(UP.uRmin, TR.rmin); gl.uniform1f(UP.uBand, FIELD_BAND);
     gl.uniform1f(UP.uFw, GFB[2]); gl.uniform1f(UP.uMot, reduce ? 0.5 : 1); gl.uniform1f(UP.uAmp, FIELD_AMP); gl.uniform1f(UP.uFade, 0.8); gl.uniform1f(UP.uTop, topFade);
-    gl.uniform2f(UP.uSeed, TR.seed[0], TR.seed[1]); gl.uniform2f(UP.uNoff, TR.noff[0], TR.noff[1]);
+    gl.uniform2f(UP.uSeed, TR.seed[0], TR.seed[1]); gl.uniform2f(UP.uNoff, TR.noff[0], TR.noff[1]); featUniforms(UP);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(vaoP); gl.drawArrays(gl.POINTS, 0, NP);
     gl.bindVertexArray(vaoL); gl.drawElements(gl.TRIANGLES, NLN, gl.UNSIGNED_SHORT, 0);
