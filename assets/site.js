@@ -544,7 +544,7 @@
         const spawn = () => {
           const text = next(), dep = [0.18, 0.3, 0.45, 0.62, 0.8, 1][R() * 6 | 0], fsz = (W < 700 ? 8 : 9) * (0.85 + dep * 0.6), p = spot(text, fsz); if (!p) return;   // dep: far (small, dim, soft) to near (large, bright, sharp)
           const el = document.createElement("span"); el.className = "biz";
-          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz.toFixed(1)}px;--o:${(0.14 + dep * 0.56).toFixed(2)};--blur:${((1 - dep) * 1.6).toFixed(2)}px`;
+          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz.toFixed(1)}px;--o:${(0.14 + dep * 0.56).toFixed(2)}`;
           tagsEl.appendChild(el);
           const life = 5000 + R() * 5000, o = { el, r: p.r };
           live.push(o);
