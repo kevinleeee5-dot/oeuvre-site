@@ -757,7 +757,7 @@
   // allowed down to CROWN_COMPACT of the height so the bust can run off the bottom without a giant face
   // short landscape screens (a phone on its side, H < SHORT_H) are compact too: the sheet, not the column; their face is sized by
   // the height (FACE_H_LAND of it) and centred
-  var FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.58, FACE_FRAC_PORTRAIT = 0.42, HEADROOM = 0.05, CHIN_MAX = 0.74, FACE_Y = 0.42, PHONE_W = 700, CROWN_COMPACT = 0.3, IMG_H = 1792, IMG_W = 2400, BLEED = 2;
+  var REF_FACE_W = 660, FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.58, FACE_FRAC_PORTRAIT = 0.42, HEADROOM = 0.05, CHIN_MAX = 0.74, FACE_Y = 0.42, PHONE_W = 700, CROWN_COMPACT = 0.3, IMG_H = 1792, IMG_W = 2400, BLEED = 2;
   var SHORT_H = 500, FACE_H_LAND = 0.5;
   function isCompact(W, H) { return W < PHONE_W || W / H < 0.8 || H < SHORT_H; }
   function headTop(faceBox) { return Math.max(0, faceBox[1] - 0.5 * faceBox[3]); }
@@ -765,7 +765,8 @@
   function layout(W, H, faceBox, opts) {
     opts = opts || {};
     var phone = isCompact(W, H), land = phone && W / H >= 1, imgH = opts.imgH || IMG_H, top = headTop(faceBox);
-    var S = land ? FACE_H_LAND * H / faceBox[3] : (phone ? (W < 500 ? FACE_FRAC_PHONE : FACE_FRAC_PORTRAIT) : FACE_FRAC) * W / faceBox[2];
+    var fwN = Math.max(faceBox[2], REF_FACE_W);                                                               // a narrow face box (f, g) must not blow the person up: every picture lands at about the same scale, so the eyes keep one line
+    var S = land ? FACE_H_LAND * H / faceBox[3] : (phone ? (W < 500 ? FACE_FRAC_PHONE : FACE_FRAC_PORTRAIT) : FACE_FRAC) * W / fwN;
     if (!phone) { var maxS = (CHIN_MAX - HEADROOM) * H / (chinY(faceBox) - top); if (S > maxS) S = maxS; }    // a short screen: the chin stays up
     var minS = ((1 - (phone && !land ? CROWN_COMPACT : HEADROOM)) * H + BLEED) / (imgH - top); if (S < minS) S = minS;   // the bottom edge never shows
     var cxI = faceBox[0] + faceBox[2] / 2, cyI = faceBox[1] + faceBox[3] / 2;
