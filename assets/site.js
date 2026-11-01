@@ -837,17 +837,17 @@
         const frame = now => {
           if (!t0) t0 = now; const t = now - t0, c = Math.min(1, t / GATHER), c2 = c * c * (3 - 2 * c);
           const nf = 0.28 - 0.19 * c2, k = 0.002 + 0.034 * c2, damp = 0.9 - 0.22 * c2, ph = t * 0.0006;
-          g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0," + (0.2 + 0.2 * c2) + ")"; g.fillRect(0, 0, w, h);
-          g.globalCompositeOperation = "source-over"; g.strokeStyle = "rgba(255,255,255," + (0.55 + 0.45 * c2) + ")"; g.lineWidth = 1.3; g.beginPath();
+          g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0," + (0.14 + 0.16 * c2) + ")"; g.fillRect(0, 0, w, h);
+          g.globalCompositeOperation = "source-over"; g.strokeStyle = "rgba(255,255,255,1)"; g.lineWidth = 1.6; g.beginPath(); const dots = new Path2D();
           const m = Math.ceil(N * 0.08 * c2);
           for (let i = 0; i < N; i++) {
             let x = X[i], y = Y[i];
             if (c2 > 0.55 && i < m) { const hj = HI[i], step = ((Math.random() * 3 | 0) - 1) * 2, nj = hj + step * 2; if (nj >= 0 && nj < pts.length - 1 && Math.hypot(pts[nj] - pts[hj], pts[nj + 1] - pts[hj + 1]) < 7) { HI[i] = nj; TX[i] = pts[nj]; TY[i] = pts[nj + 1]; } }
             const ang = Math.sin(y * 0.011 + ph) * 2.2 + Math.cos(x * 0.013 - ph * 1.3) * 2.2, fx = Math.cos(ang) * nf, fy = Math.sin(ang) * nf;
             VX[i] = (VX[i] + fx + (TX[i] - x) * k) * damp; VY[i] = (VY[i] + fy + (TY[i] - y) * k) * damp;
-            const nx = x + VX[i], ny = y + VY[i]; g.moveTo(x, y); g.lineTo(nx, ny); X[i] = nx; Y[i] = ny;
+            const nx = x + VX[i], ny = y + VY[i]; g.moveTo(x, y); g.lineTo(nx, ny); X[i] = nx; Y[i] = ny; if (c2 > 0.3) dots.rect(nx - 1, ny - 1, 2, 2);
           }
-          g.stroke();
+          g.stroke(); g.fillStyle = "rgba(255,255,255," + Math.min(1, c2 * 1.2) + ")"; g.fill(dots);
           if (!formed && t > GATHER + HOLD_MIN) { formed = true; check(); }
           raf = requestAnimationFrame(frame);
         };
