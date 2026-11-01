@@ -34,7 +34,7 @@ html.busy, html.busy * { cursor: progress !important; }
 .bar { position: fixed; inset: 0 0 auto 0; z-index: 60; display: flex; align-items: center; gap: 24px;
        padding: max(18px, env(safe-area-inset-top)) var(--gutter) 18px; mix-blend-mode: difference; pointer-events: none; }
 .bar > * { pointer-events: auto; }
-.mark { font-weight: 600; font-size: 19px; letter-spacing: -.03em; text-decoration: none; margin-right: auto; }
+.mark { font-weight: 600; font-size: clamp(26px, 2.4vw, 34px); letter-spacing: -.03em; text-decoration: none; margin-right: auto; }
 .mini ul { display: flex; gap: clamp(14px, 2.4vw, 32px); list-style: none; margin: 0; padding: 0; font-size: 14px; }
 .mini a { text-decoration: none; opacity: .62; transition: opacity .2s; position: relative; }
 .mini a:hover, .mini a[aria-current] { opacity: 1; }
@@ -103,11 +103,12 @@ html.busy, html.busy * { cursor: progress !important; }
              display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; pointer-events: none; }
 .home-foot > * { pointer-events: auto; }
 .home-statement { margin: 0; font-size: clamp(18px, 1.9vw, 26px); max-width: 16ch; line-height: 1.18; letter-spacing: -.01em; }
-.home-support { margin: 12px 0 0; font-size: clamp(12px, .95vw, 13.5px); max-width: 34ch; line-height: 1.45; color: rgba(255, 255, 255, .62); text-shadow: 0 0 14px rgba(0, 0, 0, .65); }
+.home-support { margin: 12px 0 0; font-size: clamp(12px, .95vw, 13.5px); max-width: 34ch; line-height: 1.45; color: rgba(255, 255, 255, .62); }
 .home-support:empty { display: none; }
 .p-home .foot { position: absolute; right: 0; bottom: 0; z-index: 7; padding: 0 var(--gutter) max(22px, env(safe-area-inset-bottom)); color: var(--fg); }
 /* the bust runs to the bottom edge: plain white with a soft dark halo reads over skin and black alike (no blend) */
-.home-statement, .p-home .langs { color: rgba(255, 255, 255, .92); text-shadow: 0 0 14px rgba(0, 0, 0, .65), 0 0 2px rgba(0, 0, 0, .5); }
+.home-statement { color: rgba(255, 255, 255, .95); }
+.p-home .langs { color: rgba(255, 255, 255, .92); text-shadow: 0 0 14px rgba(0, 0, 0, .65), 0 0 2px rgba(0, 0, 0, .5); }
 .p-home .langs span[aria-disabled] { opacity: .62; }
 .p-home .foot-legal { display: none; }
 .p-home .home-foot { right: calc(var(--gutter) + 120px); }
@@ -279,8 +280,8 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 /* ---------- home: small business words (js fills #tags) ---------- */
 #tags { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
 .biz { position: absolute; font: 400 11.5px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; color: #fff; opacity: 0; white-space: nowrap; user-select: none;
-       transform: translate3d(0, 0, 0); transition: opacity 1.4s ease, transform var(--life, 7s) linear; text-shadow: 0 0 12px rgba(0, 0, 0, .6); }
-.biz.in { opacity: .42; transform: translate3d(var(--dx, 0), var(--dy, 0), 0); }
+       transform: translate3d(0, 0, 0); transition: opacity .9s ease, transform var(--life, 7s) cubic-bezier(.25,.1,.25,1); text-shadow: 0 0 12px rgba(0, 0, 0, .6); min-width: 1ch; }
+.biz.in { opacity: .5; transform: translate3d(var(--dx, 0), var(--dy, 0), 0); }
 .biz.still { transition: none; transform: none; opacity: .36; }
 @media (prefers-reduced-motion: reduce) { .biz { transition: none; } }
 

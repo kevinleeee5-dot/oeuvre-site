@@ -243,7 +243,7 @@
     function place(w, prev) {
       const g = gutter(), phone = W < 860;
       const left = g + SM, right = W - g - SM, top = Math.max(80, g) + SM, bot = H - Math.max(110, g) - SM;
-      const lo = phone ? 0.13 : 0.07, hi = phone ? 0.18 : 0.12;
+      const lo = phone ? 0.2 : 0.11, hi = phone ? 0.27 : 0.19;
       const maxFs = Math.max(8, Math.min((right - left) / w.gw, (bot - top) / w.gh));
       const b = band(), f = isStatic ? fallback() : face;
       let best = null, bestScore = -1;
@@ -473,7 +473,7 @@
         const live = [], shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = R() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
         let queue = [];
         const next = () => { if (!queue.length) queue = shuf(list.slice()); return queue.pop(); };
-        const area = () => { const phone = W < 700; return { l: Math.max(20, W * 0.03), r: phone ? W - 20 : W * 0.66, t: Math.max(84, H * 0.1), b: H - (phone ? 150 : 110) }; };
+        const area = () => { const phone = W < 700; return { l: Math.max(20, W * 0.03), r: W - Math.max(20, W * 0.03), t: Math.max(84, H * 0.1), b: H - (phone ? 150 : 120) }; };   // the whole screen
         const spot = (text, fsz) => {
           const A = area(), ww = text.length * fsz * 0.66 + 8, hh = fsz * 1.6, bnd = band(), f = isStatic ? fallback() : face;
           for (let n = 0; n < 40; n++) {
@@ -481,25 +481,37 @@
             const r = { x: x - 10, y: y - 6, w: ww + 20, h: hh + 12 };
             if (overlaps(r, bnd) || (hintR && overlaps(r, hintR))) continue;
             if (pl && overlaps(r, { x: pl.x - 40, y: pl.y - 40, w: pl.w + 80, h: pl.h + 80 })) continue;
-            if (faceShare(r, { x: f.x - f.w * 0.35, y: f.y - f.h * 0.2, w: f.w * 1.7, h: f.h * 1.9 }) > 0.02) continue;   // hair and neck too
+            if ((n < 24 || W < 700) && faceShare(r, { x: f.x - f.w * 0.1, y: f.y, w: f.w * 1.2, h: f.h * 1.1 }) > 0.02) continue;   // mostly clear of the face itself (eyes, mouth), but not always: they appear anywhere
             if (live.some(o => overlaps(r, o.r))) continue;
             return { x, y, r };
           }
           return null;
         };
+        const GL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ&/+-";
+        const scramble = (el, text, dir, ms, done) => {          // letters tumble in (dir 1) or out (dir -1), left to right
+          const t0 = performance.now();
+          const step = now => {
+            const k = Math.min(1, (now - t0) / ms), settled = Math.floor((dir > 0 ? k : 1 - k) * text.length);
+            let out = ""; for (let i = 0; i < text.length; i++) out += text[i] === " " || i < settled ? text[i] : GL[R() * GL.length | 0];
+            el.textContent = out;
+            if (k < 1) requestAnimationFrame(step); else { el.textContent = dir > 0 ? text : ""; if (done) done(); }
+          };
+          requestAnimationFrame(step);
+        };
         const spawn = () => {
-          const text = next(), fsz = W < 700 ? 10.5 : 11.5, p = spot(text, fsz); if (!p) return;
-          const el = document.createElement("span"); el.textContent = text; el.className = "biz";
-          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz}px`;
+          const text = next(), big = R() < 0.18, fsz = (W < 700 ? 10.5 : 11.5) * (big ? 1.5 : 0.9 + R() * 0.35), p = spot(text, fsz); if (!p) return;
+          const el = document.createElement("span"); el.className = "biz";
+          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz.toFixed(1)}px`;
           tagsEl.appendChild(el);
-          const life = 5000 + R() * 4000, o = { el, r: p.r };
+          const life = 5000 + R() * 5000, o = { el, r: p.r };
           live.push(o);
+          scramble(el, text, 1, 650 + R() * 350);
           requestAnimationFrame(() => requestAnimationFrame(() => {
-            el.style.setProperty("--dx", ((R() - 0.5) * 16).toFixed(1) + "px"); el.style.setProperty("--dy", ((R() - 0.5) * 12).toFixed(1) + "px");
+            el.style.setProperty("--dx", ((R() - 0.5) * 60).toFixed(1) + "px"); el.style.setProperty("--dy", ((R() - 0.5) * 36).toFixed(1) + "px");
             el.style.setProperty("--life", life + "ms"); el.classList.add("in");
           }));
-          setTimeout(() => el.classList.remove("in"), life - 1400);
-          setTimeout(() => { el.remove(); const k = live.indexOf(o); if (k >= 0) live.splice(k, 1); }, life + 200);
+          setTimeout(() => { el.classList.remove("in"); scramble(el, text, -1, 600); }, life - 900);
+          setTimeout(() => { el.remove(); const k = live.indexOf(o); if (k >= 0) live.splice(k, 1); }, life + 100);
         };
         if (reduced || isStatic) {                      // a still, short list
           const stat = () => { tagsEl.textContent = ""; live.length = 0; list.slice(0, 6).forEach(() => { const text = next(), p = spot(text, 11.5); if (!p) return;
@@ -507,9 +519,9 @@
             tagsEl.appendChild(el); live.push({ el, r: p.r }); }); };
           setTimeout(stat, 600); addEventListener("resize", () => { clearTimeout(stat.t); stat.t = setTimeout(stat, 300); });
         } else {
-          const target = () => W < 700 ? 4 + (R() * 3 | 0) : 6 + (R() * 4 | 0);
+          const target = () => W < 700 ? 5 + (R() * 3 | 0) : 9 + (R() * 5 | 0);
           let goal = target();
-          setInterval(() => { if (document.hidden) return; if (live.length < goal) { spawn(); if (R() < 0.15) goal = target(); } }, 650);
+          setInterval(() => { if (document.hidden) return; if (live.length < goal) { spawn(); if (R() < 0.15) goal = target(); } }, 420);
         }
       }
     }
