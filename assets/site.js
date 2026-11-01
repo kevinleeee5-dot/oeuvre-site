@@ -114,7 +114,7 @@
   addEventListener("pointermove", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.has = true; onPointer(e); }, { passive: true });
   let onPointer = () => { };
 
-  /* ================= home: the menu words as particle text around the face ================= */
+  /* ================= home: the menu words as streaks in a flow field, over the figure ================= */
   let words = [], face = null, wordCenter = () => null;
   if (page === "home") initHome();
 
@@ -124,7 +124,7 @@
     words = $$(".word").map((el, i) => ({
       el, i, id: el.dataset.id, href: el.href,
       label: (el.childNodes[0] && el.childNodes[0].textContent || el.textContent).trim(),
-      x: 0, y: 0, tx: 0, ty: 0, w: 0, h: 0, gw: 0, gh: 0, pts: null
+      gw: 0, gh: 0, pts: null
     }));
     const fallback = () => {
       const s = Math.min(W * 0.42, H * 0.5);
@@ -175,9 +175,9 @@
       if (!on) layout(true);
     });
 
-    /* ---- glyph sampling: each word becomes N points where the ink is ---- */
-    const N = W < 860 ? 720 : 1000, SAMPLE = 240;
-    const R = rng(7);
+    /* ---- glyph sampling: each word becomes a cloud of points where the ink is (unit = font size) ---- */
+    const N = W < 860 ? 1400 : W < 1800 ? 2600 : 3400, SAMPLE = 200, NS = 3600;
+    let R = isStatic ? rng(7) : Math.random;
     function sampleWord(w) {
       const c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
       const font = `500 ${SAMPLE}px ${getComputedStyle(nav).fontFamily}`;
@@ -190,95 +190,83 @@
       for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 128) {
         area++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
       }
-      if (!area) { w.pts = []; w.gw = w.gh = 0.5; return; }
-      const step = Math.max(2, Math.sqrt(area / (N * 1.08)));
-      const out = [];
+      if (!area) { w.pts = new Float32Array(0); w.gw = w.gh = 0.5; return; }
+      const step = Math.max(1.2, Math.sqrt(area / NS)), out = [];
       for (let y = miny; y <= maxy; y += step) for (let x = minx; x <= maxx; x += step) {
-        const px = x + (R() - 0.5) * step * 0.75, py = y + (R() - 0.5) * step * 0.75;
-        const xi = Math.round(px), yi = Math.round(py);
-        if (xi < 0 || yi < 0 || xi >= c.width || yi >= c.height || d[(yi * c.width + xi) * 4 + 3] <= 128) continue;
-        out.push({ x: (px - minx) / SAMPLE, y: (py - miny) / SAMPLE });
+        const xi = Math.round(x), yi = Math.round(y);
+        if (d[(yi * c.width + xi) * 4 + 3] > 128) out.push((x - minx) / SAMPLE, (y - miny) / SAMPLE);
       }
-      // every word gets exactly N points: thin out or double up (with a nudge) so particles map 1:1
-      while (out.length > N) out.splice(Math.floor(R() * out.length), 1);
-      const base = out.length;
-      while (out.length < N && base) { const o = out[Math.floor(R() * base)]; out.push({ x: o.x + (R() - 0.5) * 0.012, y: o.y + (R() - 0.5) * 0.012 }); }
-      // left-to-right order so a flight between two words reads as a flow, not a shuffle
-      out.sort((a, b) => (a.x + a.y * 0.15) - (b.x + b.y * 0.15));
-      w.pts = out; w.gw = (maxx - minx + 1) / SAMPLE; w.gh = (maxy - miny + 1) / SAMPLE;
+      w.pts = Float32Array.from(out); w.gw = (maxx - minx + 1) / SAMPLE; w.gh = (maxy - miny + 1) / SAMPLE;
     }
-    // per-particle character: size, breathing phase, flight detour, a few strays
-    const P = Array.from({ length: N }, (_, i) => ({
-      r: 0.7 + R() * 0.7, ph: R() * 6.283, f: 0.6 + R() * 0.9, d: R(),
-      dx: (R() - 0.5) * 2, dy: (R() - 0.5) * 2, stray: R() < 0.045, sa: 0.5 + R() * 1.5, sb: R() * 6.283
-    }));
     const sampleAll = () => words.forEach(sampleWord);
 
-    /* ---- where each word wants to be, given the face box ---- */
-    let fs = 60;
-    // The whole dot cloud stays on screen: the glyph box plus the room its stray dots, breathing and
-    // pointer parallax take (see target/par), inside a gutter of max(24px, 2vw).
-    const gutter = () => Math.max(24, W * 0.02);
-    const marginX = s => s * 0.44 + 20, marginY = s => s * 0.27 + 14;
-    function layout(snap) {
-      if (body.classList.contains("list")) return;
-      const g = gutter(), top = 74, bottom = H - 70;
-      const wide = W >= 860;
-      // The face box runs crown-to-chin, ear-to-ear; the figure's hair reaches past it, so keep
-      // words a hair-margin away (sides on wide screens, above the crown on phones).
-      const hairX = face.w * 0.2, hairY = face.h * 0.13;
-      const room = Math.max(0, face.y - hairY - 6 - top);
-      const f = face;
-      if (wide) {
-        // the size the viewport asks for, then shrink (never below 40px) so each word fits in its own
-        // side of the face band before the clamp would push it onto the hair
-        let s = clamp(W * 0.075, 40, 138);
-        words.forEach(w => {
-          const avail = w.i % 2 === 0 ? f.x - hairX - 2 * g - 20 : W - 2 * g - 20 - (f.x + f.w + hairX);
-          s = Math.min(s, avail / (w.gw + 0.44));
-        });
-        fs = Math.max(40, s);
-      } else fs = clamp(Math.min(W * 0.135, room / 4 / 0.92), 28, 72);
-      nav.style.setProperty("--fs", fs + "px");
-      words.forEach(w => { w.w = w.gw * fs; w.h = w.gh * fs; });
-      const mx = marginX(fs), my = marginY(fs);
-      words.forEach(w => {
-        const left = w.i % 2 === 0, upper = w.i < 2;
-        let x, y;
-        if (wide) {
-          x = left ? f.x - hairX - g - w.w : f.x + f.w + hairX + g;
-          y = upper ? f.y + f.h * (left ? 0.02 : 0.28) - w.h / 2 : f.y + f.h * (left ? 0.72 : 1.0) - w.h / 2;
-        } else {
-          // phones: all four words above the face, staggered left/right; the band under the face
-          // belongs to the figure's talk control
-          x = left ? g + mx : W - g - mx - w.w;
-          const lo = top, hi = Math.max(top + 4 * w.h * 0.95, f.y - hairY - 6);
-          y = lo + (hi - lo - w.h) * (w.i / 3);
-        }
-        // never off screen: a word wider than the viewport sits centred
-        x = clamp(x, g + mx, W - g - mx - w.w);
-        if (w.w + 2 * (g + mx) > W) x = (W - w.w) / 2;
-        y = clamp(y, Math.max(top, g + my), Math.min(bottom, H - g - my) - w.h);
-        w.tx = x; w.ty = y;
-        if (snap || !w.placed) { w.x = x; w.y = y; w.placed = true; }
-      });
-      nav.classList.add("placed");
+    /* ---- the particles: positions, velocities, targets (and the previous targets, for the reduced crossfade) ---- */
+    const X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N);
+    const TX = new Float32Array(N), TY = new Float32Array(N), OX = new Float32Array(N), OY = new Float32Array(N), S = new Float32Array(N);
+    for (let i = 0; i < N; i++) { X[i] = R() * W; Y[i] = R() * H; S[i] = R() * 6.2832; }
+
+    /* ---- where a word lands: anywhere, at a random size, clear of the bars and the talk control under the face ---- */
+    let fs = 60, pl = null;
+    const SM = 18;                                    // room for streaks and the hold's slight drift
+    const gutter = () => Math.max(24, W * 0.03);
+    const band = () => { const f = isStatic ? fallback() : face; return { x: f.x - 120, y: f.y + f.h, w: f.w + 240, h: f.h }; };   // the talk control under the chin
+    const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const faceShare = (r, f) => {
+      const ox = Math.max(0, Math.min(r.x + r.w, f.x + f.w) - Math.max(r.x, f.x)), oy = Math.max(0, Math.min(r.y + r.h, f.y + f.h) - Math.max(r.y, f.y));
+      return ox * oy / (r.w * r.h);
+    };
+    function place(w, prev) {
+      const g = gutter(), phone = W < 860;
+      const left = g + SM, right = W - g - SM, top = Math.max(80, g) + SM, bot = H - Math.max(110, g) - SM;
+      const lo = phone ? 0.13 : 0.07, hi = phone ? 0.18 : 0.12;
+      const maxFs = Math.max(8, Math.min((right - left) / w.gw, (bot - top) / w.gh));
+      const b = band(), f = isStatic ? fallback() : face;
+      let best = null, bestScore = -1;
+      for (let n = 0; n < 90; n++) {
+        let s = W * (lo + R() * (hi - lo)) * (n > 45 ? 0.75 : 1);
+        s = Math.min(s, maxFs);
+        const ww = w.gw * s, hh = w.gh * s;
+        const x = left + R() * Math.max(0, right - left - ww), y = top + R() * Math.max(0, bot - top - hh);
+        const r = { x, y, w: ww, h: hh, fs: s, cx: x + ww / 2, cy: y + hh / 2 };
+        const far = prev ? Math.hypot(r.cx - prev.cx, r.cy - prev.cy) : W;
+        const clear = !overlaps({ x: x - SM, y: y - SM, w: ww + 2 * SM, h: hh + 2 * SM }, b);
+        // overlapping the hair or the edge of the face is fine; covering most of the face is not (light skin
+        // eats the streaks), so prefer spots where at most ~15% of the word sits on the face box
+        const score = (clear ? 2 : 0) + (faceShare(r, f) <= 0.15 ? 1 : 0) + Math.min(1, far / (W * 0.25));
+        if (score >= 4) return r;
+        if (score > bestScore) { best = r; bestScore = score; }
+      }
+      return best;
     }
-    // the drawn origin of a word this frame: its eased position plus parallax, held inside the viewport
-    function origin(w, par) {
-      const g = gutter(), mx = marginX(fs), my = marginY(fs);
-      let x = w.x + par.x, y = w.y + par.y;
-      x = w.w + 2 * (g + mx) > W ? (W - w.w) / 2 : clamp(x, g + mx, W - g - mx - w.w);
-      y = w.h + 2 * (g + my) > H ? (H - w.h) / 2 : clamp(y, g + my, H - g - my - w.h);
-      return { x, y };
+    function assign(w, p, keepOld) {
+      if (!keepOld) { OX.set(TX); OY.set(TY); }
+      const pts = w.pts, n = pts.length / 2;
+      for (let i = 0; i < N; i++) {
+        if (!n) { TX[i] = R() * W; TY[i] = R() * H; continue; }
+        const j = (R() * n | 0) * 2;
+        TX[i] = p.x + pts[j] * p.fs + (R() - 0.5) * 1.6; TY[i] = p.y + pts[j + 1] * p.fs + (R() - 0.5) * 1.6;
+      }
     }
 
-    /* ---- the cycle: one word holds, then its dots fly into the next ---- */
-    const HOLD = 4000, FLY = reduced ? 700 : 1500;
-    let cur = 0, nxt = -1, flyT0 = 0, holdT0 = performance.now(), pending = -1;
-    let paused = 0, focused = -1, sharp = 0, pos = P.map(() => ({ x: 0, y: 0 }));
+    /* ---- the cycle: gather → hold → dissolve → drift, then the next word somewhere else ---- */
+    const GATHER = 1500, HOLD = 3500, DISSOLVE = 1400, DRIFT = 600, HOLD_END = GATHER + HOLD, CYCLE = HOLD_END + DISSOLVE + DRIFT;
+    const RHOLD = 4800, XFADE = 700;                  // reduced motion: hold, then a 700 ms crossfade
+    let cur = 0, tw = 0, xf = 1, paused = 0, focused = -1, sharp = 0;
     let mctx = fit(menuC);
-    const goTo = k => { if (k === cur || k < 0) return; if (nxt >= 0) { pending = k; return; } nxt = k; flyT0 = performance.now(); };
+    const sin2 = k => { const s = Math.sin(clamp(k) * Math.PI / 2); return s * s; };
+    const clearness = () => tw < GATHER ? sin2(tw / GATHER) : tw < HOLD_END ? 1 : 1 - sin2((tw - HOLD_END) / DISSOLVE);
+    function show(k, keepTime) {
+      if (!words[k].pts) return;
+      const prev = pl;
+      cur = k; pl = place(words[k], prev); assign(words[k], pl);
+      if (!keepTime) { tw = 0; xf = prev ? 0 : 1; }
+      fs = pl.fs; nav.style.setProperty("--fs", fs + "px");
+      hit.href = words[k].href; hit.setAttribute("aria-label", words[k].label);
+      idxLinks.forEach(a => { +a.dataset.i === k ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current"); });
+    }
+    // asking for a word: it gathers at a new random place, unless it is already the legible one
+    const goTo = k => { if (k < 0 || !pl) return; if (k === cur && tw < HOLD_END) return; show(k); };
+    function layout() { if (!body.classList.contains("list") && pl) show(cur); }
     // hover / touch pauses and sharpens; the hit link navigates (the site-wide click handler runs the iris)
     hit.addEventListener("pointerenter", () => { paused |= 1; });
     hit.addEventListener("pointerleave", () => { paused &= ~1; });
@@ -294,102 +282,121 @@
       a.addEventListener("focus", () => { paused |= 4; goTo(k); });
       a.addEventListener("blur", () => { paused &= ~4; });
     });
-    const setCurrent = k => {
-      cur = k; holdT0 = performance.now();
-      hit.href = words[k].href; hit.setAttribute("aria-label", words[k].label);
-      idxLinks.forEach(a => { +a.dataset.i === k ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current"); });
-    };
-    setCurrent(0);
 
-    const target = (w, i, t, o) => {
-      const p = w.pts[i], q = P[i];
-      let x = o.x + p.x * fs, y = o.y + p.y * fs;
-      if (!reduced) {
-        const j = (1 - sharp * 0.85) * fs * 0.012;          // breathing
-        x += Math.sin(t * 0.0011 * q.f + q.ph) * j; y += Math.cos(t * 0.0009 * q.f + q.ph * 1.3) * j;
-        if (q.stray) {                                        // a few dots drift loose around the word
-          const a = fs * 0.22 * q.sa * (1 - sharp * 0.7);
-          x += Math.sin(t * 0.00025 * q.f + q.sb) * a; y += Math.cos(t * 0.0002 * q.f + q.sb * 2.1) * a * 0.6;
-        }
-      }
-      return [x, y];
-    };
-    function drawWord(w, t, par, alpha, k) {
-      // k: 0..1 flight progress for crossfade/flight; here draws the word at rest
-      mctx.globalAlpha = alpha; mctx.beginPath();
-      const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6), o = origin(w, par);
-      for (let i = 0; i < N; i++) {
-        const [x, y] = target(w, i, t, o); pos[i].x = x; pos[i].y = y;
-        const r = P[i].r * rs * (P[i].stray ? 0.75 : 1);
-        mctx.moveTo(x + r, y); mctx.arc(x, y, r, 0, 6.2832);
-      }
-      mctx.fill();
-    }
-    function drawFlight(a, b, t, par, p) {
-      const rs = (1.3 + 0.3 * sharp) * clamp(fs / 70, 0.7, 1.6);
-      const amp = Math.min(W, H) * 0.09, oa = origin(a, par), ob = origin(b, par);
-      mctx.beginPath(); mctx.globalAlpha = 1;
-      for (let i = 0; i < N; i++) {
-        const q = P[i];
-        // each dot leaves on its own cue, so the old word frays before the new one gathers
-        const k = ease(clamp((p - q.d * 0.4) / 0.6));
-        const [ax, ay] = target(a, i, t, oa), [bx, by] = target(b, i, t, ob);
-        const s = Math.sin(k * 3.1416);
-        const x = ax + (bx - ax) * k + q.dx * amp * s, y = ay + (by - ay) * k + q.dy * amp * s * 0.7 - s * amp * 0.25;
-        pos[i].x = x; pos[i].y = y;
-        const r = q.r * rs * (1 - 0.35 * s) * (q.stray ? 0.75 : 1);
-        mctx.moveTo(x + r, y); mctx.arc(x, y, r, 0, 6.2832);
-      }
-      mctx.fill();
-    }
-    function placeHit(w, par, on) {
-      const m = Math.max(10, fs * 0.12), o = origin(w, par);
-      hit.style.transform = `translate3d(${(o.x - m).toFixed(1)}px, ${(o.y - m).toFixed(1)}px, 0)`;
-      hit.style.width = (w.w + 2 * m).toFixed(1) + "px"; hit.style.height = (w.h + 2 * m).toFixed(1) + "px";
+    function placeHit(on) {
+      const m = Math.max(10, fs * 0.12);
+      hit.style.transform = `translate3d(${(pl.x - m).toFixed(1)}px, ${(pl.y - m).toFixed(1)}px, 0)`;
+      hit.style.width = (pl.w + 2 * m).toFixed(1) + "px"; hit.style.height = (pl.h + 2 * m).toFixed(1) + "px";
       hit.style.pointerEvents = on ? "auto" : "none";
     }
-    if (isStatic) window.__oeuvre = { get face() { return face; }, get haveFace() { return haveFace; }, words, get current() { return cur; } };
-    wordCenter = id => { const w = words.find(w => w.id === id); return w ? { x: w.x + w.w / 2, y: w.y + w.h / 2 } : null; };
-    let lastFace = "", lastSize = "";
+    // one short mark per particle along the flow field, every ninth a bright grain
+    function marks(tx, ty, alpha) {
+      mctx.globalCompositeOperation = "lighter"; mctx.lineWidth = 1;
+      for (let pass = 0; pass < 2; pass++) {
+        mctx.strokeStyle = pass ? `rgba(255,255,255,${0.9 * alpha})` : `rgba(242,242,238,${0.4 * alpha})`; mctx.beginPath();
+        for (let j = 0; j < N; j++) {
+          if ((j % 9 === 0) !== (pass === 1)) continue;
+          const a = Math.sin(tx[j] * 0.0021 + S[j] * 0.3) * 2.4 + Math.cos(ty[j] * 0.0027) * 2.4, l = 2.2;
+          mctx.moveTo(tx[j] - Math.cos(a) * l, ty[j] - Math.sin(a) * l); mctx.lineTo(tx[j] + Math.cos(a) * l, ty[j] + Math.sin(a) * l);
+        }
+        mctx.stroke();
+      }
+      mctx.globalCompositeOperation = "source-over";
+    }
+    function step(c) {
+      const ts = performance.now() * 0.001;
+      const nf = (0.26 - 0.2 * c) * (1 - 0.6 * sharp * c), k = 0.003 + 0.05 * c;
+      const stir = ptr.has, px = ptr.x, py = ptr.y;
+      for (let i = 0; i < N; i++) {
+        const x = X[i], y = Y[i];
+        const a = Math.sin(x * 0.0021 + ts * 0.23 + S[i] * 0.3) * 2.4 + Math.cos(y * 0.0027 - ts * 0.17) * 2.4;
+        let vx = VX[i] + Math.cos(a) * nf + (TX[i] - x) * k, vy = VY[i] + Math.sin(a) * nf + (TY[i] - y) * k;
+        if (stir) {                                   // the pointer stirs nearby particles into a slight eddy
+          const dx = x - px, dy = y - py, d2 = dx * dx + dy * dy;
+          if (d2 < 14400) { const f = (1 - d2 / 14400) * 0.35 / (Math.sqrt(d2) + 1); vx += (dx * 0.3 - dy * 0.9) * f; vy += (dy * 0.3 + dx * 0.9) * f; }
+        }
+        vx *= 0.9; vy *= 0.9; VX[i] = vx; VY[i] = vy; X[i] = x + vx; Y[i] = y + vy;
+      }
+    }
+    function streaks(c) {
+      // fade the last frames to transparent (the figure shows through), then add this frame's streaks
+      mctx.globalCompositeOperation = "destination-out";
+      mctx.fillStyle = `rgba(0,0,0,${(0.12 + 0.08 * c).toFixed(3)})`; mctx.fillRect(0, 0, W, H);
+      mctx.globalCompositeOperation = "lighter"; mctx.lineWidth = 1;
+      for (let pass = 0; pass < 2; pass++) {
+        // the faint ink brightens a little as the word settles, so a held word reads over hair and skin
+        mctx.strokeStyle = pass ? "rgba(255,255,255,.85)" : `rgba(242,242,238,${(0.22 + 0.16 * c).toFixed(3)})`; mctx.beginPath();
+        for (let j = 0; j < N; j++) {
+          if ((j % 9 === 0) !== (pass === 1)) continue;
+          let lx = VX[j] * 3, ly = VY[j] * 3; const ln = Math.abs(lx) + Math.abs(ly);
+          if (ln > 14) { lx *= 14 / ln; ly *= 14 / ln; }
+          mctx.moveTo(X[j] - lx, Y[j] - ly); mctx.lineTo(X[j] + 0.9, Y[j] + 0.9);
+        }
+        mctx.stroke();
+      }
+      mctx.globalCompositeOperation = "source-over";
+    }
+    function focusRing() {
+      if (focused !== cur || !words[cur].el.matches(":focus-visible")) return;
+      const m = fs * 0.1;
+      mctx.globalAlpha = 0.9; mctx.strokeStyle = "#fff"; mctx.lineWidth = 1.5;
+      mctx.strokeRect(pl.x - m, pl.y - m, pl.w + 2 * m, pl.h + 2 * m); mctx.globalAlpha = 1;
+    }
+
+    if (isStatic) window.__oeuvre = { get face() { return face; }, get haveFace() { return haveFace; }, words, get current() { return cur; }, get placement() { return pl; } };
+    wordCenter = () => pl ? { x: pl.cx, y: pl.cy } : null;
+    let drawn = "", lastT = 0, acc = 0, lastSize = W + "x" + H, wasLive = false, wasReduced = reduced;
     function frameLoop(t) {
       requestAnimationFrame(frameLoop);
-      const key = haveFace ? [face.x, face.y, face.w, face.h].map(v => Math.round(v / 4)).join() : "f";
-      if (key !== lastFace) { lastFace = key; layout(false); }
-      if (body.classList.contains("list")) { mctx.clearRect(0, 0, W, H); hit.style.pointerEvents = "none"; return; }
+      const dt = Math.min(50, lastT ? t - lastT : 16.7); lastT = t;
+      if (!pl) return;
+      if (body.classList.contains("list")) { mctx.clearRect(0, 0, W, H); hit.style.pointerEvents = "none"; drawn = ""; return; }
       const sz = W + "x" + H; if (sz !== lastSize) { lastSize = sz; mctx = fit(menuC); }
-      const k = reduced ? 1 : 0.08;
-      words.forEach(w => { w.x += (w.tx - w.x) * k; w.y += (w.ty - w.y) * k; });
-      sharp += ((paused ? 1 : 0) - sharp) * 0.1;
-      // the cycle (?static holds the first word so screenshots are deterministic)
-      if (nxt < 0 && !paused && !isStatic && t - holdT0 > HOLD) goTo((cur + 1) % words.length);
-      let p = 0;
-      if (nxt >= 0) {
-        p = clamp((t - flyT0) / FLY);
-        if (p >= 1) { setCurrent(nxt); nxt = -1; if (pending >= 0 && pending !== cur) { goTo(pending); } pending = -1; }
+      // the real face box arrived: if the word sits on the talk control or across the face, move it (same moment in its cycle)
+      if (haveFace && !wasLive) { wasLive = true; if (!isStatic && (overlaps(pl, band()) || faceShare(pl, face) > 0.15)) show(cur, true); }
+      if (reduced !== wasReduced) { wasReduced = reduced; mctx.clearRect(0, 0, W, H); for (let i = 0; i < N; i++) { X[i] = TX[i]; Y[i] = TY[i]; VX[i] = VY[i] = 0; } }
+      sharp += ((paused ? 1 : 0) - sharp) * 0.08;
+
+      if (reduced) {
+        // no flow: faint static marks where the word is, crossfading 700 ms to the next (?static holds word 0)
+        if (!isStatic) {
+          xf = Math.min(1, xf + dt / XFADE);
+          tw += dt; if (paused) tw = Math.min(tw, RHOLD - 1);
+          if (tw >= RHOLD) show((cur + 1) % words.length);
+        }
+        // redraw only when something changed (a held word costs nothing)
+        const key = [cur, xf, lastSize, pl.x, focused, focused >= 0 && words[focused].el.matches(":focus-visible")].join();
+        if (key === drawn) return;
+        drawn = key;
+        mctx.clearRect(0, 0, W, H);
+        if (xf < 1) marks(OX, OY, 1 - xf);
+        marks(TX, TY, xf);
+        placeHit(xf > 0.5); focusRing();
+        return;
       }
-      const par = w => reduced ? { x: 0, y: 0 } : {
-        x: Math.sin(t * 0.00035 + w.i * 1.7) * 6 - (ptr.x / W - 0.5) * 22 * (0.6 + 0.2 * w.i),
-        y: Math.cos(t * 0.0003 + w.i * 2.3) * 5 - (ptr.y / H - 0.5) * 14 * (0.6 + 0.2 * w.i)
-      };
-      mctx.clearRect(0, 0, W, H); mctx.fillStyle = "#fff";
-      const a = words[cur];
-      if (nxt < 0) { drawWord(a, t, par(a), 0.78 + 0.22 * sharp); placeHit(a, par(a), true); }
-      else {
-        const b = words[nxt];
-        if (reduced) { drawWord(a, t, par(a), (1 - p) * 0.9); drawWord(b, t, par(b), p * 0.9); }
-        else drawFlight(a, b, t, par(a), p);
-        placeHit(p < 0.5 ? a : b, par(p < 0.5 ? a : b), false);
-      }
-      // keyboard focus ring around the word (the link itself is visually hidden)
-      if (focused === cur && nxt < 0 && words[cur].el.matches(":focus-visible")) {
-        const w = words[cur], o = origin(w, par(w)), m = fs * 0.1;
-        mctx.globalAlpha = 0.9; mctx.strokeStyle = "#fff"; mctx.lineWidth = 1.5;
-        mctx.strokeRect(o.x - m, o.y - m, w.w + 2 * m, w.h + 2 * m);
-      }
-      mctx.globalAlpha = 1;
+
+      tw += dt; if (paused) tw = Math.min(tw, HOLD_END - 1);
+      if (tw >= CYCLE) show((cur + 1) % words.length);
+      const c = clearness();
+      // physics at a steady 60 Hz whatever the display rate; nothing changes on a frame with no step
+      acc = Math.min(acc + dt, 50);
+      let steps = 0;
+      while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }
+      if (steps) { streaks(c); focusRing(); }
+      placeHit(c > 0.6 && tw > GATHER * 0.6 && tw < HOLD_END + DISSOLVE * 0.15);
     }
-    addEventListener("resize", () => { if (!haveFace) face = fallback(); layout(true); });
-    const boot = () => { sampleAll(); layout(true); };
+    addEventListener("resize", () => {
+      if (!haveFace) face = fallback();
+      // re-place only when the word no longer fits (phone toolbars resize the viewport all the time)
+      if (pl && (pl.x + pl.w > W - gutter() || pl.y + pl.h > H - Math.max(110, gutter()) || pl.w > W)) show(cur, true);
+    });
+    const boot = () => {
+      sampleAll();
+      if (isStatic) R = rng(7);
+      if (isStatic || !pl) { pl = null; show(cur); } else show(cur, true);
+      nav.classList.add("placed");
+      if (reduced) xf = 1;
+    };
     boot();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
     requestAnimationFrame(frameLoop);

@@ -74,7 +74,7 @@ html.busy, html.busy * { cursor: progress !important; }
 .words.placed .word { visibility: visible; }
 .word:hover, .word:focus-visible { opacity: 1; }
 .word sup { font-size: max(10px, .14em); letter-spacing: .04em; font-weight: 400; vertical-align: top; margin-left: .35em; opacity: .7; position: relative; top: .25em; }
-/* particle menu (js): the words are drawn as dots on #menu; the links stay in the DOM for
+/* particle menu (js): the words are drawn as streaks on #menu; the links stay in the DOM for
    screen readers and the keyboard, visually hidden; #wordHit is the click target over the current word */
 .js .p-home:not(.list) .words .word { width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
                                       visibility: visible; transform: none !important; opacity: 0; transition: none; }
