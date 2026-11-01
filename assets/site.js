@@ -806,8 +806,8 @@
   if (root.classList.contains("intro")) {
     const box = $("#intro"), cv = $("#introC"); let ready = false, formed = false, gone = false, raf = 0;
     const leave = () => {
-      if (gone) return; gone = true; cancelAnimationFrame(raf); try { sessionStorage.setItem("oeuvre-intro", "1"); } catch (_) { }
-      root.classList.add("intro-out"); setTimeout(() => { root.classList.remove("intro", "intro-out"); box && box.remove(); }, 1200);
+      if (gone) return; gone = true; try { sessionStorage.setItem("oeuvre-intro", "1"); } catch (_) { }
+      root.classList.add("intro-out"); setTimeout(() => { cancelAnimationFrame(raf); root.classList.remove("intro", "intro-out"); box && box.remove(); }, 2300);
     };
     const check = () => { if (ready && formed) setTimeout(leave, 700); };
     addEventListener("message", e => {
@@ -820,42 +820,80 @@
       const run = () => {
         const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
         cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext("2d"); g.scale(dpr, dpr);
-        // the picture to form: sampled from text on an off-screen canvas
+        // the picture to form, set like a title page: the name fitted to the measure, the line a third of its size under it,
+        // the block left on the page's gutter and a little above the middle
         const off = document.createElement("canvas"); off.width = w; off.height = h; const o = off.getContext("2d");
-        const fam = getComputedStyle(document.body).fontFamily, pad = Math.max(24, w * 0.06);
-        const f1 = Math.min(w * 0.3, 170), f2 = Math.min(w * 0.082, 50);
-        const drawText = c => {
-          c.fillStyle = "#fff"; c.textBaseline = "alphabetic";
-          c.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in c) c.letterSpacing = (-0.045 * f1) + "px"; const y1 = h * 0.43; c.fillText("Oeuvre", pad, y1);
-          c.font = `300 ${f2}px ${fam}`; if ("letterSpacing" in c) c.letterSpacing = (-0.02 * f2) + "px"; c.fillText("Creative thinking.", pad, y1 + f1 * 0.28 + f2 * 1.4); c.fillText("Digital making.", pad, y1 + f1 * 0.28 + f2 * 2.55);
-        };
-        drawText(o);
-        const crisp = document.createElement("canvas"); crisp.width = w * dpr; crisp.height = h * dpr; const cc = crisp.getContext("2d"); cc.scale(dpr, dpr); drawText(cc);   // the finished letters at full resolution: the particles settle into them
+        const fam = getComputedStyle(document.body).fontFamily, pad = Math.max(20, Math.min(w * 0.06, 40));
+        o.font = `600 100px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = "-4px";
+        const f1 = Math.min(200, 100 * (w - 2 * pad) / o.measureText("Oeuvre").width), f2 = Math.max(26, f1 * 0.33), lh = f2 * 1.12;
+        o.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.04 * f1) + "px";
+        const mN = o.measureText("Oeuvre"), cap = mN.actualBoundingBoxAscent || f1 * 0.72, gap = f1 * 0.24;
+        const blockH = cap + gap + lh * 2, top = Math.round(h * 0.46 - blockH / 2), y1 = top + cap;
+        o.fillStyle = "#fff"; o.textBaseline = "alphabetic"; o.fillText("Oeuvre", pad - (mN.actualBoundingBoxLeft ? -mN.actualBoundingBoxLeft : 0), y1);
+        o.font = `500 ${f2}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.025 * f2) + "px";
+        o.fillText("Creative thinking.", pad, y1 + gap + lh * 0.82); o.fillText("Digital making.", pad, y1 + gap + lh * 1.82);
         const img = o.getImageData(0, 0, w, h).data, pts = [];
-        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (img[(y * w + x) * 4 + 3] > 140) pts.push(x, y);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (img[(y * w + x) * 4 + 3] > 128) pts.push(x, y);
         const n = pts.length / 2; if (!n) { formed = true; check(); return; }
-        const N = Math.min(14000, Math.max(5000, n >> 1)), X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N), TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N);
-        for (let i = 0; i < N; i++) { const j = (Math.random() * n | 0) * 2; TX[i] = pts[j]; TY[i] = pts[j + 1]; HI[i] = j; X[i] = Math.random() * w; Y[i] = Math.random() * h; }
-        const GATHER = 2600, HOLD_MIN = 900; let t0 = 0, last = 0;
-        g.fillStyle = "#000"; g.fillRect(0, 0, w, h);
-        const frame = now => {
-          if (!t0) t0 = now; const t = now - t0, c = Math.min(1, t / GATHER), c2 = c * c * (3 - 2 * c);
-          const nf = 0.28 - 0.19 * c2, k = 0.002 + 0.034 * c2, damp = 0.9 - 0.22 * c2, ph = t * 0.0006;
-          g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0," + (0.14 + 0.16 * c2) + ")"; g.fillRect(0, 0, w, h);
-          g.globalCompositeOperation = "source-over"; g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 1; g.beginPath(); const dots = new Path2D();
-          const m = Math.ceil(N * 0.08 * c2);
-          for (let i = 0; i < N; i++) {
-            let x = X[i], y = Y[i];
-            if (c2 > 0.55 && i < m) { const hj = HI[i], step = ((Math.random() * 3 | 0) - 1) * 2, nj = hj + step * 2; if (nj >= 0 && nj < pts.length - 1 && Math.hypot(pts[nj] - pts[hj], pts[nj + 1] - pts[hj + 1]) < 7) { HI[i] = nj; TX[i] = pts[nj]; TY[i] = pts[nj + 1]; } }
-            const ang = Math.sin(y * 0.011 + ph) * 2.2 + Math.cos(x * 0.013 - ph * 1.3) * 2.2, fx = Math.cos(ang) * nf, fy = Math.sin(ang) * nf;
-            VX[i] = (VX[i] + fx + (TX[i] - x) * k) * damp; VY[i] = (VY[i] + fy + (TY[i] - y) * k) * damp;
-            const nx = x + VX[i], ny = y + VY[i]; g.moveTo(x, y); g.lineTo(nx, ny); X[i] = nx; Y[i] = ny; if (c2 > 0.3) dots.rect(nx - 0.6, ny - 0.6, 1.2, 1.2);
+        // the menu's own system: a flow field that never stops, a soft pull to the glyphs, ink creeping along the strokes,
+        // short streaks drawn from each particle's velocity (every ninth a bright grain) over a fading trail
+        // the line is small: it gets denser ink and a calmer stream than the name, so its strokes hold together
+        const ySplit = y1 + gap * 0.5, nameIdx = [], lineIdx = [];
+        for (let j = 0; j < pts.length; j += 2) (pts[j + 1] < ySplit ? nameIdx : lineIdx).push(j);
+        const nName = Math.min(7000, Math.round(nameIdx.length * 0.45)), nLine = Math.min(7000, Math.round(lineIdx.length * 1.1)), N = Math.max(1, nName + nLine);
+        const X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N),
+          TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N), SD = new Float32Array(N), FL = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+          const src = i < nName ? nameIdx : lineIdx, j = src[Math.random() * src.length | 0];
+          TX[i] = pts[j]; TY[i] = pts[j + 1]; HI[i] = j; X[i] = Math.random() * w; Y[i] = Math.random() * h; SD[i] = Math.random() * 10; FL[i] = i < nName ? 1 : 0.45;
+        }
+        const GATHER = 2600, HOLD_MIN = 1100; let t0 = 0, last = 0, acc = 0;
+        const ptr = { has: false, x: 0, y: 0 };
+        box.addEventListener("pointermove", e => { ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY; }, { passive: true });
+        box.addEventListener("pointerdown", e => { ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY; }, { passive: true });
+        box.addEventListener("pointerup", () => { ptr.has = false; }, { passive: true });
+        const step = c => {
+          const ts = performance.now() * 0.001, nf = 0.28 - 0.19 * c, k = 0.002 + 0.034 * c, damp = 0.9 - 0.22 * c;
+          if (c > 0.25) {
+            const m = Math.ceil(N * 0.08 * c);
+            for (let q = 0; q < m; q++) {
+              const i = Math.random() * N | 0, j0 = HI[i], j = j0 + ((Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * 3 | 0))) * 2;
+              if (j < 0 || j >= pts.length || Math.abs(pts[j] - pts[j0]) + Math.abs(pts[j + 1] - pts[j0 + 1]) > 6) continue;
+              const jit = FL[i] < 1 ? 0.6 : 1.6; HI[i] = j; TX[i] = pts[j] + (Math.random() - 0.5) * jit; TY[i] = pts[j + 1] + (Math.random() - 0.5) * jit;
+            }
           }
-          const ca = c > 0.6 ? Math.min(1, (c - 0.6) / 0.4) : 0, ce = ca * ca * (3 - 2 * ca);   // the streaks gather, then the clean letters take over
-          g.globalAlpha = 1 - ce; g.stroke(); g.fillStyle = "#fff"; g.globalAlpha = Math.min(0.9, c2) * (1 - ce); g.fill(dots);
-          g.globalAlpha = ce; g.drawImage(crisp, 0, 0, w, h); g.globalAlpha = 1;
+          for (let i = 0; i < N; i++) {
+            const x = X[i], y = Y[i], a = Math.sin(x * 0.0021 + ts * 0.23 + SD[i] * 0.3) * 2.4 + Math.cos(y * 0.0027 - ts * 0.17) * 2.4;
+            const fl = nf * (c < 0.9 ? 1 : 1 - (1 - FL[i]) * (c - 0.9) * 10);
+            let vx = VX[i] + Math.cos(a) * fl + (TX[i] - x) * k, vy = VY[i] + Math.sin(a) * fl + (TY[i] - y) * k;
+            if (ptr.has) { const dx = x - ptr.x, dy = y - ptr.y, d2 = dx * dx + dy * dy; if (d2 < 14400) { const f = (1 - d2 / 14400) * 0.35 / (Math.sqrt(d2) + 1); vx += (dx * 0.3 - dy * 0.9) * f; vy += (dy * 0.3 + dx * 0.9) * f; } }
+            vx *= damp; vy *= damp; VX[i] = vx; VY[i] = vy; X[i] = x + vx; Y[i] = y + vy;
+          }
+        };
+        const draw = c => {
+          g.globalCompositeOperation = "destination-out"; g.fillStyle = `rgba(0,0,0,${(0.12 + 0.08 * c).toFixed(3)})`; g.fillRect(0, 0, w, h);
+          g.globalCompositeOperation = "lighter"; g.lineWidth = 1;
+          for (let pass = 0; pass < 2; pass++) {
+            g.strokeStyle = pass ? "rgba(255,255,255,.9)" : `rgba(242,242,238,${(0.26 + 0.2 * c).toFixed(3)})`; g.beginPath();
+            for (let j = 0; j < N; j++) {
+              if ((j % 9 === 0) !== (pass === 1)) continue;
+              let lx = VX[j] * 3, ly = VY[j] * 3; const ln = Math.abs(lx) + Math.abs(ly);
+              if (ln > 14) { lx *= 14 / ln; ly *= 14 / ln; }
+              g.moveTo(X[j] - lx, Y[j] - ly); g.lineTo(X[j] + 0.9, Y[j] + 0.9);
+            }
+            g.stroke();
+          }
+          g.globalCompositeOperation = "source-over";
+        };
+        const frame = now => {
+          if (!t0) { t0 = now; last = now; }
+          const t = now - t0, dt = Math.min(50, now - last); last = now;
+          const u = Math.min(1, t / GATHER), c = u * u * (3 - 2 * u);
+          acc = Math.min(acc + dt, 50); let steps = 0;
+          while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }   // a steady 60 Hz whatever the display does, like the menu
+          if (steps) draw(c);
           if (!formed && t > GATHER + HOLD_MIN) { formed = true; check(); }
-          raf = requestAnimationFrame(frame);
+          raf = requestAnimationFrame(frame);   // it keeps streaming under the wipe until the wipe is gone
         };
         raf = requestAnimationFrame(frame);
       };
