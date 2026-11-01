@@ -170,27 +170,81 @@
     const postKb = () => { if (vv) post({ type: "oeuvre-viewport", kb: Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) }); };
     if (vv) { vv.addEventListener("resize", postKb); vv.addEventListener("scroll", postKb); }
 
-    /* ---- ambient sound: off until asked, fades in, ducks while the figure speaks, pauses when hidden ---- */
+    /* ---- sound: a gapless ambient loop (Web Audio, so there is no join) that starts by itself, plus a quiet pentatonic
+       glass note as the pointer travels. Browsers only let a page make sound after a first click, tap or key, so the loop is
+       loaded and armed at once and begins the moment that happens (or at once where the browser already allows it) ---- */
     const sound = (() => {
-      const btn = $("#soundToggle"), au = $("#ambient");
-      if (!btn || !au || !au.canPlayType) { body.classList.add("no-audio"); return null; }
-      const FULL = 0.55, DUCK = 0.18;
-      let on = false, target = 0, cur = 0, raf = 0, ducked = false;
+      const btn = $("#soundToggle"), AC = window.AudioContext || window.webkitAudioContext;
+      if (!btn || !AC) { body.classList.add("no-audio"); window.__oeuvreSound = null; return null; }
+      const FULL = 0.5, DUCK = 0.16, KEY = "oeuvre-sound-off";
+      const safari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+      const URL_ = "/assets/audio/ambient." + (safari ? "m4a" : "mp3");
+      let ctx = null, master = null, amb = null, fx = null, buf = null, src = null, loading = false, on = false, ducked = false;
+      let userOff = false; try { userOff = localStorage.getItem(KEY) === "1"; } catch (_) { }
       const label = () => { btn.setAttribute("aria-pressed", on); btn.setAttribute("aria-label", on ? btn.dataset.on : btn.dataset.off); };
-      const step = () => {
-        cur += (target - cur) * 0.035;
-        if (Math.abs(target - cur) < 0.004) cur = target;
-        au.volume = Math.max(0, Math.min(1, cur));
-        if (cur !== target) raf = requestAnimationFrame(step); else { raf = 0; if (!on && cur === 0) au.pause(); }
+      const ensure = () => {
+        if (ctx) return ctx;
+        ctx = new AC(); master = ctx.createGain(); master.gain.value = 1; master.connect(ctx.destination);
+        amb = ctx.createGain(); amb.gain.value = 0; amb.connect(master);
+        fx = ctx.createGain(); fx.gain.value = 1;                                   // the pointer's bus: dry + a soft echo
+        const dl = ctx.createDelay(1.5), fb = ctx.createGain(), lp = ctx.createBiquadFilter(), wet = ctx.createGain();
+        dl.delayTime.value = 0.36; fb.gain.value = 0.42; lp.type = "lowpass"; lp.frequency.value = 2400; wet.gain.value = 0.55;
+        fx.connect(master); fx.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(master);
+        return ctx;
       };
-      const fade = v => { target = v; if (!raf) raf = requestAnimationFrame(step); };
-      const start = () => { on = true; label(); au.volume = cur; au.play().then(() => fade(ducked ? DUCK : FULL)).catch(() => { on = false; label(); }); try { sessionStorage.setItem("oeuvre-sound", "1"); } catch (_) { } };
-      const stop = () => { on = false; label(); fade(0); try { sessionStorage.removeItem("oeuvre-sound"); } catch (_) { } };
+      const level = v => { if (!ctx) return; amb.gain.cancelScheduledValues(ctx.currentTime); amb.gain.setTargetAtTime(v, ctx.currentTime, 1.1); };
+      const load = () => {
+        if (buf || loading) return; loading = true;
+        fetch(URL_).then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no))).then(b => {
+          buf = b; loading = false; if (!on || src) return;
+          src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(amb); src.start(0); level(ducked ? DUCK : FULL);
+        }).catch(() => { loading = false; });
+      };
+      const resume = () => { if (ctx && ctx.state === "suspended" && on) ctx.resume().catch(() => { }); };
+      const start = () => { on = true; label(); ensure(); load(); if (src) level(ducked ? DUCK : FULL); resume(); try { localStorage.removeItem(KEY); } catch (_) { } };
+      const stop = () => { on = false; label(); level(0); try { localStorage.setItem(KEY, "1"); } catch (_) { } };
       btn.addEventListener("click", () => on ? stop() : start());
-      document.addEventListener("visibilitychange", () => { if (!on) return; if (document.hidden) au.pause(); else au.play().catch(() => { }); });
-      let wanted = false; try { wanted = sessionStorage.getItem("oeuvre-sound") === "1"; } catch (_) { }
-      if (wanted) { const once = () => { removeEventListener("pointerdown", once, true); removeEventListener("keydown", once, true); if (!on) start(); }; addEventListener("pointerdown", once, true); addEventListener("keydown", once, true); }
-      return { state(s) { const d = s === "speaking" || s === "listening" || s === "thinking"; if (d === ducked) return; ducked = d; if (on) fade(d ? DUCK : FULL); } };
+      document.addEventListener("visibilitychange", () => { if (!ctx || !on) return; if (document.hidden) ctx.suspend().catch(() => { }); else resume(); });
+      ["pointerdown", "keydown", "touchend", "click"].forEach(t => addEventListener(t, resume, { capture: true, passive: true }));
+      /* the pointer's voice: a bell note for each stretch of travel, pitch from height, pan from the side, louder when quicker */
+      const SC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+      let acc = 0, lt = 0, lx = null, ly = null, lastNote = 0;
+      const bell = (x, y, vel, low) => {
+        if (!on || !ctx || ctx.state !== "running") return;
+        const t = ctx.currentTime, i = Math.max(0, Math.min(SC.length - 1, Math.floor((1 - y / H) * SC.length)));
+        const f = (low ? 110 : 261.63) * Math.pow(2, SC[i] / 12) * (low ? 1 : 1);
+        const g = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+        const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+        o1.type = "sine"; o1.frequency.value = f; o2.type = "triangle"; o2.frequency.value = f * 2.76; g2.gain.value = 0.18;   // an inharmonic partial: glass
+        o1.connect(g); o2.connect(g2); g2.connect(g);
+        const peak = 0.05 * vel * (ducked ? 0.35 : 1);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + (low ? 0.5 : 1.5));
+        if (pn) { pn.pan.value = Math.max(-0.85, Math.min(0.85, (x / W) * 2 - 1)); g.connect(pn); pn.connect(fx); } else g.connect(fx);
+        o1.start(t); o2.start(t); o1.stop(t + 1.7); o2.stop(t + 1.7);
+      };
+      window.__oeuvreSound = {
+        move(x, y) {
+          const now = performance.now();
+          if (lx !== null) { const d = Math.hypot(x - lx, y - ly); acc += d; const dt = Math.max(8, now - lt), sp = d / dt;
+            if (acc > 120 && now - lastNote > 80) { acc = 0; lastNote = now; bell(x, y, Math.max(0.25, Math.min(1, sp / 2.2)), false); } }
+          lx = x; ly = y; lt = now;
+        },
+        click(x, y) { bell(x, y, 0.9, true); },
+      };
+      if (!userOff) start(); else label();
+      return { state(s) { const d = s === "speaking" || s === "listening" || s === "thinking"; if (d === ducked) return; ducked = d; if (on) level(d ? DUCK : FULL); } };
+    })();
+
+
+    /* ---- type picker (temporary, for choosing): five faces for the brand line and the small words ---- */
+    (() => {
+      const FONTS = [["Inter Tight", "'Inter Tight', sans-serif"], ["Instrument Serif", "'Instrument Serif', serif"], ["Space Grotesk", "'Space Grotesk', sans-serif"], ["Syne", "'Syne', sans-serif"], ["Fraunces", "'Fraunces', serif"]];
+      let cur = 0; try { cur = Math.max(0, Math.min(4, (+localStorage.getItem("oeuvre-pick") || 1) - 1)); } catch (_) { }
+      const bar = document.createElement("div"); bar.className = "pick"; bar.setAttribute("role", "group"); bar.setAttribute("aria-label", "Type options");
+      const set = i => { cur = i; root.style.setProperty("--pick", FONTS[i][1]); root.dataset.pick = i + 1; [...bar.children].forEach((b, k) => b.setAttribute("aria-pressed", k === i)); try { localStorage.setItem("oeuvre-pick", i + 1); } catch (_) { } };
+      FONTS.forEach((f, i) => { const b = document.createElement("button"); b.type = "button"; b.title = f[0]; b.textContent = i + 1; b.style.fontFamily = f[1]; b.addEventListener("click", () => set(i)); bar.appendChild(b); });
+      const lab = document.createElement("span"); lab.className = "pick-l"; lab.textContent = "Type"; bar.prepend(lab);
+      body.appendChild(bar); set(cur);
     })();
 
     const toggle = $("#indexToggle");
@@ -499,15 +553,15 @@
           requestAnimationFrame(step);
         };
         const spawn = () => {
-          const text = next(), big = R() < 0.18, fsz = (W < 700 ? 10.5 : 11.5) * (big ? 1.5 : 0.9 + R() * 0.35), p = spot(text, fsz); if (!p) return;
+          const text = next(), dep = [0.18, 0.3, 0.45, 0.62, 0.8, 1][R() * 6 | 0], fsz = (W < 700 ? 9.5 : 10.5) * (0.8 + dep * 0.9), p = spot(text, fsz); if (!p) return;   // dep: far (small, dim, soft) to near (large, bright, sharp)
           const el = document.createElement("span"); el.className = "biz";
-          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz.toFixed(1)}px`;
+          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz.toFixed(1)}px;--o:${(0.14 + dep * 0.56).toFixed(2)};--blur:${((1 - dep) * 1.6).toFixed(2)}px`;
           tagsEl.appendChild(el);
           const life = 5000 + R() * 5000, o = { el, r: p.r };
           live.push(o);
           scramble(el, text, 1, 650 + R() * 350);
           requestAnimationFrame(() => requestAnimationFrame(() => {
-            el.style.setProperty("--dx", ((R() - 0.5) * 60).toFixed(1) + "px"); el.style.setProperty("--dy", ((R() - 0.5) * 36).toFixed(1) + "px");
+            el.style.setProperty("--dx", ((R() - 0.5) * (30 + dep * 60)).toFixed(1) + "px"); el.style.setProperty("--dy", ((R() - 0.5) * (18 + dep * 36)).toFixed(1) + "px");
             el.style.setProperty("--life", life + "ms"); el.classList.add("in");
           }));
           setTimeout(() => { el.classList.remove("in"); scramble(el, text, -1, 600); }, life - 900);
@@ -697,16 +751,17 @@
     let cx = -80, cy = -80, tx = -80, ty = -80, seen = false;
     const aim = (x, y) => { tx = x; ty = y; if (!seen) { cx = x; cy = y; seen = true; } d.classList.add("on"); };
     const isBig = el => !!(el && el.closest && el.closest("a,button,summary,#wordHit,[role=button]"));
-    addEventListener("pointermove", e => { aim(e.clientX, e.clientY); d.classList.toggle("big", isBig(e.target)); }, { passive: true });
+    addEventListener("pointermove", e => { aim(e.clientX, e.clientY); d.classList.toggle("big", isBig(e.target)); if (window.__oeuvreSound) window.__oeuvreSound.move(e.clientX, e.clientY); }, { passive: true });
     document.addEventListener("pointerleave", () => d.classList.remove("on"));
     document.addEventListener("pointerover", e => d.classList.toggle("big", isBig(e.target)));
-    addEventListener("pointerdown", () => d.classList.add("down")); addEventListener("pointerup", () => d.classList.remove("down"));
+    addEventListener("pointerdown", e => { d.classList.add("down"); if (window.__oeuvreSound) window.__oeuvreSound.click(e.clientX, e.clientY); }); addEventListener("pointerup", () => d.classList.remove("down"));
     addEventListener("message", e => {
       const fr = $("#being"); let ok = false; try { ok = !!fr && e.source === fr.contentWindow; } catch (_) { }
       if (e.origin !== location.origin || !ok || !e.data || e.data.type !== "oeuvre-cursor") return;
       const m = e.data;
       if (m.inside === false) { d.classList.remove("on"); return; }
-      if (Number.isFinite(m.x) && Number.isFinite(m.y)) aim(m.x, m.y);
+      if (Number.isFinite(m.x) && Number.isFinite(m.y)) { aim(m.x, m.y); if (window.__oeuvreSound) window.__oeuvreSound.move(m.x, m.y); }
+      if (m.down && !d.classList.contains("down") && window.__oeuvreSound) window.__oeuvreSound.click(m.x, m.y);
       d.classList.toggle("big", !!m.hover); d.classList.toggle("down", !!m.down);
     });
     const step = () => { cx += (tx - cx) * 0.28; cy += (ty - cy) * 0.28; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };

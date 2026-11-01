@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261101i"  # bump to bust caches of css/js
+VERSION = "20261101j"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -105,7 +105,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Instrument+Serif&amp;family=Space+Grotesk:wght@300;400;500&amp;family=Syne:wght@400;500&amp;family=Fraunces:opsz,wght@9..144,300;9..144,400&amp;display=swap">
 <link rel="stylesheet" href="/assets/site.css?v={VERSION}">
 <script>(function(d){{d.className=d.className.replace('no-js','js');try{{if(sessionStorage.getItem('oeuvre-iris')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' arriving'}}catch(e){{}}}})(document.documentElement)</script>
 <script src="/assets/site.js?v={VERSION}" defer></script>
@@ -123,7 +123,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
   <p class="foot-legal">{esc(s['legal'])}</p>
   <div class="langs" role="group" aria-label="{esc(s['languages'])}">{''.join(langs)}</div>
 </footer>
-{'<audio id="ambient" loop preload="none"><source src="/assets/audio/ambient.m4a" type="audio/mp4"><source src="/assets/audio/ambient.mp3" type="audio/mpeg"></audio>' + chr(10) if page_id == 'home' else ''}<canvas id="iris" aria-hidden="true"></canvas>
+<canvas id="iris" aria-hidden="true"></canvas>
 <div id="live" class="sr-only" aria-live="polite"></div>
 </body>
 </html>
@@ -173,7 +173,7 @@ def home(c, P):
   <canvas id="menu" aria-hidden="true"></canvas>
   <a id="wordHit" class="word-hit" href="{P}{c["menu"][0]["href"]}" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
-    <div class="home-copy"><p class="home-statement">{esc(s['statement'])}</p>
+    <div class="home-copy"><p class="home-statement">{esc(s['statement']).replace('. ', '.<br>')}</p>
     <p class="home-support">{esc(s.get('support',''))}</p></div>
   </div>
 </main>"""
