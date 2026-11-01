@@ -239,20 +239,21 @@
         const pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pn) { pn.pan.value = (Math.random() - 0.5) * 0.3; pn.connect(master); }
         const out = pn || master;
         const ns = ctx.createBufferSource(); ns.buffer = noise();
-        const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = (up ? 3600 : heavy ? 1500 : back ? 2100 : 2500) * j; bp.Q.value = 1.1;
-        const ng = ctx.createGain(); const np = (up ? 0.03 : heavy ? 0.16 : back ? 0.1 : 0.13) * duck;
-        ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(np, t + 0.002); ng.gain.exponentialRampToValueAtTime(0.0001, t + (up ? 0.018 : 0.04));
-        ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t, Math.random() * 0.03, 0.06);
+        const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = (up ? 5200 : heavy ? 2600 : back ? 3400 : 3900) * j; bp.Q.value = 2.4;
+        const ng = ctx.createGain(); const np = (up ? 0.05 : heavy ? 0.34 : back ? 0.26 : 0.3) * duck;
+        ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(np, t + 0.0007); ng.gain.exponentialRampToValueAtTime(0.0001, t + (up ? 0.009 : 0.016));
+        ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t, Math.random() * 0.03, 0.04);
         if (!up) {
-          const o = ctx.createOscillator(), og = ctx.createGain(); o.type = "sine";
-          const f0 = (heavy ? 150 : back ? 200 : 185) * j; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.5, t + 0.07);
-          og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime((heavy ? 0.2 : 0.13) * duck, t + 0.003); og.gain.exponentialRampToValueAtTime(0.0001, t + (heavy ? 0.12 : 0.085));
-          o.connect(og); og.connect(out); o.start(t); o.stop(t + 0.15);
+          // a short, high "tock" for the switch bottoming out, and a lighter tick a hair later for the keycap
+          const o = ctx.createOscillator(), og = ctx.createGain(); o.type = "triangle";
+          const f0 = (heavy ? 330 : back ? 460 : 520) * j; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, t + 0.03);
+          og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime((heavy ? 0.1 : 0.07) * duck, t + 0.001); og.gain.exponentialRampToValueAtTime(0.0001, t + (heavy ? 0.06 : 0.04));
+          o.connect(og); og.connect(out); o.start(t); o.stop(t + 0.08);
+          const t2 = t + (heavy ? 0.016 : 0.011), ns2 = ctx.createBufferSource(); ns2.buffer = noise();
+          const b2 = ctx.createBiquadFilter(); b2.type = "bandpass"; b2.frequency.value = 6200 * j; b2.Q.value = 3;
+          const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, t2); g2.gain.exponentialRampToValueAtTime(0.12 * duck, t2 + 0.0006); g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.008);
+          ns2.connect(b2); b2.connect(g2); g2.connect(out); ns2.start(t2, Math.random() * 0.03, 0.03);
         }
-        const hf = ctx.createBiquadFilter(); hf.type = "highpass"; hf.frequency.value = 5200;
-        const hs = ctx.createBufferSource(); hs.buffer = noise(); const hg = ctx.createGain();
-        hg.gain.setValueAtTime(0.0001, t); hg.gain.exponentialRampToValueAtTime((up ? 0.012 : 0.035) * duck, t + 0.001); hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
-        hs.connect(hf); hf.connect(hg); hg.connect(out); hs.start(t, 0.02, 0.02);
       };
       window.__oeuvreSound = {
         key: keyClick,
