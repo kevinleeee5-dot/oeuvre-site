@@ -280,7 +280,7 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 /* ---------- home: small business words (js fills #tags) ---------- */
 #tags { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
 .biz { position: absolute; font: 400 11.5px/1.4 "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; color: #fff; opacity: 0; white-space: nowrap; user-select: none;
-       transform: translate3d(0, 0, 0); transition: opacity .9s ease, transform var(--life, 7s) cubic-bezier(.25,.1,.25,1); text-shadow: 0 0 12px rgba(0, 0, 0, .6); min-width: 1ch; filter: blur(var(--blur, 0px)); }
+       transform: translate3d(0, 0, 0); transition: opacity .9s ease, transform var(--life, 7s) cubic-bezier(.25,.1,.25,1); min-width: 1ch; filter: blur(var(--blur, 0px)); }
 .biz.in { opacity: var(--o, .5); transform: translate3d(var(--dx, 0), var(--dy, 0), 0); }
 .biz.still { transition: none; transform: none; opacity: .36; }
 @media (prefers-reduced-motion: reduce) { .biz { transition: none; } }
