@@ -15,6 +15,7 @@
   html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); overflow:hidden; }
   body { font-family:var(--sans); -webkit-font-smoothing:antialiased; touch-action:none; user-select:none; -webkit-user-select:none; }
   button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  @media (hover:hover) and (pointer:fine) { html, body, *, *::before, *::after { cursor:none !important; } }   /* the site draws the pointer (a ring), over the figure too */
   canvas#c { position:fixed; inset:0; width:100%; height:100%; display:block; }
   body.onface canvas#c { cursor:pointer; }
   .sr-only { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
@@ -47,8 +48,27 @@
   #panel.talked #chips { order:6; }   /* after the first exchange the suggestions follow the latest reply, just above the input */
   body.loading #panel, body.loading #tab { opacity:0; pointer-events:none; }
   body:not(.panelopen) #panel { opacity:0; transform:translate(24px,0); pointer-events:none; visibility:hidden; transition:opacity .4s var(--ease), transform .5s var(--ease), visibility 0s linear .5s; }
-  #panel::before { content:""; position:absolute; inset:-40px -28px -40px -64px; z-index:-1; pointer-events:none;   /* a faint ground: the text reads over a shoulder */
-    background:radial-gradient(closest-side, rgba(0,0,0,.6), rgba(0,0,0,.35) 60%, rgba(0,0,0,0)); }
+  #panel { text-shadow:0 0 14px #000, 0 0 3px rgba(0,0,0,.8); }   /* no ground behind it: the words carry their own shadow */
+  /* waiting: the column is not a form but a presence that is expecting you */
+  @keyframes breathe { 50% { opacity:.25; transform:scale(.7); } }
+  @keyframes floaty { 50% { transform:translateY(-2px); } }
+  @keyframes sweep { from { background-position:-40% 0; } to { background-position:140% 0; } }
+  @keyframes ringout { from { opacity:.5; transform:scale(.7); } to { opacity:0; transform:scale(1.9); } }
+  @keyframes inword { from { opacity:0; transform:translateY(5px); filter:blur(3px); } }
+  body:not(.listening):not(.speaking):not(.thinking) .live { animation:breathe 2.6s ease-in-out infinite; }
+  #panel:not(.talked) .chip { animation:rise .7s var(--ease) both, floaty 5.5s ease-in-out infinite; }
+  #panel:not(.talked) .chip:nth-child(1) { animation-delay:.5s, 1.2s; } #panel:not(.talked) .chip:nth-child(2) { animation-delay:.65s, 2.3s; }
+  #panel:not(.talked) .chip:nth-child(3) { animation-delay:.8s, 3.4s; } #panel:not(.talked) .chip:nth-child(4) { animation-delay:.95s, 4.5s; }
+  .lede .w { display:inline-block; animation:inword .8s var(--ease) both; }
+  .inrow { position:relative; }
+  .inrow::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1px; pointer-events:none; opacity:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.85) 50%, transparent) no-repeat; background-size:40% 100%; background-position:-40% 0; }
+  body:not(.listening):not(.thinking):not(.speaking) #panel:not(.talked) .inrow:not(:focus-within)::after { opacity:1; animation:sweep 3.4s var(--ease) infinite; }
+  .mic { position:relative; }
+  .mic::after { content:""; position:absolute; inset:0; border-radius:99px; border:1px solid rgba(255,255,255,.45); opacity:0; pointer-events:none; }
+  body:not(.listening):not(.thinking):not(.speaking) #panel:not(.talked) .mic::after { animation:ringout 3.2s ease-out 1.4s infinite; }
+  #say::placeholder { transition:opacity .3s; }
+  @media (prefers-reduced-motion: reduce) { .live, .chip, .lede .w, .inrow::after, .mic::after { animation:none !important; } }
   .meta { font:500 10.5px/1.4 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--soft); }
   .ph { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:10px; border-bottom:1px solid var(--hair); }
   .ph .meta { display:inline-flex; align-items:center; gap:9px; }
@@ -63,7 +83,7 @@
   #panel.talked .lede { display:none; }   /* once it is talking the thread gets the room */
   .lede { margin:0; font-size:15px; line-height:1.45; color:var(--fg); letter-spacing:-.005em; max-width:30ch; }
   .chips { display:flex; flex-wrap:wrap; gap:7px; }
-  .chip { font:400 12.5px/1 var(--sans); padding:8px 12px; border:1px solid var(--hair); border-radius:99px; color:var(--soft); background:rgba(0,0,0,.35);
+  .chip { font:400 12.5px/1 var(--sans); padding:8px 12px; border:1px solid var(--hair); border-radius:99px; color:var(--soft); background:transparent;
     transition:color .25s, border-color .25s, background .25s, opacity .4s, transform .4s var(--ease); }
   .chip:hover { color:#000; background:var(--fg); border-color:var(--fg); }
   .chip.used { display:none; }
@@ -88,7 +108,7 @@
   /* the reply's action chips: the suggestions' pill, a little brighter; shown faint while the reply types, lit when it is done */
   .acts { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; white-space:normal; transition:opacity .6s var(--ease); }
   .acts.wait { opacity:.35; pointer-events:none; }
-  .go { font:400 12.5px/1 var(--sans); padding:8px 12px; border-radius:99px; border:1px solid rgba(255,255,255,.35); color:var(--fg); background:rgba(0,0,0,.35);
+  .go { font:400 12.5px/1 var(--sans); padding:8px 12px; border-radius:99px; border:1px solid rgba(255,255,255,.35); color:var(--fg); background:transparent;
     animation:rise .5s var(--ease) both; transition:border-color .25s, background .25s; }
   .go:hover, .go:focus-visible { border-color:var(--fg); background:rgba(255,255,255,.06); }
   .go .ar { display:inline-block; margin-left:6px; transition:transform .3s var(--ease); }
@@ -120,7 +140,7 @@
   .foot .meta { color:var(--dim); font-size:9.5px; }
   /* collapsed: a vertical 'Talk' pill on the right edge, where the column's middle was */
   .tab { position:fixed; z-index:3; right:0; top:50%; transform:translate(0,-50%); writing-mode:vertical-rl; width:36px; min-height:120px; padding:18px 0; justify-content:center;
-    border:1px solid rgba(255,255,255,.28); border-right:0; border-radius:18px 0 0 18px; background:rgba(0,0,0,.55); font:500 11px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--fg);
+    border:1px solid rgba(255,255,255,.28); border-right:0; border-radius:18px 0 0 18px; background:transparent; font:500 11px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--fg);
     display:inline-flex; align-items:center; gap:12px; transition:opacity .4s var(--ease), transform .5s var(--ease), background .25s, visibility 0s linear 0s; }
   .tab .live { opacity:.7; }
   .tab:hover { background:rgba(255,255,255,.1); }
@@ -725,7 +745,7 @@
     if (!phone) { var maxS = (CHIN_MAX - HEADROOM) * H / (chinY(faceBox) - top); if (S > maxS) S = maxS; }    // a short screen: the chin stays up
     var minS = ((1 - (phone && !land ? CROWN_COMPACT : HEADROOM)) * H + BLEED) / (imgH - top); if (S < minS) S = minS;   // the bottom edge never shows
     var cxI = faceBox[0] + faceBox[2] / 2, cyI = faceBox[1] + faceBox[3] / 2;
-    var cx = phone ? W / 2 : W / 2 - Math.min(0.07 * W, 0.3 * (opts.right || 0));
+    var cx = W / 2;                                                                                           // centred, on every screen
     var ox = cx - cxI * S;
     var oy = FACE_Y * H - cyI * S;
     oy = Math.max(oy, HEADROOM * H - top * S);                                                                // the crown in frame, with headroom
@@ -1018,7 +1038,7 @@
   // where the video frame sits in the photo's uv (rect: photo px from tools/vid_register.py)
   function vidUvRect(rect, W, H) { return [rect[0] / W, rect[1] / H, rect[2] / W, rect[3] / H]; }
   // the crossfade between the still and a clip's first / last frame: short where they agree, longer where they do not (i's hair)
-  function fadeMs(gray) { return gray > 10 ? 900 : gray > 6 ? 550 : 350; }
+  function fadeMs(gray) { return gray > 10 ? 260 : gray > 6 ? 200 : 140; }   // short: still and clip are never both visible for long (they are registered, not identical)
   // the erosion grain is set in cells per face width (being3's 1536 px portraits: 280 cells across, ~131.6 per face width),
   // so the transition looks the same on the landscape 2400 px portraits with a smaller face share
   var ERODE_CELLS = 131.6;
@@ -1083,13 +1103,13 @@
     "  float lid = texture(T, uv).g / max(0.02, texture(T, uv - g).g); col *= mix(1.0, clamp(lid, 0.55, 1.15), 0.35 * inIris);\n" +
     "  return col; }\n" +
     "vec3 pick(sampler2D T, vec2 uv, vec4 iL, vec4 iR){ if (uEye == 1) return eye(T, uv, uv.x < 0.5 ? iL : iR); return texture(T, uv, -0.5).rgb; }\n" +
-    // the clips are softer than the stills (a 1080p render lifted to 1664): an unsharp mask plus the still's own fine texture (pores, hairs: the generator smooths them away, and the faces hardly move in a calm clip) bring them to the still's detail, so the cross-fade does not read as a change of focus
+    // the clips are softer than the stills (a 1080p render lifted to 1664): an unsharp mask lifts their fine detail to the still's, so the cross-fade does not read as a change of focus
     "vec3 vidSharp(vec2 vu){ vec2 px = 1.0 / vec2(textureSize(uVidTex, 0)); vec3 c = texture(uVidTex, vu).rgb;\n" +
     "  vec3 b = (texture(uVidTex, vu + vec2(px.x, 0.0)).rgb + texture(uVidTex, vu - vec2(px.x, 0.0)).rgb + texture(uVidTex, vu + vec2(0.0, px.y)).rgb + texture(uVidTex, vu - vec2(0.0, px.y)).rgb) * 0.25;\n" +
-    "  vec3 d = c - b; return c + clamp(d * 1.2, -0.08, 0.08); }\n" +
+    "  vec3 d = c - b; return c + clamp(d * 1.7, -0.10, 0.10); }\n" +
     "void main(){ vec3 col = pick(uTex, vUv, uIrisL, uIrisR); float fe = edges(vUv);\n" +
     // the clip, in register with the still (uVidR: the video frame's rect in the photo's uv), crossfaded by uVid
-    "  if (uVid > 0.0) { vec2 vu = (vUv - uVidR.xy) / uVidR.zw; if (vu.x >= 0.0 && vu.y >= 0.0 && vu.x <= 1.0 && vu.y <= 1.0) col = mix(col, vidSharp(vu) + clamp(col - textureLod(uTex, vUv, 1.8).rgb, -0.12, 0.12) * 0.9, uVid); }\n" +                      // edges(): in NOISE, shared with the grains
+    "  if (uVid > 0.0) { vec2 vu = (vUv - uVidR.xy) / uVidR.zw; if (vu.x >= 0.0 && vu.y >= 0.0 && vu.x <= 1.0 && vu.y <= 1.0) col = mix(col, vidSharp(vu), uVid); }\n" +                      // edges(): in NOISE, shared with the grains
     "  if (uTrans == 1) {\n" +
     // k < 0: still the old face; k > 1: the new one; between (a band uBand wide, up to 1.3x wider where the two pictures differ)
     // the old surface is eroded: a pixel goes when k passes its place n in the erosion pattern, over a soft edge uSoft wide, so
@@ -1882,6 +1902,18 @@
   // ===========================================================================
   function parentWin() { try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; } }
   function post(msg) { var p = parentWin(); if (!p || !LOC.origin || LOC.origin === "null") return; try { p.postMessage(msg, LOC.origin); } catch (e) {} }
+  // the pointer ring is the site's: report where the mouse is (the iframe swallows the events), whether it is over something live, and the press
+  var curDown = false;
+  function curMsg(e, inside) {
+    var t = e && e.target, hov = !!(t && t.closest && t.closest("#panel button, #panel input, #tab, #nextface, .chip, .go, a")) || document.body.classList.contains("onface");
+    post({ type: "oeuvre-cursor", x: e ? e.clientX : 0, y: e ? e.clientY : 0, inside: inside, hover: hov, down: curDown });
+  }
+  if (window.matchMedia && matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    window.addEventListener("pointermove", function (e) { if (e.pointerType === "mouse") curMsg(e, true); }, { passive: true });
+    window.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse") { curDown = true; curMsg(e, true); } }, { passive: true });
+    window.addEventListener("pointerup", function (e) { if (e.pointerType === "mouse") { curDown = false; curMsg(e, true); } }, { passive: true });
+    document.documentElement.addEventListener("pointerleave", function (e) { curDown = false; curMsg(e, false); });
+  }
   window.addEventListener("message", function (e) {
     var p = parentWin(); if (!p || e.source !== p) return;
     if (!LOC.origin || LOC.origin === "null" || e.origin !== LOC.origin) return;
@@ -2225,6 +2257,31 @@
     requestAnimationFrame(frame);
     if (PARAM.cycle) loadRest();
   }).catch(function (e) { gateText.textContent = "it could not find its face. open this page from its folder over http (assets/ids4/ids.json)."; console.error(e); });
+</script>
+<script>
+// the column's idle life: the lede arrives word by word, and the empty input keeps trying out questions, typed and erased,
+// until it is touched (focus, typing, a first exchange) or the figure is listening, thinking or speaking
+(function () {
+  var rm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var lede = document.querySelector(".lede"), say = document.getElementById("say"), panel = document.getElementById("panel");
+  if (lede && !rm) { var words = lede.textContent.trim().split(/\s+/); lede.setAttribute("aria-label", words.join(" ")); lede.innerHTML = words.map(function (w, i) { return '<span class="w" aria-hidden="true" style="animation-delay:' + (0.25 + i * 0.07).toFixed(2) + 's">' + w + "</span>"; }).join(" "); }
+  if (!say || rm) return;
+  var Q = ["What could we build for you?", "How does a project start?", "Tell it about your brand", "Show me your work", "Can you make an app for us?", "What does the studio do?", "Who are you?"];
+  var base = say.getAttribute("placeholder"), qi = 0, ci = 0, dir = 1, wait = 0, timer = 0;
+  function idle() { return !say.value && document.activeElement !== say && !panel.classList.contains("talked") && !/\b(listening|thinking|speaking)\b/.test(document.body.className); }
+  function tick() {
+    if (!idle()) { say.setAttribute("placeholder", base); ci = 0; dir = 1; timer = setTimeout(tick, 600); return; }
+    var q = Q[qi % Q.length];
+    if (wait > 0) { wait--; timer = setTimeout(tick, 60); return; }
+    ci += dir;
+    if (ci >= q.length) { ci = q.length; dir = -1; wait = 30; }
+    else if (ci <= 0) { ci = 0; dir = 1; qi++; wait = 6; }
+    say.setAttribute("placeholder", q.slice(0, ci) + (ci % 2 ? "\u258f" : " "));
+    timer = setTimeout(tick, dir > 0 ? 55 + Math.random() * 50 : 22);
+  }
+  say.addEventListener("focus", function () { say.setAttribute("placeholder", base); });
+  setTimeout(tick, 1800);
+})();
 </script>
 </body>
 </html>
