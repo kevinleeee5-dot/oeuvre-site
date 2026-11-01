@@ -6,6 +6,9 @@ Options -Indexes
 # /api/talk (what the figure calls) -> api/talk.php; keep repo-only folders and notes off the web
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  # one canonical host: www -> apex, https enforced by the host
+  RewriteCond %{HTTP_HOST} ^www\.oeuvre\.co\.nz$ [NC]
+  RewriteRule ^(.*)$ https://oeuvre.co.nz/$1 [R=301,L]
   RewriteRule ^api/talk/?$ api/talk.php [L]
   RewriteRule ^(tools|docs|proto)(/|$) - [R=404,L]
   RewriteRule (^|/)README\.md$ - [R=404,L]

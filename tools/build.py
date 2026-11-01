@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102h"  # bump to bust caches of css/js
+VERSION = "20261102i"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -63,9 +63,36 @@ def fix_sizes(img):
 
 # ---------------------------------------------------------------- shell
 
+def jsonld(c, page_id, canonical, full_title, description):
+    """Structured data from facts already on the site: name, legal name, url, email, Auckland, services."""
+    s = c["site"]
+    org = {"@type": "Organization", "@id": s["url"] + "/#org", "name": s["name"], "url": s["url"] + "/",
+           "legalName": "BNB Management Consulting Ltd", "email": s["email"],
+           "logo": s["url"] + "/assets/favicon.svg", "image": s["url"] + "/assets/og.png",
+           "description": s.get("metaDescription", s["description"]),
+           "areaServed": {"@type": "Country", "name": "New Zealand"},
+           "location": {"@type": "Place", "address": {"@type": "PostalAddress", "addressLocality": "Auckland", "addressCountry": "NZ"}},
+           "knowsAbout": [i["name"] for i in c["services"]["items"] if not i.get("soon")]}
+    if page_id == "home":
+        graph = [org, {"@type": "WebSite", "@id": s["url"] + "/#site", "url": s["url"] + "/", "name": s["name"],
+                       "inLanguage": c["htmlLang"], "publisher": {"@id": s["url"] + "/#org"}}]
+    else:
+        crumbs = [("Home", s["url"] + "/")]
+        if page_id != "notfound":
+            crumbs.append((full_title.split(" — ")[0], canonical))
+        graph = [{"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": i + 1, "name": n, "item": u} for i, (n, u) in enumerate(crumbs)]}]
+        if page_id == "services":
+            graph.append({"@type": "ItemList", "itemListElement": [
+                {"@type": "ListItem", "position": i + 1, "item": {"@type": "Service", "name": it["name"], "description": it["what"],
+                 "provider": {"@id": s["url"] + "/#org"}, "areaServed": "NZ"}}
+                for i, it in enumerate([x for x in c["services"]["items"] if not x.get("soon")])]})
+    return '<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + "</script>"
+
+
 def page(c, *, lang_prefix, path, page_id, section, title, description, body, body_class="", alternates=()):
     s = c["site"]
-    full_title = s["name"] if page_id == "home" else f"{title} — {s['name']}"
+    full_title = s.get("homeTitle", s["name"]) if page_id == "home" else (title if s["name"] in title else f"{title} — {s['name']}")
     canonical = s["url"] + path
     langs = []
     for l in c["languages"]:
@@ -93,6 +120,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <title>{esc(full_title)}</title>
 <meta name="description" content="{esc(description)}">
 <meta name="google-site-verification" content="HdM9d1ZrdcDQDWXiHn4fNgn0pB8N0wssrnslsydQ_Ps">
+{'<meta name="robots" content="noindex">' if page_id == "notfound" else ""}
 <link rel="canonical" href="{esc(canonical)}">
 {alt_links}
 <meta property="og:type" content="website">
@@ -100,14 +128,22 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <meta property="og:title" content="{esc(full_title)}">
 <meta property="og:description" content="{esc(description)}">
 <meta property="og:url" content="{esc(canonical)}">
+<meta property="og:locale" content="{esc(c['htmlLang'].replace('-', '_'))}">
 <meta property="og:image" content="{esc(s['url'])}/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{esc(s.get('ogAlt', s['name']))}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{esc(full_title)}">
+<meta name="twitter:description" content="{esc(description)}">
+<meta name="twitter:image" content="{esc(s['url'])}/assets/og.png">
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Oeuvre">
 <link rel="manifest" href="/assets/site.webmanifest">
+{jsonld(c, page_id, canonical, full_title, description)}
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -173,7 +209,7 @@ def home(c, P):
     ln = "".join(f"<span>{esc(t.strip().rstrip('.'))}.</span>" for t in s["statement"].split(". ") if t.strip().strip("."))
     body = f"""<div id="intro" aria-hidden="true"><canvas id="introC"></canvas><div class="i-name">{esc(s["name"])}</div></div>
 <main id="main" class="home">
-  <h1 class="sr-only">{esc(s['name'])} — {esc(s['statement'])}</h1>
+  <h1 class="sr-only">{esc(s.get('homeH1', s['name'] + ' — ' + s['statement']))}</h1>
   <div class="being">
     <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
   </div>
@@ -332,15 +368,15 @@ def build():
                    [("x-default", en["site"]["url"] + path)]
 
         pages = [
-            ("index.html", "/", "home", "", c["site"]["name"], c["site"]["description"], home(c, P)),
-            ("work/index.html", "/work/", "work", "work", c["work"]["title"], c["work"]["metaDescription"], work_index(c, P)),
+            ("index.html", "/", "home", "", c["site"]["name"], c["site"].get("metaDescription", c["site"]["description"]), home(c, P)),
+            ("work/index.html", "/work/", "work", "work", c["work"].get("metaTitle", c["work"]["title"]), c["work"]["metaDescription"], work_index(c, P)),
         ]
         for i, p in enumerate(c["work"]["projects"] if c["work"].get("publishDetail", True) else []):
             pages.append((f"work/{p['slug']}/index.html", f"/work/{p['slug']}/", "case", "work", p["name"], p["outcome"], case(c, P, i)))
         pages += [
-            ("services/index.html", "/services/", "services", "services", c["services"]["title"], c["services"]["metaDescription"], services(c, P)),
-            ("studio/index.html", "/studio/", "studio", "studio", c["studio"]["title"], c["studio"]["metaDescription"], studio(c, P)),
-            ("contact/index.html", "/contact/", "contact", "contact", c["contact"]["title"], c["contact"]["metaDescription"], contact(c, P)),
+            ("services/index.html", "/services/", "services", "services", c["services"].get("metaTitle", c["services"]["title"]), c["services"]["metaDescription"], services(c, P)),
+            ("studio/index.html", "/studio/", "studio", "studio", c["studio"].get("metaTitle", c["studio"]["title"]), c["studio"]["metaDescription"], studio(c, P)),
+            ("contact/index.html", "/contact/", "contact", "contact", c["contact"].get("metaTitle", c["contact"]["title"]), c["contact"]["metaDescription"], contact(c, P)),
         ]
         for rel, path, pid, section, title, desc, body in pages:
             written.append(write(base + rel, page(c, lang_prefix=P, path=path, page_id=pid, section=section, title=title,
@@ -349,7 +385,7 @@ def build():
         if code == "en":
             written.append(write("404.html", page(c, lang_prefix=P, path="/404.html", page_id="notfound", section="",
                                                   title="404", description=c["notFound"]["text"], body=not_found(c, P))))
-    sitemap = "\n".join(f"  <url><loc>{esc(u)}</loc></url>" for u in urls)
+    sitemap = "\n".join(f"  <url><loc>{esc(u)}</loc><lastmod>{__import__('datetime').date.today().isoformat()}</lastmod></url>" for u in urls)
     written.append(write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap}\n</urlset>\n'))
     written.append(write("robots.txt", f"User-agent: *\nAllow: /\nDisallow: /proto/\nDisallow: /tools/\nSitemap: {en['site']['url']}/sitemap.xml\n"))
     print("\n".join(written))

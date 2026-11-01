@@ -25,7 +25,11 @@
     "beingTitle": "A photographic figure you can talk to",
     "copyright": "© 2026 BNB Management Consulting Ltd",
     "ctaLead": "Have something in mind?",
-    "ctaLink": "Start a conversation"
+    "ctaLink": "Start a conversation",
+    "homeTitle": "Oeuvre — Brand and digital studio in Auckland",
+    "homeH1": "Oeuvre — Brand and digital studio in Auckland. Creative thinking. Digital making.",
+    "metaDescription": "Oeuvre is a brand and digital studio in Auckland. Brand identity, websites, digital products and motion — one team, from first idea to launch and care.",
+    "ogAlt": "Oeuvre — Brand and digital studio, Auckland"
   },
   "languages": [
     {
@@ -72,7 +76,7 @@
   ],
   "work": {
     "title": "Work",
-    "metaDescription": "Selected work by Oeuvre: BeiCare, MUZI, Folio and ACE.",
+    "metaDescription": "Selected brand, web and digital product work by Oeuvre, an Auckland studio: BeiCare, MUZI, Folio and ACE.",
     "intro": "Selected projects. Each one taken from first idea to the thing people use.",
     "next": "Next project",
     "all": "All work",
@@ -284,11 +288,12 @@
         ]
       }
     ],
-    "publishDetail": false
+    "publishDetail": false,
+    "metaTitle": "Work — Brand, web and digital product projects | Oeuvre"
   },
   "services": {
     "title": "Services",
-    "metaDescription": "Brand, digital product, web, motion and photography — one team.",
+    "metaDescription": "Brand identity, websites, digital products, motion and content from one Auckland studio. Hire one discipline, or all of them.",
     "intro": "Five disciplines, one team. Hire one, or all of them.",
     "closing": "One team, start to finish — and after.",
     "cta": "Start a project",
@@ -334,11 +339,12 @@
         "get": "Opening in 2027. Ask early to book a first shoot.",
         "time": "—"
       }
-    ]
+    ],
+    "metaTitle": "Services — Brand, web and digital product design | Oeuvre"
   },
   "studio": {
     "title": "Studio",
-    "metaDescription": "Oeuvre is a small studio in Auckland. Designers and engineers on the same brief.",
+    "metaDescription": "Oeuvre is a small brand and digital studio in Auckland. Designers and engineers on the same brief, from first idea to launch and care.",
     "statement": "We create brands, websites and digital experiences that help businesses stand out.",
     "body": [
       "A small studio in Auckland. Designers and engineers in the same room, on the same brief.",
@@ -359,16 +365,18 @@
         "name": "Built to be looked after.",
         "text": "Launch is the middle, not the end."
       }
-    ]
+    ],
+    "metaTitle": "Studio — A brand and digital studio in Auckland | Oeuvre"
   },
   "contact": {
     "title": "Contact",
-    "metaDescription": "Write to Oeuvre: info@bnbmanagement.co.nz.",
+    "metaDescription": "Start a brand, website or digital product project with Oeuvre in Auckland. Write to info@bnbmanagement.co.nz.",
     "lead": "Tell us three things: what you make, what's not working, and when you'd like it fixed.",
     "copy": "Copy email",
     "copied": "Copied",
     "write": "Write to us",
-    "reply": "We reply within two working days."
+    "reply": "We reply within two working days.",
+    "metaTitle": "Contact Oeuvre — Start a project in Auckland"
   },
   "notFound": {
     "title": "Nothing here. Yet.",
