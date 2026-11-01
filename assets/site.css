@@ -102,7 +102,9 @@ html.busy, html.busy * { cursor: progress !important; }
 .home-foot { position: absolute; z-index: 6; left: var(--gutter); right: var(--gutter); bottom: max(22px, env(safe-area-inset-bottom));
              display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; pointer-events: none; }
 .home-foot > * { pointer-events: auto; }
-.home-statement { margin: 0; font-size: clamp(14px, 1.25vw, 17px); max-width: 24ch; line-height: 1.35; }
+.home-statement { margin: 0; font-size: clamp(18px, 1.9vw, 26px); max-width: 16ch; line-height: 1.18; letter-spacing: -.01em; }
+.home-support { margin: 12px 0 0; font-size: clamp(12px, .95vw, 13.5px); max-width: 34ch; line-height: 1.45; color: rgba(255, 255, 255, .62); text-shadow: 0 0 14px rgba(0, 0, 0, .65); }
+.home-support:empty { display: none; }
 .p-home .foot { position: absolute; right: 0; bottom: 0; z-index: 7; padding: 0 var(--gutter) max(22px, env(safe-area-inset-bottom)); color: var(--fg); }
 /* the bust runs to the bottom edge: plain white with a soft dark halo reads over skin and black alike (no blend) */
 .home-statement, .p-home .langs { color: rgba(255, 255, 255, .92); text-shadow: 0 0 14px rgba(0, 0, 0, .65), 0 0 2px rgba(0, 0, 0, .5); }

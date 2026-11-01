@@ -4,8 +4,9 @@
   "site": {
     "name": "Oeuvre",
     "url": "https://oeuvre.co.nz",
-    "statement": "One team for a brand's whole digital life.",
-    "description": "Oeuvre is a small Auckland studio. Brand, apps, websites and motion — one team for a brand's whole digital life.",
+    "statement": "Creative thinking. Digital making.",
+    "support": "We create brands, websites and digital experiences that help businesses stand out.",
+    "description": "Creative thinking. Digital making. Oeuvre creates brands, websites and digital experiences that help businesses stand out. A small studio in Auckland.",
     "place": "Auckland, Aotearoa — New Zealand",
     "legal": "Oeuvre is a trading name of BNB Management Consulting Ltd.",
     "email": "info@bnbmanagement.co.nz",
@@ -338,11 +339,11 @@
   "studio": {
     "title": "Studio",
     "metaDescription": "Oeuvre is a small studio in Auckland. Designers and engineers on the same brief.",
-    "statement": "We design it, build it, and stay. One team for a brand's whole digital life.",
+    "statement": "We create brands, websites and digital experiences that help businesses stand out.",
     "body": [
       "A small studio in Auckland. Designers and engineers in the same room, on the same brief.",
       "No hand-offs between agencies. The people who start your project are the people who look after it.",
-      "We work in English and 中文 today, with te reo Māori on the way."
+      "We work in English today, with te reo Māori on the way."
     ],
     "principlesTitle": "Principles",
     "principles": [

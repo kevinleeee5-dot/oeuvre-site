@@ -173,7 +173,8 @@ def home(c, P):
   <canvas id="menu" aria-hidden="true"></canvas>
   <a id="wordHit" class="word-hit" href="{P}{c["menu"][0]["href"]}" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
-    <p class="home-statement">{esc(s['statement'])}</p>
+    <div class="home-copy"><p class="home-statement">{esc(s['statement'])}</p>
+    <p class="home-support">{esc(s.get('support',''))}</p></div>
   </div>
 </main>"""
     return body
