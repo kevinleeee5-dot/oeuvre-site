@@ -39,14 +39,14 @@ html.busy, html.busy * { cursor: progress !important; }
 .mini a { text-decoration: none; opacity: .62; transition: opacity .2s; position: relative; }
 .mini a:hover, .mini a[aria-current] { opacity: 1; }
 .mini a[aria-current]::before { content: ""; position: absolute; left: -10px; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: currentColor; }
-.chip { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 99px; padding: 7px 13px; font-weight: 500; }
-.chip:hover { background: var(--fg); color: var(--bg); }
+.chip { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; border: 0; padding: 7px 6px; font-weight: 500; opacity: .8; transition: opacity .2s; }
+.chip:hover { opacity: 1; }
 /* the sound toggle: icon only, a 36 px ring — a speaker with a small cross (off) or three moving bars (on) */
-.snd-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 1px; width: 36px; height: 36px; flex: none;
-           border: 1px solid currentColor; border-radius: 50%; transition: background .2s, color .2s; }
-.snd-btn::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; }   /* a 46 px hit area, same look */
-.snd-btn:hover { background: var(--fg); color: var(--bg); }
-.snd-btn .spk { width: 18px; height: 18px; display: block; margin-left: -1px; }
+.snd-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 1px; width: 28px; height: 28px; flex: none;
+           border: 0; border-radius: 50%; opacity: .8; transition: opacity .2s; }
+.snd-btn::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }   /* a 46 px hit area, same look */
+.snd-btn:hover { opacity: 1; }
+.snd-btn .spk { width: 15px; height: 15px; display: block; margin-left: -1px; }
 .snd { display: none; align-items: center; gap: 2px; height: 10px; margin-left: -3px; }
 .snd i { display: block; width: 1.5px; height: 4px; background: currentColor; border-radius: 1px; }
 .snd-btn[aria-pressed="true"] .spk .x { display: none; }
@@ -62,7 +62,7 @@ html.busy, html.busy * { cursor: progress !important; }
   .bar { gap: 14px; }
   /* bigger hit areas on phones, same look */
   .chip { min-height: 40px; min-width: 40px; display: inline-flex; align-items: center; justify-content: center; }
-  .snd-btn { width: 40px; height: 40px; }
+  .snd-btn { width: 32px; height: 32px; }
   .langs { gap: 2px; margin: -10px -6px; }
   .langs > * { padding: 10px 6px; min-width: 32px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
 }

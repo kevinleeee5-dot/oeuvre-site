@@ -382,7 +382,7 @@
     const nearPerson = () => { const f = isStatic ? fallback() : face; return { x: f.x - f.w * 0.15, y: f.y, w: f.w * 1.3, h: f.h * 1.7 }; };
     function onInk(x, y) {
       const w = words[cur], pts = w && w.pts; if (!pts || !pl) return true;
-      const u = (x - pl.x) / pl.fs, v = (y - pl.y) / pl.fs, r = Math.max(7, pl.fs * 0.07) / pl.fs, r2 = r * r;
+      const u = (x - pl.x) / pl.fs, v = (y - pl.y) / pl.fs, r = Math.max(16, pl.fs * 0.18) / pl.fs, r2 = r * r;
       for (let j = 0; j < pts.length; j += 2) { const du = pts[j] - u, dv = pts[j + 1] - v; if (du * du + dv * dv < r2) return true; }
       return false;
     }
@@ -525,7 +525,7 @@
       while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }
       if (steps) { streaks(c); clearPanel(); focusRing(); }
       if (perf) { const d = performance.now() - t0; perf.n++; perf.sum += d; if (d > perf.max) perf.max = d; if (steps) { perf.drawn++; perf.dsum += d; } }
-      placeHit(c > 0.6 && tw > GATHER * 0.6 && tw < HOLD_END + DISSOLVE * 0.15);
+      placeHit(c > 0.35 && tw > GATHER * 0.4 && tw < HOLD_END + DISSOLVE * 0.5);
     }
     addEventListener("resize", () => {
       if (!haveFace) face = fallback();
