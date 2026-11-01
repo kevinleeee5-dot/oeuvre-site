@@ -37,7 +37,8 @@
       "code": "zh",
       "label": "中",
       "name": "中文",
-      "ready": false
+      "ready": false,
+      "hidden": true
     },
     {
       "code": "mi",
@@ -281,7 +282,8 @@
           }
         ]
       }
-    ]
+    ],
+    "publishDetail": false
   },
   "services": {
     "title": "Services",
@@ -371,5 +373,27 @@
     "title": "Nothing here. Yet.",
     "text": "This page doesn't exist — or hasn't been made.",
     "home": "Go home"
-  }
+  },
+  "homeTags": [
+    "Brand strategy",
+    "Identity",
+    "Websites",
+    "Apps",
+    "Product design",
+    "AI agents",
+    "Content",
+    "Campaigns",
+    "Motion",
+    "3D & visuals",
+    "Social",
+    "Automation",
+    "Naming",
+    "Copywriting",
+    "E-commerce",
+    "Photography",
+    "Video",
+    "Analytics",
+    "Launch",
+    "Support"
+  ]
 }

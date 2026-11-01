@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261101g"  # bump to bust caches of css/js
+VERSION = "20261101h"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -69,6 +69,8 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
     canonical = s["url"] + path
     langs = []
     for l in c["languages"]:
+        if l.get("hidden"):                       # e.g. 中 while the Chinese site is off: no chip, no link
+            continue
         cur = l["code"] == c["lang"]
         if l["ready"]:
             href = ("/" if l["code"] == "en" else f"/{l['code']}/") + path.lstrip("/")
@@ -167,6 +169,7 @@ def home(c, P):
     <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
   </div>
   <nav class="words" aria-label="Main"><ul>{words}</ul></nav>
+  <div id="tags" aria-hidden="true" data-tags="{esc(json.dumps(c.get('homeTags', []), ensure_ascii=False))}"></div>
   <canvas id="menu" aria-hidden="true"></canvas>
   <a id="wordHit" class="word-hit" href="{P}{c["menu"][0]["href"]}" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
@@ -179,11 +182,13 @@ def home(c, P):
 def work_index(c, P):
     W = c["work"]
     rows = []
+    detail = W.get("publishDetail", True)         # false: the project detail pages are off the site until the new design is ready
     for i, p in enumerate(W["projects"]):
-        rows.append(f"""<li><a class="row" href="{P}/work/{p['slug']}/" data-src="{esc(p['hero']['src'])}" data-fit="{esc(p['hero'].get('fit', 'cover'))}"{' data-graphic' if p['hero'].get('graphic') else ''}>
+        tag, href = ("a", f' href="{P}/work/{p["slug"]}/"') if detail else ("div", "")
+        rows.append(f"""<li><{tag} class="row"{href} data-src="{esc(p['hero']['src'])}" data-fit="{esc(p['hero'].get('fit', 'cover'))}"{' data-graphic' if p['hero'].get('graphic') else ''}>
   <span class="n">0{i + 1}</span><span class="nm">{esc(p['name'])}</span>
   <span class="meta">{' · '.join(esc(t) for t in p['tags'])} <span class="yr">— {esc(p['year'])}</span></span>
-  <span class="oc">{esc(p['outcome'])}</span></a></li>""")
+  <span class="oc">{esc(p['outcome'])}</span></{tag}></li>""")
     return f"""<main id="main" class="wrap">
   {back(c, P + '/')}
   <h1 class="page-title" data-count="{len(W['projects']):02d}">{esc(W['title'])}</h1>
@@ -320,7 +325,7 @@ def build():
             ("index.html", "/", "home", "", c["site"]["name"], c["site"]["description"], home(c, P)),
             ("work/index.html", "/work/", "work", "work", c["work"]["title"], c["work"]["metaDescription"], work_index(c, P)),
         ]
-        for i, p in enumerate(c["work"]["projects"]):
+        for i, p in enumerate(c["work"]["projects"] if c["work"].get("publishDetail", True) else []):
             pages.append((f"work/{p['slug']}/index.html", f"/work/{p['slug']}/", "case", "work", p["name"], p["outcome"], case(c, P, i)))
         pages += [
             ("services/index.html", "/services/", "services", "services", c["services"]["title"], c["services"]["metaDescription"], services(c, P)),

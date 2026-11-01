@@ -464,6 +464,55 @@
     };
     boot();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
+
+    /* ---- small business words: a quiet, always-changing cloud on the left two thirds, so a visitor sees what the studio does ---- */
+    const tagsEl = $("#tags");
+    if (tagsEl) {
+      let list = []; try { list = JSON.parse(tagsEl.dataset.tags || "[]"); } catch (_) { }
+      if (list.length) {
+        const live = [], shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = R() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+        let queue = [];
+        const next = () => { if (!queue.length) queue = shuf(list.slice()); return queue.pop(); };
+        const area = () => { const phone = W < 700; return { l: Math.max(20, W * 0.03), r: phone ? W - 20 : W * 0.66, t: Math.max(84, H * 0.1), b: H - (phone ? 150 : 110) }; };
+        const spot = (text, fsz) => {
+          const A = area(), ww = text.length * fsz * 0.66 + 8, hh = fsz * 1.6, bnd = band(), f = isStatic ? fallback() : face;
+          for (let n = 0; n < 40; n++) {
+            const x = A.l + R() * Math.max(0, A.r - A.l - ww), y = A.t + R() * Math.max(0, A.b - A.t - hh);
+            const r = { x: x - 10, y: y - 6, w: ww + 20, h: hh + 12 };
+            if (overlaps(r, bnd) || (hintR && overlaps(r, hintR))) continue;
+            if (pl && overlaps(r, { x: pl.x - 40, y: pl.y - 40, w: pl.w + 80, h: pl.h + 80 })) continue;
+            if (faceShare(r, { x: f.x - f.w * 0.35, y: f.y - f.h * 0.2, w: f.w * 1.7, h: f.h * 1.9 }) > 0.02) continue;   // hair and neck too
+            if (live.some(o => overlaps(r, o.r))) continue;
+            return { x, y, r };
+          }
+          return null;
+        };
+        const spawn = () => {
+          const text = next(), fsz = W < 700 ? 10.5 : 11.5, p = spot(text, fsz); if (!p) return;
+          const el = document.createElement("span"); el.textContent = text; el.className = "biz";
+          el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:${fsz}px`;
+          tagsEl.appendChild(el);
+          const life = 5000 + R() * 4000, o = { el, r: p.r };
+          live.push(o);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            el.style.setProperty("--dx", ((R() - 0.5) * 16).toFixed(1) + "px"); el.style.setProperty("--dy", ((R() - 0.5) * 12).toFixed(1) + "px");
+            el.style.setProperty("--life", life + "ms"); el.classList.add("in");
+          }));
+          setTimeout(() => el.classList.remove("in"), life - 1400);
+          setTimeout(() => { el.remove(); const k = live.indexOf(o); if (k >= 0) live.splice(k, 1); }, life + 200);
+        };
+        if (reduced || isStatic) {                      // a still, short list
+          const stat = () => { tagsEl.textContent = ""; live.length = 0; list.slice(0, 6).forEach(() => { const text = next(), p = spot(text, 11.5); if (!p) return;
+            const el = document.createElement("span"); el.textContent = text; el.className = "biz in still"; el.style.cssText = `left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px;font-size:11.5px`;
+            tagsEl.appendChild(el); live.push({ el, r: p.r }); }); };
+          setTimeout(stat, 600); addEventListener("resize", () => { clearTimeout(stat.t); stat.t = setTimeout(stat, 300); });
+        } else {
+          const target = () => W < 700 ? 4 + (R() * 3 | 0) : 6 + (R() * 4 | 0);
+          let goal = target();
+          setInterval(() => { if (document.hidden) return; if (live.length < goal) { spawn(); if (R() < 0.15) goal = target(); } }, 650);
+        }
+      }
+    }
     requestAnimationFrame(frameLoop);
   }
 
@@ -623,22 +672,32 @@
       }
       tctx.fill();
     };
+
     requestAnimationFrame(draw);
   }
 
-  /* ================= the dot cursor ================= */
+  /* ================= the O cursor ================= */
+  // a thin white ring replaces the pointer on mouse devices (touch is unchanged). Over the figure's iframe the page gets no
+  // pointer events, so the figure posts {type:'oeuvre-cursor', x, y, inside, hover, down} and the ring follows from there
   if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
     const d = document.createElement("div"); d.className = "dot-cursor"; d.setAttribute("aria-hidden", "true"); body.appendChild(d);
-    let cx = -50, cy = -50, tx = -50, ty = -50;
-    // over the figure and over a menu word the dot stays away: the word already sharpens under the
-    // pointer, and the big dot (white through the difference blend) would sit inside a letter's counter
-    const overWord = el => !!(el && el.closest && el.closest("#wordHit, #being"));
-    addEventListener("pointermove", e => { tx = e.clientX; ty = e.clientY; d.classList.toggle("on", !overWord(e.target)); }, { passive: true });
+    root.classList.add("has-o");
+    let cx = -80, cy = -80, tx = -80, ty = -80, seen = false;
+    const aim = (x, y) => { tx = x; ty = y; if (!seen) { cx = x; cy = y; seen = true; } d.classList.add("on"); };
+    const isBig = el => !!(el && el.closest && el.closest("a,button,summary,#wordHit,[role=button]"));
+    addEventListener("pointermove", e => { aim(e.clientX, e.clientY); d.classList.toggle("big", isBig(e.target)); }, { passive: true });
     document.addEventListener("pointerleave", () => d.classList.remove("on"));
-    const fr = $("#being"); if (fr) fr.addEventListener("pointerenter", () => d.classList.remove("on"));
+    document.addEventListener("pointerover", e => d.classList.toggle("big", isBig(e.target)));
     addEventListener("pointerdown", () => d.classList.add("down")); addEventListener("pointerup", () => d.classList.remove("down"));
-    document.addEventListener("pointerover", e => d.classList.toggle("big", !overWord(e.target) && !!(e.target.closest && e.target.closest("a,button,summary"))));
-    const step = () => { cx += (tx - cx) * 0.25; cy += (ty - cy) * 0.25; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
+    addEventListener("message", e => {
+      const fr = $("#being"); let ok = false; try { ok = !!fr && e.source === fr.contentWindow; } catch (_) { }
+      if (e.origin !== location.origin || !ok || !e.data || e.data.type !== "oeuvre-cursor") return;
+      const m = e.data;
+      if (m.inside === false) { d.classList.remove("on"); return; }
+      if (Number.isFinite(m.x) && Number.isFinite(m.y)) aim(m.x, m.y);
+      d.classList.toggle("big", !!m.hover); d.classList.toggle("down", !!m.down);
+    });
+    const step = () => { cx += (tx - cx) * 0.28; cy += (ty - cy) * 0.28; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
     requestAnimationFrame(step);
   }
 

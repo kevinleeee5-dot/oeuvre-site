@@ -73,3 +73,11 @@ MediaPipe. Debug params: `?hold=SECONDS`, `?video=0` (stills only), `?id=e…i`,
 Refresh it from the prototype folder with `tools/sync_being.sh <oeuvre-dream dir>`.
 Embedded (same-origin parent), the figure hides its own HUD/status lines and the fine print (the Contact page carries the
 privacy note); the conversation panel, the touch hint and the ripple are its only chrome.
+
+### Cursor ring (site draws it, figure reports)
+The site replaces the mouse pointer with a thin white 'O' ring (desktop mouse devices only, `html.has-o`; native cursor hidden with
+`cursor: none`). The iframe swallows pointer events, so over the figure the page cannot see the mouse. The figure must:
+- set `cursor: none` on its own document while `matchMedia('(hover: hover) and (pointer: fine)')` matches, and
+- post `{type:'oeuvre-cursor', x, y, inside, hover, down}` to the parent on every pointer move/down/up/leave in the figure
+  (x, y in the frame's CSS px = the page's; `inside:false` on leave; `hover:true` over the face, panel buttons and chips; `down` while pressed).
+The site ignores the message from any other origin or window.
