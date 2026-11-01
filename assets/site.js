@@ -859,7 +859,7 @@
         };
         raf = requestAnimationFrame(frame);
       };
-      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(run);
+      Promise.race([document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 900))]).then(run);   // never sit on black waiting for a font
     }
   }
 
