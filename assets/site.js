@@ -842,29 +842,34 @@
         for (let j = 0; j < pts.length; j += 2) (pts[j + 1] < ySplit ? nameIdx : lineIdx).push(j);
         const nName = Math.min(7000, Math.round(nameIdx.length * 0.45)), nLine = Math.min(7000, Math.round(lineIdx.length * 1.1)), N = Math.max(1, nName + nLine);
         const X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N),
-          TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N), SD = new Float32Array(N), FL = new Float32Array(N);
+          TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N), SD = new Float32Array(N), FL = new Float32Array(N), BORN = new Float32Array(N);
+        // a few at first, then more and more: each particle enters at its own moment (later ones far more common) and gathers on its own clock
+        const SPAWN = 2800, GATHER = 1100, HOLD_MIN = 1000;
         for (let i = 0; i < N; i++) {
           const src = i < nName ? nameIdx : lineIdx, j = src[Math.random() * src.length | 0];
-          TX[i] = pts[j]; TY[i] = pts[j + 1]; HI[i] = j; X[i] = Math.random() * w; Y[i] = Math.random() * h; SD[i] = Math.random() * 10; FL[i] = i < nName ? 1 : 0.45;
+          TX[i] = pts[j]; TY[i] = pts[j + 1]; HI[i] = j; const ang = Math.random() * 6.283, rr = 70 + 240 * Math.random(); X[i] = TX[i] + Math.cos(ang) * rr; Y[i] = TY[i] + Math.sin(ang) * rr * 1.3;   // each comes in from somewhere around its place
+          SD[i] = Math.random() * 10; FL[i] = i < nName ? 1 : 0.45; BORN[i] = SPAWN * Math.pow(Math.random(), 0.33);   // a trickle that swells
         }
-        const GATHER = 2600, HOLD_MIN = 1100; let t0 = 0, last = 0, acc = 0;
+        let t0 = 0, last = 0, acc = 0, tNow = 0;
         const ptr = { has: false, x: 0, y: 0 };
         box.addEventListener("pointermove", e => { ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY; }, { passive: true });
         box.addEventListener("pointerdown", e => { ptr.has = true; ptr.x = e.clientX; ptr.y = e.clientY; }, { passive: true });
         box.addEventListener("pointerup", () => { ptr.has = false; }, { passive: true });
         const step = c => {
-          const ts = performance.now() * 0.001, nf = 0.28 - 0.19 * c, k = 0.002 + 0.034 * c, damp = 0.9 - 0.22 * c;
+          const ts = performance.now() * 0.001;
           if (c > 0.25) {
             const m = Math.ceil(N * 0.08 * c);
             for (let q = 0; q < m; q++) {
-              const i = Math.random() * N | 0, j0 = HI[i], j = j0 + ((Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * 3 | 0))) * 2;
+              const i = Math.random() * N | 0; if (tNow < BORN[i] + GATHER * 0.5) continue; const j0 = HI[i], j = j0 + ((Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * 3 | 0))) * 2;
               if (j < 0 || j >= pts.length || Math.abs(pts[j] - pts[j0]) + Math.abs(pts[j + 1] - pts[j0 + 1]) > 6) continue;
               const jit = FL[i] < 1 ? 0.6 : 1.6; HI[i] = j; TX[i] = pts[j] + (Math.random() - 0.5) * jit; TY[i] = pts[j + 1] + (Math.random() - 0.5) * jit;
             }
           }
           for (let i = 0; i < N; i++) {
+            const age = tNow - BORN[i]; if (age < 0) continue;
+            const u = Math.min(1, age / GATHER), ci = u * u * (3 - 2 * u), nf = 0.22 - 0.13 * ci, k = 0.006 + 0.03 * ci, damp = 0.88 - 0.2 * ci;   // the early ones settle first, so the letters fill in
             const x = X[i], y = Y[i], a = Math.sin(x * 0.0021 + ts * 0.23 + SD[i] * 0.3) * 2.4 + Math.cos(y * 0.0027 - ts * 0.17) * 2.4;
-            const fl = nf * (c < 0.9 ? 1 : 1 - (1 - FL[i]) * (c - 0.9) * 10);
+            const fl = nf * (ci < 0.9 ? 1 : 1 - (1 - FL[i]) * (ci - 0.9) * 10);
             let vx = VX[i] + Math.cos(a) * fl + (TX[i] - x) * k, vy = VY[i] + Math.sin(a) * fl + (TY[i] - y) * k;
             if (ptr.has) { const dx = x - ptr.x, dy = y - ptr.y, d2 = dx * dx + dy * dy; if (d2 < 14400) { const f = (1 - d2 / 14400) * 0.35 / (Math.sqrt(d2) + 1); vx += (dx * 0.3 - dy * 0.9) * f; vy += (dy * 0.3 + dx * 0.9) * f; } }
             vx *= damp; vy *= damp; VX[i] = vx; VY[i] = vy; X[i] = x + vx; Y[i] = y + vy;
@@ -876,7 +881,7 @@
           for (let pass = 0; pass < 2; pass++) {
             g.strokeStyle = pass ? "rgba(255,255,255,.9)" : `rgba(242,242,238,${(0.26 + 0.2 * c).toFixed(3)})`; g.beginPath();
             for (let j = 0; j < N; j++) {
-              if ((j % 9 === 0) !== (pass === 1)) continue;
+              if ((j % 9 === 0) !== (pass === 1) || tNow < BORN[j]) continue;
               let lx = VX[j] * 3, ly = VY[j] * 3; const ln = Math.abs(lx) + Math.abs(ly);
               if (ln > 14) { lx *= 14 / ln; ly *= 14 / ln; }
               g.moveTo(X[j] - lx, Y[j] - ly); g.lineTo(X[j] + 0.9, Y[j] + 0.9);
@@ -887,12 +892,12 @@
         };
         const frame = now => {
           if (!t0) { t0 = now; last = now; }
-          const t = now - t0, dt = Math.min(50, now - last); last = now;
-          const u = Math.min(1, t / GATHER), c = u * u * (3 - 2 * u);
+          const t = now - t0, dt = Math.min(50, now - last); last = now; tNow = t;
+          const u = Math.min(1, t / (SPAWN + GATHER)), c = u * u * (3 - 2 * u);
           acc = Math.min(acc + dt, 50); let steps = 0;
           while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }   // a steady 60 Hz whatever the display does, like the menu
           if (steps) draw(c);
-          if (!formed && t > GATHER + HOLD_MIN) { formed = true; check(); }
+          if (!formed && t > SPAWN + GATHER + HOLD_MIN) { formed = true; check(); }
           raf = requestAnimationFrame(frame);   // it keeps streaming under the wipe until the wipe is gone
         };
         raf = requestAnimationFrame(frame);
