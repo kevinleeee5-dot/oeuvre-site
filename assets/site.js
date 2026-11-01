@@ -236,17 +236,6 @@
     })();
 
 
-    /* ---- type picker (temporary, for choosing): five faces for the brand line and the small words ---- */
-    (() => {
-      const FONTS = [["Inter Tight", "'Inter Tight', sans-serif"], ["Instrument Serif", "'Instrument Serif', serif"], ["Space Grotesk", "'Space Grotesk', sans-serif"], ["Syne", "'Syne', sans-serif"], ["Fraunces", "'Fraunces', serif"]];
-      let cur = 0; try { cur = Math.max(0, Math.min(4, (+localStorage.getItem("oeuvre-pick") || 1) - 1)); } catch (_) { }
-      const bar = document.createElement("div"); bar.className = "pick"; bar.setAttribute("role", "group"); bar.setAttribute("aria-label", "Type options");
-      const set = i => { cur = i; root.style.setProperty("--pick", FONTS[i][1]); root.dataset.pick = i + 1; [...bar.children].forEach((b, k) => b.setAttribute("aria-pressed", k === i)); try { localStorage.setItem("oeuvre-pick", i + 1); } catch (_) { } };
-      FONTS.forEach((f, i) => { const b = document.createElement("button"); b.type = "button"; b.title = f[0]; b.textContent = i + 1; b.style.fontFamily = f[1]; b.addEventListener("click", () => set(i)); bar.appendChild(b); });
-      const lab = document.createElement("span"); lab.className = "pick-l"; lab.textContent = "Type"; bar.prepend(lab);
-      body.appendChild(bar); set(cur);
-    })();
-
     const toggle = $("#indexToggle");
     toggle && toggle.addEventListener("click", () => {
       const on = body.classList.toggle("list");
@@ -766,6 +755,24 @@
     });
     const step = () => { cx += (tx - cx) * 0.28; cy += (ty - cy) * 0.28; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
     requestAnimationFrame(step);
+  }
+
+
+  /* ================= phone intro: the name and the line while the figure loads ================= */
+  // On a phone the figure's pictures and clip are heavy. The page opens on a black screen with the name and the line, and the home
+  // appears when the figure says it is ready (at least ~2.4 s of the intro, at most 14 s), once per session.
+  if (root.classList.contains("intro")) {
+    const el = $("#intro"); let ready = false, minDone = false, gone = false;
+    const leave = () => {
+      if (gone) return; gone = true; try { sessionStorage.setItem("oeuvre-intro", "1"); } catch (_) { }
+      root.classList.add("intro-out"); setTimeout(() => { root.classList.remove("intro", "intro-out"); el && el.remove(); }, 1100);
+    };
+    const check = () => { if (ready && minDone) leave(); };
+    addEventListener("message", e => {
+      const fr = $("#being"); let ok = false; try { ok = !!fr && e.source === fr.contentWindow; } catch (_) { }
+      if (e.origin === location.origin && ok && e.data && e.data.type === "oeuvre-ready") { ready = true; check(); }
+    });
+    setTimeout(() => { minDone = true; check(); }, 2400); setTimeout(leave, 14000);
   }
 
   /* ================= resize + arrive ================= */

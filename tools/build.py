@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261101j"  # bump to bust caches of css/js
+VERSION = "20261101k"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -105,9 +105,9 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Instrument+Serif&amp;family=Space+Grotesk:wght@300;400;500&amp;family=Syne:wght@400;500&amp;family=Fraunces:opsz,wght@9..144,300;9..144,400&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap">
 <link rel="stylesheet" href="/assets/site.css?v={VERSION}">
-<script>(function(d){{d.className=d.className.replace('no-js','js');try{{if(sessionStorage.getItem('oeuvre-iris')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' arriving'}}catch(e){{}}}})(document.documentElement)</script>
+<script>(function(d){{d.className=d.className.replace('no-js','js');try{{if(sessionStorage.getItem('oeuvre-iris')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' arriving'}}catch(e){{}}{"try{if((innerWidth<=820||matchMedia('(pointer:coarse)').matches)&&!sessionStorage.getItem('oeuvre-intro'))d.className+=' intro'}catch(e){}" if page_id == 'home' else ''}}})(document.documentElement)</script>
 <script src="/assets/site.js?v={VERSION}" defer></script>
 </head>
 <body class="p-{page_id} {body_class}" data-page="{page_id}" data-section="{esc(section)}">
@@ -163,7 +163,10 @@ def home(c, P):
     words = "".join(
         f'<li><a class="word" data-i="{i}" data-id="{m["id"]}" href="{P}{m["href"]}">{esc(m["label"])}<sup aria-hidden="true">0{i + 1}</sup></a></li>'
         for i, m in enumerate(c["menu"]))
-    body = f"""<main id="main" class="home">
+    nm = "".join(f'<span style="animation-delay:{0.12 * i:.2f}s">{esc(ch)}</span>' for i, ch in enumerate(s["name"]))
+    ln = "".join(f"<span>{esc(t.strip().rstrip('.'))}.</span>" for t in s["statement"].split(". ") if t.strip().strip("."))
+    body = f"""<div id="intro" aria-hidden="true"><div class="i-name">{nm}</div><div class="i-line">{ln}</div><div class="i-bar"></div></div>
+<main id="main" class="home">
   <h1 class="sr-only">{esc(s['name'])} — {esc(s['statement'])}</h1>
   <div class="being">
     <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
