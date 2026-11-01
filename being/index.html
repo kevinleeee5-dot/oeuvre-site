@@ -1083,9 +1083,13 @@
     "  float lid = texture(T, uv).g / max(0.02, texture(T, uv - g).g); col *= mix(1.0, clamp(lid, 0.55, 1.15), 0.35 * inIris);\n" +
     "  return col; }\n" +
     "vec3 pick(sampler2D T, vec2 uv, vec4 iL, vec4 iR){ if (uEye == 1) return eye(T, uv, uv.x < 0.5 ? iL : iR); return texture(T, uv, -0.5).rgb; }\n" +
+    // the clips are softer than the stills (a 1080p render lifted to 1664): an unsharp mask lifts their fine detail to the still's, so the cross-fade does not read as a change of focus
+    "vec3 vidSharp(vec2 vu){ vec2 px = 1.0 / vec2(textureSize(uVidTex, 0)); vec3 c = texture(uVidTex, vu).rgb;\n" +
+    "  vec3 b = (texture(uVidTex, vu + vec2(px.x, 0.0)).rgb + texture(uVidTex, vu - vec2(px.x, 0.0)).rgb + texture(uVidTex, vu + vec2(0.0, px.y)).rgb + texture(uVidTex, vu - vec2(0.0, px.y)).rgb) * 0.25;\n" +
+    "  vec3 d = c - b; return c + clamp(d * 1.6, -0.09, 0.09); }\n" +
     "void main(){ vec3 col = pick(uTex, vUv, uIrisL, uIrisR); float fe = edges(vUv);\n" +
     // the clip, in register with the still (uVidR: the video frame's rect in the photo's uv), crossfaded by uVid
-    "  if (uVid > 0.0) { vec2 vu = (vUv - uVidR.xy) / uVidR.zw; if (vu.x >= 0.0 && vu.y >= 0.0 && vu.x <= 1.0 && vu.y <= 1.0) col = mix(col, texture(uVidTex, vu).rgb, uVid); }\n" +                      // edges(): in NOISE, shared with the grains
+    "  if (uVid > 0.0) { vec2 vu = (vUv - uVidR.xy) / uVidR.zw; if (vu.x >= 0.0 && vu.y >= 0.0 && vu.x <= 1.0 && vu.y <= 1.0) col = mix(col, vidSharp(vu), uVid); }\n" +                      // edges(): in NOISE, shared with the grains
     "  if (uTrans == 1) {\n" +
     // k < 0: still the old face; k > 1: the new one; between (a band uBand wide, up to 1.3x wider where the two pictures differ)
     // the old surface is eroded: a pixel goes when k passes its place n in the erosion pattern, over a soft edge uSoft wide, so
