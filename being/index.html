@@ -162,14 +162,14 @@
   /* phones (and short landscape screens): the panel is a bottom sheet over the lower bust; a 'Talk' pill bottom right opens it.
      --kb: the on-screen keyboard's height (oeuvre-viewport / visualViewport), so the sheet rides above it */
   @media (max-width: 699px), (max-aspect-ratio: 4/5), (max-height: 499px) {
-    #panel { left:0; right:0; top:auto; bottom:var(--kb,0px); width:auto; max-height:min(52svh,460px); gap:12px; padding:14px 16px max(16px,env(safe-area-inset-bottom));
+    #panel { left:0; right:0; top:auto; bottom:max(var(--kb,0px),var(--bar,0px)); width:auto; max-height:min(52svh,460px); gap:12px; padding:14px 16px max(16px,env(safe-area-inset-bottom));
       background:rgba(6,6,6,.86); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); border-top:1px solid var(--hair); border-radius:16px 16px 0 0; transform:none; }
     #panel.talked { height:min(56svh,480px); max-height:calc(100svh - var(--kb,0px) - 56px); }   /* a fixed height once it talks: the thread scrolls inside, the face stays put */
     #panel::before { display:none; }
     body:not(.panelopen) #panel { transform:translateY(105%); }
     .lede { font-size:14px; max-width:none; }
     #thread .it { font-size:14.5px; }
-    .tab { writing-mode:horizontal-tb; width:auto; min-height:44px; top:auto; right:16px; bottom:max(64px,calc(env(safe-area-inset-bottom) + 52px)); transform:none; border:1px solid rgba(255,255,255,.5);
+    .tab { writing-mode:horizontal-tb; width:auto; min-height:44px; top:auto; right:16px; bottom:calc(max(64px,calc(env(safe-area-inset-bottom) + 52px)) + var(--bar,0px)); transform:none; border:1px solid rgba(255,255,255,.5);
       border-radius:99px; padding:14px 18px; background:rgba(0,0,0,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
     body.panelopen .tab { transform:translateY(20px); }
     .foot .meta:last-child { display:none; }
@@ -194,13 +194,13 @@
   <div class="hud bl">BNB Management Consulting Ltd t/a Oeuvre<br>info@bnbmanagement.co.nz</div>
   <div id="perf"></div>
   <div id="gate"><p id="gatetext">it is finding a face…</p></div>
-  <div id="hint" aria-hidden="true"><span>Touch the face to change it</span><i></i></div>
+  <div id="hint" aria-hidden="true" hidden><span></span><i></i></div>
   <button id="nextface" class="sr-only" type="button">Change the face</button>
 
   <aside id="panel" aria-label="Talk to the face">
     <div class="ph"><span class="meta"><i class="live" aria-hidden="true"></i><span id="pstate">Talk</span></span>
       <button id="pclose" class="ic" type="button" aria-label="Hide the conversation" aria-controls="panel"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" stroke="currentColor" stroke-width="1.2"/></svg></button></div>
-    <p id="phint" class="meta">Touch the face to change it</p>
+    <p id="phint" class="meta" hidden></p>
     <p class="lede">Talk to the face. Ask about the studio, a project, or what we could make for you.</p>
     <div id="chips" class="chips" role="group" aria-label="Suggestions">
       <button class="chip" type="button">What does Oeuvre do?</button><button class="chip" type="button">Show me your work</button><button class="chip" type="button">How do projects start?</button><button class="chip" type="button">Who are you?</button>
@@ -1903,6 +1903,16 @@
   function parentWin() { try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; } }
   function post(msg) { var p = parentWin(); if (!p || !LOC.origin || LOC.origin === "null") return; try { p.postMessage(msg, LOC.origin); } catch (e) {} }
   // the pointer ring is the site's: report where the mouse is (the iframe swallows the events), whether it is over something live, and the press
+  // typing: each key in the conversation's input is reported so the site can play a mechanical-keyboard click (the audio engine lives there)
+  var lastKey = 0;
+  function keyMsg(e, up) {
+    if (!e.target || e.target.id !== "say" || e.metaKey || e.ctrlKey || e.altKey) return;
+    var now = performance.now(); if (!up && e.repeat && now - lastKey < 45) return; if (!up) lastKey = now;
+    var kind = e.key === " " ? "space" : e.key === "Enter" ? "enter" : e.key === "Backspace" || e.key === "Delete" ? "back" : e.key && e.key.length === 1 ? "key" : "";
+    if (kind) post({ type: "oeuvre-key", kind: kind, up: !!up });
+  }
+  window.addEventListener("keydown", function (e) { keyMsg(e, false); }, true);
+  window.addEventListener("keyup", function (e) { keyMsg(e, true); }, true);
   var curDown = false;
   function curMsg(e, inside) {
     var t = e && e.target, hov = !!(t && t.closest && t.closest("#panel button, #panel input, #tab, #nextface, .chip, .go, a")) || document.body.classList.contains("onface");
@@ -1926,7 +1936,7 @@
     }
     else if (d.type === "oeuvre-camera") { if (d.on) post({ type: "oeuvre-camera", on: false }); }   // no camera in this figure
     else if (d.type === "oeuvre-next") { var ok = changeFace(null, null); if (ok && faceCss[2]) ripple(faceCss[0] + faceCss[2] / 2, faceCss[1] + faceCss[3] * 0.45, true); }   // the site's 'N' key
-    else if (d.type === "oeuvre-viewport") { setKb(+d.kb); }                       // the on-screen keyboard (the site's visualViewport)
+    else if (d.type === "oeuvre-viewport") { setBar(+d.bar); setKb(+d.kb); }                       // the on-screen keyboard (the site's visualViewport)
     else if (d.type === "oeuvre-touch") {                                          // a click the site's word box passed on (not on its ink)
       var tx = +d.x, ty = +d.y; if (!isFinite(tx) || !isFinite(ty) || !personAt(tx, ty)) return;
       var tok = changeFace(tx, ty); ripple(tx, ty, tok);
@@ -1948,6 +1958,7 @@
   window.addEventListener("resize", resize);
   // the on-screen keyboard: the sheet rides above it and the face rises with it. Embedded, the site posts it (oeuvre-viewport);
   // standalone, this page's own visualViewport
+  function setBar(b) { b = isFinite(b) ? clamp(Math.round(b), 0, 200) : 0; document.body.style.setProperty("--bar", b + "px"); }   // the browser's bottom bar over the page
   function setKb(kb) { kb = isFinite(kb) ? clamp(Math.round(kb), 0, 0.7 * (H || 800)) : 0; if (kb === KB) return; KB = kb; document.body.style.setProperty("--kb", KB + "px"); liftTarget(); setTimeout(postPanel, 30); }
   if (window.visualViewport) {
     var vvKb = function () { if (EMBED) return; var vv = window.visualViewport; setKb(window.innerHeight - vv.height - vv.offsetTop); };
@@ -2232,7 +2243,7 @@
     return best ? { r: best.r, cls: best.cls, panel: false } : null;
   }
   function placeHint(t) {
-    var show = !touched && readyAt && t - readyAt > 2500 && !TR && convo === "idle" && !(isCompact(W, H) && document.body.classList.contains("panelopen"));
+    var show = false && !touched && readyAt && t - readyAt > 2500 && !TR && convo === "idle" && !(isCompact(W, H) && document.body.classList.contains("panelopen"));
     var spot = null;
     if (show) {
       var key = CUR_ID + "|" + W + "|" + H + "|" + Math.round(SHIFT) + "|" + Math.round(LIFT) + "|" + document.body.classList.contains("panelopen");

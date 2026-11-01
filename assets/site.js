@@ -167,8 +167,15 @@
     frame.addEventListener("load", () => { post({ type: "oeuvre-hello", reduced }); postKb(); });
     // the on-screen keyboard: the figure's sheet rides above it (the frame's own viewport doesn't shrink)
     const vv = window.visualViewport;
-    const postKb = () => { if (vv) post({ type: "oeuvre-viewport", kb: Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) }); };
+    // the browser's bottom bar (iOS Safari floats it over the page): the page is drawn full height (lvh) under it, and this is how much of
+    // the bottom it covers (lvh - svh), so text and the sheet stay above it while the picture runs to the very bottom of the screen
+    const probe = (u) => { const d = document.createElement("div"); d.style.cssText = `position:fixed;left:0;top:0;width:0;height:100${u};visibility:hidden;pointer-events:none`; document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h; };
+    let bar = 0;
+    const measureBar = () => { bar = Math.max(0, Math.min(200, probe("lvh") - probe("svh"))); root.style.setProperty("--bar", bar + "px"); };
+    measureBar();
+    const postKb = () => { measureBar(); if (vv) post({ type: "oeuvre-viewport", kb: Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)), bar }); };
     if (vv) { vv.addEventListener("resize", postKb); vv.addEventListener("scroll", postKb); }
+    addEventListener("resize", postKb);
 
     /* ---- sound: a gapless ambient loop (Web Audio, so there is no join) that starts by itself, plus a quiet pentatonic
        glass note as the pointer travels. Browsers only let a page make sound after a first click, tap or key, so the loop is
@@ -222,7 +229,33 @@
         if (pn) { pn.pan.value = Math.max(-0.85, Math.min(0.85, (x / W) * 2 - 1)); g.connect(pn); pn.connect(fx); } else g.connect(fx);
         o1.start(t); o2.start(t); o1.stop(t + 1.7); o2.stop(t + 1.7);
       };
+      /* a mechanical keyboard: a short noise 'tick' through a band-pass, a low 'thock' that falls in pitch, and a tiny bright click.
+         Space and Enter are deeper, Backspace lighter, the key-up a faint release. */
+      let nbuf = null;
+      const noise = () => { if (nbuf) return nbuf; nbuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.08), ctx.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return nbuf; };
+      const keyClick = (kind, up) => {
+        if (!on || !ctx || ctx.state !== "running") return;
+        const t = ctx.currentTime, heavy = kind === "space" || kind === "enter", back = kind === "back", duck = ducked ? 0.35 : 1, j = 0.92 + Math.random() * 0.16;
+        const pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pn) { pn.pan.value = (Math.random() - 0.5) * 0.3; pn.connect(master); }
+        const out = pn || master;
+        const ns = ctx.createBufferSource(); ns.buffer = noise();
+        const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = (up ? 3600 : heavy ? 1500 : back ? 2100 : 2500) * j; bp.Q.value = 1.1;
+        const ng = ctx.createGain(); const np = (up ? 0.03 : heavy ? 0.16 : back ? 0.1 : 0.13) * duck;
+        ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(np, t + 0.002); ng.gain.exponentialRampToValueAtTime(0.0001, t + (up ? 0.018 : 0.04));
+        ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t, Math.random() * 0.03, 0.06);
+        if (!up) {
+          const o = ctx.createOscillator(), og = ctx.createGain(); o.type = "sine";
+          const f0 = (heavy ? 150 : back ? 200 : 185) * j; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.5, t + 0.07);
+          og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime((heavy ? 0.2 : 0.13) * duck, t + 0.003); og.gain.exponentialRampToValueAtTime(0.0001, t + (heavy ? 0.12 : 0.085));
+          o.connect(og); og.connect(out); o.start(t); o.stop(t + 0.15);
+        }
+        const hf = ctx.createBiquadFilter(); hf.type = "highpass"; hf.frequency.value = 5200;
+        const hs = ctx.createBufferSource(); hs.buffer = noise(); const hg = ctx.createGain();
+        hg.gain.setValueAtTime(0.0001, t); hg.gain.exponentialRampToValueAtTime((up ? 0.012 : 0.035) * duck, t + 0.001); hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
+        hs.connect(hf); hf.connect(hg); hg.connect(out); hs.start(t, 0.02, 0.02);
+      };
       window.__oeuvreSound = {
+        key: keyClick,
         move(x, y) {
           const now = performance.now();
           if (lx !== null) { const d = Math.hypot(x - lx, y - ly); acc += d; const dt = Math.max(8, now - lt), sp = d / dt;
@@ -731,6 +764,13 @@
     requestAnimationFrame(draw);
   }
 
+  /* ================= typing sound: the figure reports keys typed in its input ================= */
+  addEventListener("message", e => {
+    const fr = $("#being"); let ok = false; try { ok = !!fr && e.source === fr.contentWindow; } catch (_) { }
+    if (e.origin !== location.origin || !ok || !e.data || e.data.type !== "oeuvre-key") return;
+    if (window.__oeuvreSound && window.__oeuvreSound.key) window.__oeuvreSound.key(String(e.data.kind || "key"), !!e.data.up);
+  });
+
   /* ================= the O cursor ================= */
   // a thin white ring replaces the pointer on mouse devices (touch is unchanged). Over the figure's iframe the page gets no
   // pointer events, so the figure posts {type:'oeuvre-cursor', x, y, inside, hover, down} and the ring follows from there
@@ -758,21 +798,62 @@
   }
 
 
-  /* ================= phone intro: the name and the line while the figure loads ================= */
-  // On a phone the figure's pictures and clip are heavy. The page opens on a black screen with the name and the line, and the home
-  // appears when the figure says it is ready (at least ~2.4 s of the intro, at most 14 s), once per session.
+  /* ================= phone intro: the name and the line gather as streaks (the menu's flow), then a hard wipe ================= */
+  // The page opens on black. "Oeuvre" and the line gather out of a flow field as streaks, exactly like the menu words. Only when the
+  // whole picture has formed (and the figure is ready) a hard-edged mask sweeps down from the top and the home is there. Once per
+  // session; at most 14 s; reduced motion shows the plain words for a moment instead.
   if (root.classList.contains("intro")) {
-    const el = $("#intro"); let ready = false, minDone = false, gone = false;
+    const box = $("#intro"), cv = $("#introC"); let ready = false, formed = false, gone = false, raf = 0;
     const leave = () => {
-      if (gone) return; gone = true; try { sessionStorage.setItem("oeuvre-intro", "1"); } catch (_) { }
-      root.classList.add("intro-out"); setTimeout(() => { root.classList.remove("intro", "intro-out"); el && el.remove(); }, 1100);
+      if (gone) return; gone = true; cancelAnimationFrame(raf); try { sessionStorage.setItem("oeuvre-intro", "1"); } catch (_) { }
+      root.classList.add("intro-out"); setTimeout(() => { root.classList.remove("intro", "intro-out"); box && box.remove(); }, 1200);
     };
-    const check = () => { if (ready && minDone) leave(); };
+    const check = () => { if (ready && formed) setTimeout(leave, 700); };
     addEventListener("message", e => {
       const fr = $("#being"); let ok = false; try { ok = !!fr && e.source === fr.contentWindow; } catch (_) { }
       if (e.origin === location.origin && ok && e.data && e.data.type === "oeuvre-ready") { ready = true; check(); }
     });
-    setTimeout(() => { minDone = true; check(); }, 2400); setTimeout(leave, 14000);
+    setTimeout(leave, 14000);
+    if (reduced || !cv) { setTimeout(() => { formed = true; check(); }, 2200); }
+    else {
+      const run = () => {
+        const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
+        cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext("2d"); g.scale(dpr, dpr);
+        // the picture to form: sampled from text on an off-screen canvas
+        const off = document.createElement("canvas"); off.width = w; off.height = h; const o = off.getContext("2d");
+        const fam = getComputedStyle(document.body).fontFamily, pad = Math.max(24, w * 0.06);
+        const f1 = Math.min(w * 0.3, 170), f2 = Math.min(w * 0.082, 50);
+        o.fillStyle = "#fff"; o.textBaseline = "alphabetic";
+        o.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.045 * f1) + "px"; const y1 = h * 0.43; o.fillText("Oeuvre", pad, y1);
+        o.font = `300 ${f2}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.02 * f2) + "px"; o.fillText("Creative thinking.", pad, y1 + f1 * 0.28 + f2 * 1.4); o.fillText("Digital making.", pad, y1 + f1 * 0.28 + f2 * 2.55);
+        const img = o.getImageData(0, 0, w, h).data, pts = [];
+        for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (img[(y * w + x) * 4 + 3] > 140) pts.push(x, y);
+        const n = pts.length / 2; if (!n) { formed = true; check(); return; }
+        const N = Math.min(9000, Math.max(4000, n)), X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N), TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N);
+        for (let i = 0; i < N; i++) { const j = (Math.random() * n | 0) * 2; TX[i] = pts[j]; TY[i] = pts[j + 1]; HI[i] = j; X[i] = Math.random() * w; Y[i] = Math.random() * h; }
+        const GATHER = 2600, HOLD_MIN = 900; let t0 = 0, last = 0;
+        g.fillStyle = "#000"; g.fillRect(0, 0, w, h);
+        const frame = now => {
+          if (!t0) t0 = now; const t = now - t0, c = Math.min(1, t / GATHER), c2 = c * c * (3 - 2 * c);
+          const nf = 0.28 - 0.19 * c2, k = 0.002 + 0.034 * c2, damp = 0.9 - 0.22 * c2, ph = t * 0.0006;
+          g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0," + (0.2 + 0.2 * c2) + ")"; g.fillRect(0, 0, w, h);
+          g.globalCompositeOperation = "source-over"; g.strokeStyle = "rgba(255,255,255," + (0.55 + 0.45 * c2) + ")"; g.lineWidth = 1.3; g.beginPath();
+          const m = Math.ceil(N * 0.08 * c2);
+          for (let i = 0; i < N; i++) {
+            let x = X[i], y = Y[i];
+            if (c2 > 0.55 && i < m) { const hj = HI[i], step = ((Math.random() * 3 | 0) - 1) * 2, nj = hj + step * 2; if (nj >= 0 && nj < pts.length - 1 && Math.hypot(pts[nj] - pts[hj], pts[nj + 1] - pts[hj + 1]) < 7) { HI[i] = nj; TX[i] = pts[nj]; TY[i] = pts[nj + 1]; } }
+            const ang = Math.sin(y * 0.011 + ph) * 2.2 + Math.cos(x * 0.013 - ph * 1.3) * 2.2, fx = Math.cos(ang) * nf, fy = Math.sin(ang) * nf;
+            VX[i] = (VX[i] + fx + (TX[i] - x) * k) * damp; VY[i] = (VY[i] + fy + (TY[i] - y) * k) * damp;
+            const nx = x + VX[i], ny = y + VY[i]; g.moveTo(x, y); g.lineTo(nx, ny); X[i] = nx; Y[i] = ny;
+          }
+          g.stroke();
+          if (!formed && t > GATHER + HOLD_MIN) { formed = true; check(); }
+          raf = requestAnimationFrame(frame);
+        };
+        raf = requestAnimationFrame(frame);
+      };
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(run);
+    }
   }
 
   /* ================= resize + arrive ================= */
