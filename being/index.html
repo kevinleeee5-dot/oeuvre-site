@@ -90,17 +90,17 @@
   #panel.talked .chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding:1px 0 2px; margin-top:-2px;
     -webkit-mask-image:linear-gradient(to right, #000 82%, transparent); mask-image:linear-gradient(to right, #000 82%, transparent); }
   #panel.talked .chips::-webkit-scrollbar { display:none; }
-  /* the first screen of the column: one calm line, then the questions as a ruled list (desktop); phones keep the pills */
+  /* the first screen of the column: no header, no sentence, no rules - the questions as quiet lines above one input (desktop); phones keep the pills */
   @media (min-width: 700px) {
-    #panel:not(.talked) { gap:20px; }
-    #panel:not(.talked) .lede { font-size:21px; line-height:1.28; font-weight:300; letter-spacing:-.015em; max-width:17em; text-wrap:balance; }
-    #panel:not(.talked) .chips { flex-direction:column; flex-wrap:nowrap; gap:0; }
-    #panel:not(.talked) .chip { display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left; border:0; border-radius:0;
-      border-bottom:1px solid var(--hair); padding:13px 2px; font-size:13.5px; color:var(--soft); animation:rise .7s var(--ease) both; }
-    #panel:not(.talked) .chip:first-child { border-top:1px solid var(--hair); }
-    #panel:not(.talked) .chip::after { content:"\2192"; opacity:.35; transform:translateX(-4px); transition:opacity .3s, transform .4s var(--ease); }
-    #panel:not(.talked) .chip:hover { background:transparent; color:var(--fg); border-color:var(--line); }
-    #panel:not(.talked) .chip:hover::after { opacity:1; transform:none; }
+    #panel:not(.talked) { gap:14px; }
+    #panel:not(.talked) .ph, #panel:not(.talked) .lede { display:none; }
+    #panel:not(.talked) .chips { flex-direction:column; flex-wrap:nowrap; gap:2px; align-items:flex-start; }
+    #panel:not(.talked) .chip { display:inline-flex; align-items:center; gap:10px; border:0; border-radius:0; padding:7px 0; font-size:15px; font-weight:300;
+      color:var(--soft); animation:rise .7s var(--ease) both; }
+    #panel:not(.talked) .chip::after { content:"\2192"; opacity:0; transform:translateX(-6px); transition:opacity .3s, transform .4s var(--ease); }
+    #panel:not(.talked) .chip:hover { background:transparent; color:var(--fg); }
+    #panel:not(.talked) .chip:hover::after { opacity:.8; transform:none; }
+    #panel:not(.talked) .inrow { border-top:0; }
   }
 
   #panel.talked .chip { flex:none; }
