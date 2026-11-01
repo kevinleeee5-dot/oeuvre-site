@@ -120,7 +120,6 @@
 
   function initHome() {
     const frame = $("#being"), nav = $(".words"), menuC = $("#menu"), hit = $("#wordHit");
-    const idxLinks = $$(".idx a");
     words = $$(".word").map((el, i) => ({
       el, i, id: el.dataset.id, href: el.href,
       label: (el.childNodes[0] && el.childNodes[0].textContent || el.textContent).trim(),
@@ -131,19 +130,45 @@
       return { x: W / 2 - s * 0.42, y: H * 0.47 - s * 0.62, w: s * 0.84, h: s * 1.1 };
     };
     face = fallback();
-    let haveFace = false;
+    // the figure's conversation panel (a column on the right; on phones and portrait screens a bottom sheet, or its 'Talk' pill):
+    // the words keep out of it. Until the figure says where it is, the column's usual place
+    const compact = () => W < 700 || W / H < 0.8;
+    const fallbackPanel = () => {
+      if (compact()) return { x: W - 110, y: H - 120, w: 94, h: 44 };
+      const pw = Math.min(372, Math.max(320, 0.24 * W)), g = Math.min(56, Math.max(16, 0.04 * W));
+      return { x: W - g - pw, y: H / 2 - 160, w: pw, h: 320 };
+    };
+    let haveFace = false, panel = null, havePanel = false, hintR = null;
+    const sameWin = e => { try { return e.source === frame.contentWindow; } catch (_) { return false; } };
     addEventListener("message", e => {
-      if (e.origin !== location.origin || !e.data || typeof e.data !== "object") return;
+      if (e.origin !== location.origin || !e.data || typeof e.data !== "object" || !sameWin(e)) return;
       const d = e.data;
       if (d.type === "oeuvre-face" && [d.x, d.y, d.w, d.h].every(Number.isFinite) && d.w > 10 && d.h > 10) {
         // the frame fills the viewport, so its CSS pixels are ours
         face = { x: d.x, y: d.y, w: d.w, h: d.h }; if (!haveFace) body.setAttribute("data-face", "live"); haveFace = true;
         if (sound) sound.state(d.state);
+      } else if (d.type === "oeuvre-panel" && [d.x, d.y, d.w, d.h].every(Number.isFinite) && d.w >= 0 && d.h >= 0) {
+        panel = { x: d.x, y: d.y, w: d.w, h: d.h }; havePanel = true;
+        const hn = d.hint; hintR = hn && [hn.x, hn.y, hn.w, hn.h].every(Number.isFinite) && hn.w > 0 && hn.h > 0 ? { x: hn.x - 16, y: hn.y - 12, w: hn.w + 32, h: hn.h + 24 } : null;   // the first-visit hint: words keep out of it too
+        body.classList.toggle("sheet-open", !!(d.sheet && d.open));
+        if (pl && !isStatic && overlaps(pl, band())) show(cur, true);               // the panel grew over the word: it moves (same moment in its cycle)
+      } else if (d.type === "oeuvre-ready") {
+        if (!haveFace) { body.setAttribute("data-face", "live"); haveFace = true; }   // fallback: the first face box may come a frame later
+      } else if (d.type === "oeuvre-nav" && typeof d.href === "string") {
+        // an action chip in the conversation ('Open Work ->'): only the menu's own sections, through the iris from the chip
+        const a = words.find(w => new URL(w.href, location.href).pathname === d.href);
+        if (!a) return;
+        const o = Number.isFinite(d.x) && Number.isFinite(d.y) ? { x: d.x, y: d.y } : { x: W / 2, y: H / 2 };
+        leave(new URL(d.href, location.href).href, o);
       }
     });
     const post = msg => { try { frame.contentWindow.postMessage(msg, location.origin); } catch (_) { } };
     onPointer = e => post({ type: "oeuvre-pointer", x: e.clientX, y: e.clientY, w: W, h: H });
-    frame.addEventListener("load", () => post({ type: "oeuvre-hello", reduced }));
+    frame.addEventListener("load", () => { post({ type: "oeuvre-hello", reduced }); postKb(); });
+    // the on-screen keyboard: the figure's sheet rides above it (the frame's own viewport doesn't shrink)
+    const vv = window.visualViewport;
+    const postKb = () => { if (vv) post({ type: "oeuvre-viewport", kb: Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) }); };
+    if (vv) { vv.addEventListener("resize", postKb); vv.addEventListener("scroll", postKb); }
 
     /* ---- ambient sound: off until asked, fades in, ducks while the figure speaks, pauses when hidden ---- */
     const sound = (() => {
@@ -205,11 +230,11 @@
     const TX = new Float32Array(N), TY = new Float32Array(N), OX = new Float32Array(N), OY = new Float32Array(N), S = new Float32Array(N);
     for (let i = 0; i < N; i++) { X[i] = R() * W; Y[i] = R() * H; S[i] = R() * 6.2832; }
 
-    /* ---- where a word lands: anywhere, at a random size, clear of the bars and the talk control under the face ---- */
+    /* ---- where a word lands: anywhere, at a random size, clear of the bars and the figure's conversation panel ---- */
     let fs = 60, pl = null;
     const SM = 18;                                    // room for streaks and the hold's slight drift
     const gutter = () => Math.max(24, W * 0.03);
-    const band = () => { const f = isStatic ? fallback() : face; return { x: f.x - 120, y: f.y + f.h, w: f.w + 240, h: f.h }; };   // the talk control under the chin
+    const band = () => { const p = isStatic || !havePanel ? fallbackPanel() : panel; return { x: p.x - 28, y: p.y - 28, w: p.w + 56, h: p.h + 56 }; };   // the conversation panel
     const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
     const faceShare = (r, f) => {
       const ox = Math.max(0, Math.min(r.x + r.w, f.x + f.w) - Math.max(r.x, f.x)), oy = Math.max(0, Math.min(r.y + r.h, f.y + f.h) - Math.max(r.y, f.y));
@@ -229,7 +254,8 @@
         const x = left + R() * Math.max(0, right - left - ww), y = top + R() * Math.max(0, bot - top - hh);
         const r = { x, y, w: ww, h: hh, fs: s, cx: x + ww / 2, cy: y + hh / 2 };
         const far = prev ? Math.hypot(r.cx - prev.cx, r.cy - prev.cy) : W;
-        const clear = !overlaps({ x: x - SM, y: y - SM, w: ww + 2 * SM, h: hh + 2 * SM }, b);
+        const box = { x: x - SM, y: y - SM, w: ww + 2 * SM, h: hh + 2 * SM };
+        const clear = !overlaps(box, b) && !(hintR && !isStatic && overlaps(box, hintR));
         // overlapping the hair or the edge of the face is fine; covering most of the face is not (light skin
         // eats the streaks), so prefer spots where at most ~15% of the word sits on the face box
         const score = (clear ? 2 : 0) + (faceShare(r, f) <= 0.15 ? 1 : 0) + Math.min(1, far / (W * 0.25));
@@ -263,7 +289,6 @@
       if (!keepTime) { tw = 0; xf = prev ? 0 : 1; }
       fs = pl.fs; nav.style.setProperty("--fs", fs + "px");
       hit.href = words[k].href; hit.setAttribute("aria-label", words[k].label);
-      idxLinks.forEach(a => { +a.dataset.i === k ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current"); });
     }
     // asking for a word: it gathers at a new random place, unless it is already the legible one
     const goTo = k => { if (k < 0 || !pl) return; if (k === cur && tw < HOLD_END) return; show(k); };
@@ -275,13 +300,29 @@
     // keyboard: focusing a hidden word link brings that word in and holds it
     nav.addEventListener("focusin", e => { const a = e.target.closest(".word"); if (!a) return; focused = +a.dataset.i; paused |= 2; goTo(focused); });
     nav.addEventListener("focusout", () => { focused = -1; paused &= ~2; });
-    // the tiny index previews a word on hover/focus and navigates on click
-    idxLinks.forEach(a => {
-      const k = +a.dataset.i;
-      a.addEventListener("pointerenter", () => { paused |= 4; goTo(k); });
-      a.addEventListener("pointerleave", () => { paused &= ~4; });
-      a.addEventListener("focus", () => { paused |= 4; goTo(k); });
-      a.addEventListener("blur", () => { paused &= ~4; });
+    // a click on the word's box but not on its ink, where the box lies over the face or neck, belongs to the figure
+    // (touching the person changes the face): forward it instead of navigating
+    const nearPerson = () => { const f = isStatic ? fallback() : face; return { x: f.x - f.w * 0.15, y: f.y, w: f.w * 1.3, h: f.h * 1.7 }; };
+    function onInk(x, y) {
+      const w = words[cur], pts = w && w.pts; if (!pts || !pl) return true;
+      const u = (x - pl.x) / pl.fs, v = (y - pl.y) / pl.fs, r = Math.max(7, pl.fs * 0.07) / pl.fs, r2 = r * r;
+      for (let j = 0; j < pts.length; j += 2) { const du = pts[j] - u, dv = pts[j + 1] - v; if (du * du + dv * dv < r2) return true; }
+      return false;
+    }
+    hit.addEventListener("click", e => {
+      if (e.detail === 0 || !pl || !overlaps(pl, nearPerson()) || onInk(e.clientX, e.clientY)) return;   // keyboard clicks and ink navigate
+      e.preventDefault(); e.stopPropagation();
+      post({ type: "oeuvre-touch", x: e.clientX, y: e.clientY });
+    });
+    hit.addEventListener("pointermove", e => {
+      if (e.pointerType !== "mouse") return;
+      hit.style.cursor = !pl || !overlaps(pl, nearPerson()) || onInk(e.clientX, e.clientY) ? "pointer" : "default";
+    }, { passive: true });
+    // 'N' for the next face, wherever the focus is on the page (the figure also listens inside its own frame)
+    addEventListener("keydown", e => {
+      if ((e.key !== "n" && e.key !== "N") || e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.isComposing) return;
+      const t = e.target; if (t && t.closest && (t.closest("input,textarea,select,[contenteditable]") || t.isContentEditable)) return;
+      post({ type: "oeuvre-next" });
     });
 
     function placeHit(on) {
@@ -350,6 +391,11 @@
       }
       mctx.globalCompositeOperation = "source-over";
     }
+    // nothing is ever drawn over the figure's conversation panel (streaks included), with a 16 px margin
+    function clearPanel() {
+      const p = isStatic || !havePanel ? fallbackPanel() : panel; if (!p || p.w <= 0 || p.h <= 0) return;
+      mctx.clearRect(p.x - 16, p.y - 16, p.w + 32, p.h + 32);
+    }
     function focusRing() {
       if (focused !== cur || !words[cur].el.matches(":focus-visible")) return;
       const m = fs * 0.1;
@@ -360,13 +406,17 @@
     if (isStatic) window.__oeuvre = { get face() { return face; }, get haveFace() { return haveFace; }, words, get current() { return cur; }, get placement() { return pl; } };
     wordCenter = () => pl ? { x: pl.cx, y: pl.cy } : null;
     let drawn = "", lastT = 0, acc = 0, lastSize = W + "x" + H, wasLive = false, wasReduced = reduced;
+    // ?perf=1: the menu's own cost per frame (main thread), read from window.__menuPerf
+    const perf = /[?&]perf=1\b/.test(location.search) ? (window.__menuPerf = { n: 0, sum: 0, max: 0, drawn: 0, dsum: 0, N, get avg() { return this.sum / Math.max(1, this.n); }, get avgDrawn() { return this.dsum / Math.max(1, this.drawn); } }) : null;
     function frameLoop(t) {
       requestAnimationFrame(frameLoop);
+      if (document.hidden) { lastT = 0; return; }               // a hidden tab does no work (and resumes without a jump)
+      const t0 = perf ? performance.now() : 0;
       const dt = Math.min(50, lastT ? t - lastT : 16.7); lastT = t;
       if (!pl) return;
       if (body.classList.contains("list")) { mctx.clearRect(0, 0, W, H); hit.style.pointerEvents = "none"; drawn = ""; return; }
       const sz = W + "x" + H; if (sz !== lastSize) { lastSize = sz; mctx = fit(menuC); }
-      // the real face box arrived: if the word sits on the talk control or across the face, move it (same moment in its cycle)
+      // the real face box arrived: if the word sits on the panel or across the face, move it (same moment in its cycle)
       if (haveFace && !wasLive) { wasLive = true; if (!isStatic && (overlaps(pl, band()) || faceShare(pl, face) > 0.15)) show(cur, true); }
       if (reduced !== wasReduced) { wasReduced = reduced; mctx.clearRect(0, 0, W, H); for (let i = 0; i < N; i++) { X[i] = TX[i]; Y[i] = TY[i]; VX[i] = VY[i] = 0; } }
       sharp += ((paused ? 1 : 0) - sharp) * 0.08;
@@ -385,7 +435,7 @@
         mctx.clearRect(0, 0, W, H);
         if (xf < 1) marks(OX, OY, 1 - xf);
         marks(TX, TY, xf);
-        placeHit(xf > 0.5); focusRing();
+        clearPanel(); placeHit(xf > 0.5); focusRing();
         return;
       }
 
@@ -396,7 +446,8 @@
       acc = Math.min(acc + dt, 50);
       let steps = 0;
       while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }
-      if (steps) { streaks(c); focusRing(); }
+      if (steps) { streaks(c); clearPanel(); focusRing(); }
+      if (perf) { const d = performance.now() - t0; perf.n++; perf.sum += d; if (d > perf.max) perf.max = d; if (steps) { perf.drawn++; perf.dsum += d; } }
       placeHit(c > 0.6 && tw > GATHER * 0.6 && tw < HOLD_END + DISSOLVE * 0.15);
     }
     addEventListener("resize", () => {

@@ -16,7 +16,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261101"  # bump to bust caches of css/js
+VERSION = "20261101e"  # bump to bust caches of css/js
+# the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
+SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
+              '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
+              '<path class="x" d="M13 8.2l3.6 3.6M16.6 8.2L13 11.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>'
+              '</svg><span class="snd" aria-hidden="true"><i></i><i></i><i></i></span>')
 
 
 def esc(s):
@@ -82,7 +87,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <html lang="{esc(c['htmlLang'])}" class="no-js">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>{esc(full_title)}</title>
 <meta name="description" content="{esc(description)}">
 <link rel="canonical" href="{esc(canonical)}">
@@ -108,7 +113,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <header class="bar">
   <a class="mark" href="{lang_prefix or '/'}" aria-label="{esc(s['name'])} — {esc(s['home'])}">{esc(s['name'])}</a>
   {mini}
-  {idx(c, lang_prefix) + chr(10) + '  ' if page_id == 'home' else ''}{'<button class="chip chip-sound" type="button" id="soundToggle" aria-pressed="false" aria-label="' + esc(s['sound_on']) + '" data-on="' + esc(s['sound_off']) + '" data-off="' + esc(s['sound_on']) + '"><span class="snd" aria-hidden="true"><i></i><i></i><i></i></span><span class="lbl">' + esc(s['sound']) + '</span></button>\n  <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
+  {'<button class="snd-btn" type="button" id="soundToggle" aria-pressed="false" aria-label="' + esc(s['sound_on']) + '" data-on="' + esc(s['sound_off']) + '" data-off="' + esc(s['sound_on']) + '">' + SOUND_ICON + '</button>\n  <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
 </header>
 {body}
 {cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
@@ -121,14 +126,6 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 </body>
 </html>
 """
-
-
-def idx(c, P):
-    """Tiny always-visible index next to the Index chip: 01-04, one per menu word."""
-    items = "".join(
-        f'<li><a href="{P}{m["href"]}" data-i="{i}" aria-label="{esc(m["label"])}">0{i + 1}</a></li>'
-        for i, m in enumerate(c["menu"]))
-    return f'<ol class="idx" aria-label="{esc(c["site"]["sections"])}">{items}</ol>'
 
 
 def cta(c, P):

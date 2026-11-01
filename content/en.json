@@ -13,7 +13,6 @@
     "skip": "Skip to content",
     "index": "Index",
     "float": "Float",
-    "sound": "Sound",
     "sound_on": "Sound on",
     "sound_off": "Sound off",
     "soon": "Coming soon",
@@ -22,7 +21,7 @@
     "home": "Home",
     "seeYou": "Let it see you",
     "seeYouOff": "Stop camera",
-    "beingTitle": "A photographic figure that mirrors your face",
+    "beingTitle": "A photographic figure you can talk to",
     "copyright": "© 2026 BNB Management Consulting Ltd",
     "ctaLead": "Have something in mind?",
     "ctaLink": "Start a conversation"

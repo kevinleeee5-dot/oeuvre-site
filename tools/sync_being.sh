@@ -4,7 +4,7 @@
 # Copies being4.html -> being/index.html and the runtime assets it loads:
 #   assets/ids4/ids.json            landmarks, mesh and video registration for the five identities e-i
 #   assets/ids4/{e,f,g,h,i}.web.jpg the web-sized portraits (1600 px)
-#   assets/video/web/{e..i}{1,2}.mp4 the clips (H.264, 1280x960, no audio), two per identity
+#   assets/video/web/{e..i}{1,2}.mp4 the clips (H.264 High, full 1664x1248, CRF 19-22, <= 2.5 MB, no audio; oeuvre-dream/tools/encode_web.sh), two per identity
 # Never copies the source portraits (assets/ids/final), the Seedance originals (assets/video/*.mp4), the registration
 # frames (assets/ids4/frames), assets/src, assets/check, assets/test, tools/ or anything else.
 set -eu

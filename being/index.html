@@ -5,109 +5,206 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Oeuvre</title>
 <meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&amp;display=swap">
 <style>
-  :root { --bg:#000; --fg:#f2f2ee; --dim:#7d7d78; --line:#3a3a37; color-scheme:dark; }
+  :root { --bg:#000; --fg:#f2f2ee; --dim:#7d7d78; --line:#3a3a37; --hair:rgba(255,255,255,.14); --soft:rgba(255,255,255,.58); --g:clamp(16px,4vw,56px);
+    --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; --ease:cubic-bezier(.2,.7,.2,1); color-scheme:dark; }
   * { box-sizing:border-box; }
   html,body { height:100%; margin:0; background:var(--bg); color:var(--fg); overflow:hidden; }
-  body { font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; touch-action:none; user-select:none; -webkit-user-select:none; }
-  canvas { position:fixed; inset:0; width:100%; height:100%; display:block; }
-  .hud { position:fixed; font:11px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); pointer-events:none; z-index:2; }
+  body { font-family:var(--sans); -webkit-font-smoothing:antialiased; touch-action:none; user-select:none; -webkit-user-select:none; }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  canvas#c { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  body.onface canvas#c { cursor:pointer; }
+  .sr-only { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+  .sr-only:focus-visible { width:auto; height:auto; clip:auto; clip-path:none; left:var(--g); bottom:var(--g); padding:8px 12px; border:1px solid var(--fg); border-radius:99px; z-index:9; font:11px var(--mono); letter-spacing:.1em; text-transform:uppercase; background:#000; }
+  .hud { position:fixed; font:11px/1.5 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--dim); pointer-events:none; z-index:2; }
   .hud b { color:var(--fg); font-weight:500; }
   .tl { top:max(20px,env(safe-area-inset-top)); left:max(20px,env(safe-area-inset-left)); }
-  .tr { top:max(20px,env(safe-area-inset-top)); right:max(20px,env(safe-area-inset-right)); text-align:right; }
   .bl { bottom:max(20px,env(safe-area-inset-bottom)); left:max(20px,env(safe-area-inset-left)); }
-  .br { bottom:max(20px,env(safe-area-inset-bottom)); right:max(20px,env(safe-area-inset-right)); text-align:right; }
-  #perf { position:fixed; left:max(20px,env(safe-area-inset-left)); top:calc(max(20px,env(safe-area-inset-top)) + 44px); font:11px/1.5 ui-monospace,"SF Mono",Menlo,monospace;
-    color:var(--dim); white-space:pre; pointer-events:none; display:none; z-index:2; }   /* debug only: under the state line, never over the face or the wordmark */
+  #perf { position:fixed; left:max(20px,env(safe-area-inset-left)); top:calc(max(20px,env(safe-area-inset-top)) + 44px); font:11px/1.5 var(--mono);
+    color:var(--dim); white-space:pre; pointer-events:none; display:none; z-index:2; }   /* debug only */
   body.perf #perf { display:block; }
-  #gate { position:fixed; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; font:14px/1.7 ui-monospace,"SF Mono",Menlo,monospace; transition:opacity .8s; z-index:2; }
+  #gate { position:fixed; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; font:14px/1.7 var(--mono); transition:opacity .8s; z-index:2; }
   #gate.off { opacity:0; }
   #gate p { margin:0; color:var(--dim); max-width:40ch; }
-  /* talk: what it says, what it heard, the mic and the input, bottom centre (embedded: a compact pill under the chin) */
-  #talk { position:fixed; left:50%; transform:translateX(-50%); bottom:max(20px,env(safe-area-inset-bottom)); width:min(600px,calc(100% - 32px));
-    display:grid; gap:10px; justify-items:center; text-align:center; font:12px/1.6 ui-monospace,"SF Mono",Menlo,monospace; color:var(--dim); z-index:2; transition:opacity .6s; }
-  body.loading #talk { opacity:0; pointer-events:none; }
-  #said { min-height:1.65em; max-width:58ch; color:var(--fg); font-size:13px; white-space:pre-wrap; text-shadow:0 0 14px #000, 0 0 4px #000; }
-  #notice { min-height:1.6em; max-width:58ch; color:var(--fg); opacity:0; transition:opacity .5s; text-shadow:0 0 10px #000; }
-  #notice.on { opacity:.85; }
-  #said.dim { color:var(--dim); }
-  #said a { color:var(--fg); }
-  #said .caret { display:inline-block; width:.5em; height:1.05em; margin-left:1px; vertical-align:-.15em; background:currentColor; opacity:.55; animation:caret 1s steps(1) infinite; }
-  @keyframes caret { 50% { opacity:0; } }
-  #heard { min-height:1.6em; max-width:58ch; color:var(--dim); white-space:pre-wrap; text-shadow:0 0 10px #000; }
-  .row { display:flex; gap:8px; width:100%; align-items:center; justify-content:center; }
-  #say { flex:1; min-width:0; background:rgba(0,0,0,.6); border:1px solid var(--line); border-radius:999px; color:var(--fg); padding:10px 16px;
-    font:12px ui-monospace,"SF Mono",Menlo,Consolas,monospace; letter-spacing:.02em; cursor:text; }
-  #say::placeholder { color:#5f5f5b; }
-  #say.interim { color:var(--dim); }
-  #say:focus { border-color:var(--dim); outline:none; }
-  #say:focus-visible { outline:1px solid var(--fg); outline-offset:2px; }
-  body.listening #mic { border-color:var(--fg); }
-  body.listening #mic .dot { background:var(--fg); animation:pulse 1.1s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity:.25; transform:scale(.7); } }
-  #talk { user-select:text; -webkit-user-select:text; cursor:auto; }
-  .pill { flex:none; background:rgba(0,0,0,.6); border:1px solid var(--line); color:var(--fg); cursor:pointer; padding:10px 16px; font:11px ui-monospace,"SF Mono",Menlo,monospace;
-    letter-spacing:.12em; text-transform:uppercase; border-radius:999px; display:inline-flex; align-items:center; gap:8px; transition:border-color .3s, color .3s; }
-  .pill:hover { border-color:var(--fg); }
-  .pill:disabled { color:var(--dim); cursor:default; border-color:var(--line); }
-  .pill:focus-visible { outline:1px solid var(--fg); outline-offset:2px; }
-  .dot { width:7px; height:7px; border-radius:50%; border:1px solid currentColor; flex:none; }
-  /* standalone: the heard line sits on a soft black ground so it reads over the chest of the lighter identities */
-  body:not(.embed) #heard:not(:empty) { background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); padding:6px 12px; border-radius:8px; }
-  #open { display:none; }
   #vids { position:fixed; left:0; top:0; width:2px; height:2px; overflow:hidden; opacity:0; pointer-events:none; z-index:-1; }
   #vids video { width:2px; height:2px; }
-  body.noui .hud, body.noui #talk, body.noui #gate, body.noui #perf { display:none; }
+  body.noui .hud, body.noui #panel, body.noui #tab, body.noui #gate, body.noui #perf, body.noui #hint { display:none; }
   body.nohud .hud { display:none; }
-  @media (max-width: 1180px) { #talk { bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px)); } }   /* above the bottom-left HUD */
-  @media (max-width: 640px) { .tr, .br { display:none; } .pill { padding:10px 12px; letter-spacing:.08em; } #talk { bottom:max(64px,calc(env(safe-area-inset-bottom) + 48px)); } }
-  /* embedded in the site's home page (same-origin iframe): the site draws the words, corners and footer. Here: pure black,
-     no HUD, the bottom fading to black, and only a compact talk control just under the face box (placed by placeTalk). */
   body.embed .hud, body.embed #gate { display:none; }
-  body.embed::after { content:""; position:fixed; left:0; right:0; bottom:0; height:100px; z-index:1; pointer-events:none; background:linear-gradient(to bottom, rgba(0,0,0,0), #000); }
-  body.embed #talk { bottom:auto; top:-999px; gap:6px; transition:opacity .6s, top .35s ease-out; }
-  body.embed #talk .row, body.embed #open { order:0; } body.embed #notice { order:2; } body.embed #heard { order:3; } body.embed #said { order:4; max-height:6.7em; overflow-y:auto; }
-  /* embedded: only a compact 'talk' pill under the chin until it is clicked; then the input and the mic */
-  body.embed:not(.talkopen) #open { display:inline-flex; } body.embed:not(.talkopen) #talk .row { display:none; }
-  body.embed #talk .row { width:min(360px,100%); }
-  body.embed #said:empty, body.embed #heard:empty { display:none; } body.embed #notice:not(.on) { min-height:0; height:0; }
-  body.embed .pill { padding:8px 12px; letter-spacing:.08em; }
-  body.embed #say { padding:8px 14px; }
-  /* a soft, light pool of black behind the controls so the reply reads over the neck */
-  body.embed #talk::before { content:""; position:absolute; inset:-18px -40px -22px; z-index:-1; pointer-events:none;
-    background:radial-gradient(closest-side, rgba(0,0,0,.5) 40%, rgba(0,0,0,.22) 72%, rgba(0,0,0,0)); }
-  body.embed #talk::before { opacity:0; transition:opacity .5s; }   /* only once there is something to read: the closed pill carries its own ground */
-  body.embed.talkopen #talk::before, body.embed.listening #talk::before, body.embed.thinking #talk::before, body.embed.speaking #talk::before { opacity:1; }
-  body.embed.narrow #talk .row { width:min(320px,100%); }
+
+  /* ---- the conversation: a slim column on the right, transparent over the black (phones: a bottom sheet; a phone on its side: a
+     drawer). It is anchored by its input, not its centre: the input row sits at a fixed height (bottom edge 150 px below the middle)
+     and never moves; once it talks the column takes a fixed height and the thread grows upward inside it, under a top fade ---- */
+  #panel { position:fixed; z-index:3; right:var(--g); top:auto; bottom:calc(50% - 150px); width:clamp(320px,24vw,372px); max-height:min(600px,calc(50% + 150px - 96px));
+    display:flex; flex-direction:column; gap:14px; color:var(--fg); font:300 14px/1.5 var(--sans);
+    transform:none; transition:opacity .55s var(--ease), transform .7s var(--ease), visibility 0s linear 0s; user-select:text; -webkit-user-select:text; cursor:auto; }
+  #panel > * { flex:none; }
+  #panel.talked { height:min(560px,calc(50% + 150px - 96px)); }
+  .ph { order:0; } .lede { order:1; } #chips { order:2; } #thread { order:3; } #think { order:4; } #notice { order:5; } .inrow { order:7; } .foot { order:8; }
+  #panel.talked #chips { order:6; }   /* after the first exchange the suggestions follow the latest reply, just above the input */
+  body.loading #panel, body.loading #tab { opacity:0; pointer-events:none; }
+  body:not(.panelopen) #panel { opacity:0; transform:translate(24px,0); pointer-events:none; visibility:hidden; transition:opacity .4s var(--ease), transform .5s var(--ease), visibility 0s linear .5s; }
+  #panel::before { content:""; position:absolute; inset:-40px -28px -40px -64px; z-index:-1; pointer-events:none;   /* a faint ground: the text reads over a shoulder */
+    background:radial-gradient(closest-side, rgba(0,0,0,.6), rgba(0,0,0,.35) 60%, rgba(0,0,0,0)); }
+  .meta { font:500 10.5px/1.4 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--soft); }
+  .ph { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:10px; border-bottom:1px solid var(--hair); }
+  .ph .meta { display:inline-flex; align-items:center; gap:9px; }
+  .live { width:6px; height:6px; border-radius:50%; background:var(--fg); opacity:.85; transition:transform .4s, opacity .4s; }
+  body.listening .live, body.speaking .live { animation:pulse 1.1s ease-in-out infinite; }
+  body.thinking .live { opacity:.35; }
+  @keyframes pulse { 50% { opacity:.25; transform:scale(.6); } }
+  .ic { width:28px; height:28px; display:inline-grid; place-items:center; border-radius:50%; color:var(--soft); transition:color .25s, background .25s; }
+  .ic:hover { color:var(--fg); background:rgba(255,255,255,.08); }
+  .ic:focus-visible, .chip:focus-visible, .go:focus-visible, .tab:focus-visible { outline:1px solid var(--fg); outline-offset:3px; }
+  #say:focus, #say:focus-visible { outline:none; }   /* the row's hairlines brighten instead */
+  #panel.talked .lede { display:none; }   /* once it is talking the thread gets the room */
+  .lede { margin:0; font-size:15px; line-height:1.45; color:var(--fg); letter-spacing:-.005em; max-width:30ch; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; }
+  .chip { font:400 12.5px/1 var(--sans); padding:8px 12px; border:1px solid var(--hair); border-radius:99px; color:var(--soft); background:rgba(0,0,0,.35);
+    transition:color .25s, border-color .25s, background .25s, opacity .4s, transform .4s var(--ease); }
+  .chip:hover { color:#000; background:var(--fg); border-color:var(--fg); }
+  .chip.used { display:none; }
+  #panel.talked .chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding:1px 0 2px; margin-top:-2px;
+    -webkit-mask-image:linear-gradient(to right, #000 82%, transparent); mask-image:linear-gradient(to right, #000 82%, transparent); }
+  #panel.talked .chips::-webkit-scrollbar { display:none; }
+  #panel.talked .chip { flex:none; }
+  #panel { touch-action:pan-y; } #tab, #nextface { touch-action:manipulation; }
+  #panel > #thread { list-style:none; margin:0; padding:0 2px 0 0; display:flex; flex-direction:column; gap:12px; overflow-y:auto; min-height:0; flex:1 1 auto; scrollbar-width:thin; scrollbar-color:var(--line) transparent;
+    mask-image:linear-gradient(to bottom, transparent 0, #000 28px); -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 28px); }
+  #thread > li:first-child { margin-top:auto; }   /* the thread sits on the input and grows upward */
+  #thread:empty { display:none; }
+  #thread li { animation:rise .5s var(--ease) both; }
+  @keyframes rise { from { opacity:0; transform:translateY(6px); } }
+  #thread .you { align-self:flex-end; max-width:86%; text-align:right; color:var(--soft); font-size:13px; line-height:1.45; }
+  #thread .you::before { content:"you"; display:block; font:500 9.5px/1.6 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+  #thread .it { color:var(--fg); font-size:15px; line-height:1.5; white-space:pre-wrap; text-shadow:0 0 12px #000; }
+  #thread .it.dim { color:var(--soft); }
+  #thread .it a { color:var(--fg); }
+  #thread .caret { display:inline-block; width:.45em; height:1em; margin-left:2px; vertical-align:-.12em; background:currentColor; opacity:.55; animation:caret 1s steps(1) infinite; }
+  @keyframes caret { 50% { opacity:0; } }
+  /* the reply's action chips: the suggestions' pill, a little brighter; shown faint while the reply types, lit when it is done */
+  .acts { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; white-space:normal; transition:opacity .6s var(--ease); }
+  .acts.wait { opacity:.35; pointer-events:none; }
+  .go { font:400 12.5px/1 var(--sans); padding:8px 12px; border-radius:99px; border:1px solid rgba(255,255,255,.35); color:var(--fg); background:rgba(0,0,0,.35);
+    animation:rise .5s var(--ease) both; transition:border-color .25s, background .25s; }
+  .go:hover, .go:focus-visible { border-color:var(--fg); background:rgba(255,255,255,.06); }
+  .go .ar { display:inline-block; margin-left:6px; transition:transform .3s var(--ease); }
+  .go:hover .ar { transform:translateX(3px); }
+  /* thinking: three short streaks that drift and brighten in turn */
+  #think { display:none; gap:7px; align-items:center; height:14px; padding-left:1px; }
+  body.thinking #think { display:flex; }
+  #think i { display:block; width:20px; height:2px; border-radius:1px; background:linear-gradient(90deg, rgba(255,255,255,0), var(--fg)); opacity:.2; animation:streak 1.2s var(--ease) infinite; }
+  #think i:nth-child(2) { animation-delay:.18s; } #think i:nth-child(3) { animation-delay:.36s; }
+  @keyframes streak { 0% { opacity:.15; transform:translateX(-3px) scaleX(.6); } 40% { opacity:1; transform:translateX(2px) scaleX(1); } 100% { opacity:.15; transform:translateX(5px) scaleX(.6); } }
+  #notice { min-height:0; color:var(--soft); font-size:12.5px; opacity:0; transition:opacity .5s; }
+  #notice:empty { display:none; }
+  #notice.on { opacity:1; }
+  .inrow { display:flex; align-items:center; gap:8px; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:4px 0; transition:border-color .3s; }
+  .inrow:focus-within, body.listening .inrow { border-color:rgba(255,255,255,.4); }
+  #say { flex:1; min-width:0; background:transparent; border:0; color:var(--fg); padding:12px 0; font:300 15px/1.3 var(--sans); cursor:text; outline:none; }
+  #say::placeholder { color:var(--dim); }
+  #say.interim { color:var(--soft); }
+  #say:disabled { opacity:.5; }
+  .mic { width:auto; min-width:34px; height:34px; padding:0 9px; gap:7px; display:inline-flex; align-items:center; border-radius:99px; }
+  .mic svg { width:15px; height:15px; flex:none; }
+  .meter { display:none; align-items:center; gap:2px; height:16px; }
+  .meter i { display:block; width:2px; height:calc(2px + var(--v,0) * 14px); border-radius:1px; background:var(--fg); transition:height .08s linear; }
+  body.listening .mic { color:#000; background:var(--fg); }
+  body.listening .meter { display:inline-flex; }
+  body.listening .meter i { background:#000; }
+  .mic:disabled { opacity:.4; cursor:default; }
+  .foot { display:flex; justify-content:space-between; gap:10px; color:var(--dim); }
+  .foot .meta { color:var(--dim); font-size:9.5px; }
+  /* collapsed: a vertical 'Talk' pill on the right edge, where the column's middle was */
+  .tab { position:fixed; z-index:3; right:0; top:50%; transform:translate(0,-50%); writing-mode:vertical-rl; width:36px; min-height:120px; padding:18px 0; justify-content:center;
+    border:1px solid rgba(255,255,255,.28); border-right:0; border-radius:18px 0 0 18px; background:rgba(0,0,0,.55); font:500 11px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--fg);
+    display:inline-flex; align-items:center; gap:12px; transition:opacity .4s var(--ease), transform .5s var(--ease), background .25s, visibility 0s linear 0s; }
+  .tab .live { opacity:.7; }
+  .tab:hover { background:rgba(255,255,255,.1); }
+  body.panelopen .tab { opacity:0; transform:translate(100%,-50%); pointer-events:none; visibility:hidden; transition:opacity .3s var(--ease), transform .4s var(--ease), visibility 0s linear .4s; }
+  /* the touch hint and the ripple a touch leaves */
+  #hint { position:fixed; z-index:2; left:0; top:0; font:500 10.5px/1.4 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--soft); pointer-events:none;
+    opacity:0; transition:opacity 1.2s var(--ease); white-space:nowrap; text-shadow:0 0 6px #000, 0 0 14px #000, 0 0 2px #000; display:flex; align-items:center; gap:10px; }
+  #hint.r { flex-direction:row-reverse; }
+  #hint.c i { display:none; }
+  #phint { display:none; margin:-6px 0 0; color:var(--dim); font-size:9.5px; order:1; }
+  body.phint #phint { display:block; }
+  #hint.on { opacity:1; }
+  #hint i { display:block; width:28px; height:1px; background:currentColor; opacity:.6; }
+  .ripple { position:fixed; z-index:2; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:1px solid rgba(255,255,255,.75); pointer-events:none; animation:ripple 1s var(--ease) forwards; }
+  .ripple.no { border-color:rgba(255,255,255,.3); animation-duration:.6s; }
+  @keyframes ripple { to { transform:scale(5); opacity:0; } }
+  @media (prefers-reduced-motion: reduce) { .ripple { animation:none; opacity:0; } #thread li, .go { animation:none; } }
+  @media (pointer: coarse) { .foot .meta:last-child { display:none; } }   /* no space bar to hold */
+  /* phones (and short landscape screens): the panel is a bottom sheet over the lower bust; a 'Talk' pill bottom right opens it.
+     --kb: the on-screen keyboard's height (oeuvre-viewport / visualViewport), so the sheet rides above it */
+  @media (max-width: 699px), (max-aspect-ratio: 4/5), (max-height: 499px) {
+    #panel { left:0; right:0; top:auto; bottom:var(--kb,0px); width:auto; max-height:min(52svh,460px); gap:12px; padding:14px 16px max(16px,env(safe-area-inset-bottom));
+      background:rgba(6,6,6,.86); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); border-top:1px solid var(--hair); border-radius:16px 16px 0 0; transform:none; }
+    #panel.talked { height:min(56svh,480px); max-height:calc(100svh - var(--kb,0px) - 56px); }   /* a fixed height once it talks: the thread scrolls inside, the face stays put */
+    #panel::before { display:none; }
+    body:not(.panelopen) #panel { transform:translateY(105%); }
+    .lede { font-size:14px; max-width:none; }
+    #thread .it { font-size:14.5px; }
+    .tab { writing-mode:horizontal-tb; width:auto; min-height:44px; top:auto; right:16px; bottom:max(64px,calc(env(safe-area-inset-bottom) + 52px)); transform:none; border:1px solid rgba(255,255,255,.5);
+      border-radius:99px; padding:14px 18px; background:rgba(0,0,0,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+    body.panelopen .tab { transform:translateY(20px); }
+    .foot .meta:last-child { display:none; }
+    /* touch targets: 40-44 px */
+    .chip, .go { padding:13px 14px; min-height:40px; }
+    .ic { width:40px; height:40px; }
+    .mic { min-width:44px; height:44px; }
+  }
+  /* a phone on its side: a drawer on the right, full height (the face slides left to make room) */
+  @media (max-height: 499px) and (min-aspect-ratio: 1/1) {
+    #panel, #panel.talked { left:auto; right:0; top:0; bottom:var(--kb,0px); width:min(400px,50vw); height:auto; max-height:none; border-top:0; border-left:1px solid var(--hair);
+      border-radius:16px 0 0 16px; padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) 16px; gap:10px; }
+    body:not(.panelopen) #panel { transform:translateX(105%); }
+    .lede, .foot { display:none; }
+    .tab { bottom:max(16px,env(safe-area-inset-bottom)); }
+  }
 </style>
 </head>
 <body class="loading">
   <canvas id="c"></canvas>
   <div class="hud tl"><b>Oeuvre</b><br><span id="state">waking</span> &middot; <span id="clock"></span> Auckland</div>
-  <div class="hud tr">it is never one person for long.<br>talk to it, it answers</div>
   <div class="hud bl">BNB Management Consulting Ltd t/a Oeuvre<br>info@bnbmanagement.co.nz</div>
-  <div class="hud br">every face here is made up.<br>none of them is anyone.</div>
   <div id="perf"></div>
   <div id="gate"><p id="gatetext">it is finding a face…</p></div>
+  <div id="hint" aria-hidden="true"><span>Touch the face to change it</span><i></i></div>
+  <button id="nextface" class="sr-only" type="button">Change the face</button>
 
-  <section id="talk" aria-label="talk to it">
-    <div id="said" aria-live="polite"></div>
-    <div id="heard"></div>
-    <div id="notice" role="status"></div>
-    <button id="open" class="pill" type="button" aria-expanded="false" aria-controls="say"><span class="dot"></span>talk</button>
-    <div class="row">
-      <button id="mic" class="pill" type="button" title="tap, or hold the space bar, to talk"><span class="dot"></span><span id="miclabel">speak</span></button>
-      <input id="say" type="text" maxlength="500" autocomplete="off" spellcheck="false" enterkeyhint="send" placeholder="or type to it, then enter" aria-label="type to it">
+  <aside id="panel" aria-label="Talk to the face">
+    <div class="ph"><span class="meta"><i class="live" aria-hidden="true"></i><span id="pstate">Talk</span></span>
+      <button id="pclose" class="ic" type="button" aria-label="Hide the conversation" aria-controls="panel"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" stroke="currentColor" stroke-width="1.2"/></svg></button></div>
+    <p id="phint" class="meta">Touch the face to change it</p>
+    <p class="lede">Talk to the face. Ask about the studio, a project, or what we could make for you.</p>
+    <div id="chips" class="chips" role="group" aria-label="Suggestions">
+      <button class="chip" type="button">What does Oeuvre do?</button><button class="chip" type="button">Show me your work</button><button class="chip" type="button">How do projects start?</button><button class="chip" type="button">Who are you?</button>
     </div>
-  </section>
+    <ol id="thread" aria-live="polite"></ol>
+    <div id="think" role="status" aria-label="thinking"><i></i><i></i><i></i></div>
+    <div id="notice" role="status"></div>
+    <div class="inrow">
+      <input id="say" type="text" maxlength="500" autocomplete="off" spellcheck="false" enterkeyhint="send" placeholder="Ask it something" aria-label="Type to it, then Enter">
+      <button id="mic" class="ic mic" type="button" title="Tap, or hold the space bar, to talk"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M3 8a5 5 0 0 0 10 0M8 13v2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span id="miclabel" class="sr-only">speak</span></button>
+    </div>
+    <div class="foot"><span class="meta">Enter to send</span><span class="meta">Hold space to speak</span></div>
+  </aside>
+  <button id="tab" class="tab" type="button" aria-controls="panel" aria-expanded="false"><i class="live" aria-hidden="true"></i>Talk</button>
   <div id="vids" aria-hidden="true"></div>
 
 <script type="module">
   var cv = document.getElementById("c");
   var stateEl = document.getElementById("state"), clockEl = document.getElementById("clock"), perfEl = document.getElementById("perf");
   var gate = document.getElementById("gate"), gateText = document.getElementById("gatetext");
-  var noticeEl = document.getElementById("notice"), openBtn = document.getElementById("open"), vidsEl = document.getElementById("vids");
-  var micBtn = document.getElementById("mic"), micLabel = document.getElementById("miclabel"), sayEl = document.getElementById("say"), saidEl = document.getElementById("said"), heardEl = document.getElementById("heard");
+  var noticeEl = document.getElementById("notice"), vidsEl = document.getElementById("vids");
+  var micBtn = document.getElementById("mic"), micLabel = document.getElementById("miclabel"), sayEl = document.getElementById("say"), saidEl = null;
+  var panelEl = document.getElementById("panel"), tabBtn = document.getElementById("tab"), closeBtn = document.getElementById("pclose"), threadEl = document.getElementById("thread");
+  var chipsEl = document.getElementById("chips"), pstateEl = document.getElementById("pstate"), hintEl = document.getElementById("hint"), nextBtn = document.getElementById("nextface");
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches, REDUCE_MQ = reduce;
   var LOC = typeof location !== "undefined" && location ? location : { search: "", origin: "null" };
   var EMBED = (function () {
@@ -606,27 +703,95 @@
     return { step: step, neutral: NEU, info: info, MT: MT, AU: AU };
   }
 
-  // --- composition: the picture on the screen so the face box is a share of the width, the head upper-middle
-  // The face box is FACE_FRAC of the width (desktop 24 %, phone 45 %); the whole head, hair included (taken as half a face
-  // height above the face box, never above the picture), stays in frame with HEADROOM of the height above it, and the head
-  // plus the talk control under the chin fit the height: on a short wide screen the scale gives way, never the framing.
-  // being4's portraits are landscape busts: the shoulders (taken as SHOULDER x the face height under the chin) stay above
-  // SHOULDER_MAX of the height, so the full width of the shoulders shows before the bottom fades; the scale gives way first, then
-  // the centring (never the headroom)
-  var FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.45, HEADROOM = 0.05, SHOULDER = 0.45, SHOULDER_MAX = 0.86;
+  // --- composition (v5, full bleed): the bust runs straight off the bottom of the screen, no fade. The picture is scaled so
+  // the face box is FACE_FRAC of the width (desktop ~24 %, phone ~58 %), the crown keeps HEADROOM of the height above it, and
+  // the picture's bottom edge always sits at or below the viewport's bottom (the chest is cropped by the screen, like an
+  // editorial crop). On a short wide screen the chin stays above CHIN_MAX of the height (the scale gives way), but never so far
+  // that the bottom edge would come into view: the full bleed wins. Desktop: the face sits a little left of centre to balance the
+  // conversation panel on the right (opts.right: the css px the panel takes). Compact screens (phones, portrait): centred, the bust fills the width.
+  // compact (phones, and portrait screens such as an upright tablet): the face centred, the bust filling the width, the crown
+  // allowed down to CROWN_COMPACT of the height so the bust can run off the bottom without a giant face
+  // short landscape screens (a phone on its side, H < SHORT_H) are compact too: the sheet, not the column; their face is sized by
+  // the height (FACE_H_LAND of it) and centred
+  var FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.58, FACE_FRAC_PORTRAIT = 0.42, HEADROOM = 0.05, CHIN_MAX = 0.74, FACE_Y = 0.42, PHONE_W = 700, CROWN_COMPACT = 0.3, IMG_H = 1792, IMG_W = 2400, BLEED = 2;
+  var SHORT_H = 500, FACE_H_LAND = 0.5;
+  function isCompact(W, H) { return W < PHONE_W || W / H < 0.8 || H < SHORT_H; }
   function headTop(faceBox) { return Math.max(0, faceBox[1] - 0.5 * faceBox[3]); }
-  function shoulderY(faceBox) { return faceBox[1] + faceBox[3] * (1 + SHOULDER); }
-  function layout(W, H, faceBox, ID) {
-    var phone = W <= 640, frac = phone ? FACE_FRAC_PHONE : FACE_FRAC;
-    var S = frac * W / faceBox[2], top = headTop(faceBox), shY = shoulderY(faceBox);
-    var maxS = (phone ? 0.82 : 0.78) * H / ((faceBox[1] + faceBox[3] * 1.12) - top); if (S > maxS) S = maxS;   // head + room for the talk control
-    var maxS2 = (SHOULDER_MAX - HEADROOM) * H / (shY - top); if (!phone && S > maxS2) S = maxS2;               // crown to shoulders
+  function chinY(faceBox) { return faceBox[1] + faceBox[3]; }
+  function layout(W, H, faceBox, opts) {
+    opts = opts || {};
+    var phone = isCompact(W, H), land = phone && W / H >= 1, imgH = opts.imgH || IMG_H, top = headTop(faceBox);
+    var S = land ? FACE_H_LAND * H / faceBox[3] : (phone ? (W < 500 ? FACE_FRAC_PHONE : FACE_FRAC_PORTRAIT) : FACE_FRAC) * W / faceBox[2];
+    if (!phone) { var maxS = (CHIN_MAX - HEADROOM) * H / (chinY(faceBox) - top); if (S > maxS) S = maxS; }    // a short screen: the chin stays up
+    var minS = ((1 - (phone && !land ? CROWN_COMPACT : HEADROOM)) * H + BLEED) / (imgH - top); if (S < minS) S = minS;   // the bottom edge never shows
     var cxI = faceBox[0] + faceBox[2] / 2, cyI = faceBox[1] + faceBox[3] / 2;
-    var ox = W / 2 - cxI * S, oy = (phone ? 0.38 : 0.42) * H - cyI * S;
-    if (!phone) { var oySh = SHOULDER_MAX * H - shY * S; if (oy > oySh) oy = oySh; }  // the shoulders above the fade
-    var oyTop = HEADROOM * H - top * S; if (oy < oyTop) oy = oyTop;              // the crown never runs off the top
-    return { S: S, ox: ox, oy: oy, frac: faceBox[2] * S / W };
+    var cx = phone ? W / 2 : W / 2 - Math.min(0.07 * W, 0.3 * (opts.right || 0));
+    var ox = cx - cxI * S;
+    var oy = FACE_Y * H - cyI * S;
+    oy = Math.max(oy, HEADROOM * H - top * S);                                                                // the crown in frame, with headroom
+    oy = Math.max(oy, H + BLEED - imgH * S);                                                                  // the picture's bottom past the screen's
+    return { S: S, ox: ox, oy: oy, frac: faceBox[2] * S / W, phone: phone, bottom: oy + imgH * S };
   }
+  // a screen point (css px) -> the transition field's coordinates (head frame, face widths, y up), for a touch-seeded transition.
+  // lay: the identity's layout, lift: the extra vertical offset the figure is drawn at (the phone sheet). Clamped to the head
+  // and shoulders: a touch on the chest seeds under the chin, never off the mesh
+  // The seed is read off the face itself: the field coordinates of the three landmarks nearest the touch (in the picture),
+  // inverse-distance weighted, so it is exactly where the shader's field has its zero. A touch on the hair or the chest lands on
+  // the nearest edge of the face (the rings are folded onto the oval: the face edge there goes first, then the hair or collar)
+  function fieldPoint(I, lay, lift, x, y) {
+    var ix = (x - lay.ox) / lay.S, iy = (y - lay.oy - (lift || 0)) / lay.S, bi = [-1, -1, -1], bd = [1e30, 1e30, 1e30], i, k;
+    for (i = 0; i < NL; i++) {
+      var dx = I.img[i * 3] - ix, dy = I.img[i * 3 + 1] - iy, d = dx * dx + dy * dy;
+      if (d < bd[2]) { for (k = 2; k > 0 && d < bd[k - 1]; k--) { bd[k] = bd[k - 1]; bi[k] = bi[k - 1]; } bd[k] = d; bi[k] = i; }
+    }
+    var fx = 0, fy = 0, ws = 0;
+    for (k = 0; k < 3; k++) { var w = 1 / (Math.sqrt(bd[k]) + 0.5); fx += w * I.L[bi[k] * 3] / I.fw; fy += w * I.L[bi[k] * 3 + 1] / I.fw; ws += w; }
+    return [fx / ws, fy / ws];
+  }
+  // the person under a screen point: the identity's luminance mask (mw x mh, 0..255, from the web portrait) at that point
+  function onPerson(mask, mw, mh, lay, lift, x, y, W, H) {
+    if (!mask) return false;
+    var u = (x - lay.ox) / lay.S / (W || IMG_W), v = (y - lay.oy - (lift || 0)) / lay.S / (H || IMG_H);
+    if (u < 0 || v < 0 || u >= 1 || v >= 1) return false;
+    return mask[Math.floor(v * mh) * mw + Math.floor(u * mw)] > 26;
+  }
+  // what a reply points at: the site's sections it mentions, as action chips ('Open Work ->'), at most two, in the order they
+  // come up. The visitor's question counts too (asked for the work, the work chip comes first)
+  var INTENTS = [
+    { id: "work", label: "Work", href: "/work/", re: /\b(our work|your work|the work|selected work|work page|portfolio|case stud(y|ies)|projects? we|recent projects?|clients?|show(ing)? you)\b|\bWork\b(?! with| on| together)/ },
+    // service phrases only: a bare product noun ('Beicare, an app') is a project, not the Services page
+    { id: "services", label: "Services", href: "/services/", re: /\b(our services|services|what we (do|make|offer)|how we work)\b/i },
+    { id: "studio", label: "Studio", href: "/studio/", re: /\b(the studio|our studio|studio page|the team|our team|who we are|about us|based in auckland)\b|\bStudio\b/ },
+    { id: "contact", label: "Contact", href: "/contact/", re: /\b(contact|get in touch|email|e-mail|write to|reach (us|out)|info@|start a project|book a call|brief us|let'?s talk)\b/i }
+  ];
+  function intentsOf(reply, asked) {
+    var found = [], text = String(reply || ""), q = String(asked || "");
+    INTENTS.forEach(function (it) {
+      var m = text.search(it.re), mq = q.search(it.re);
+      if (m >= 0 || mq >= 0) found.push({ id: it.id, label: it.label, href: it.href, at: mq >= 0 ? -1000 + mq : m });
+    });
+    found.sort(function (a, b) { return a.at - b.at; });
+    return found.slice(0, 2).map(function (f) { return { id: f.id, label: f.label, href: f.href }; });
+  }
+  // the parent may navigate only to its own sections
+  function navHref(h) { h = String(h || ""); return /^\/(work|services|studio|contact)\/$/.test(h) ? h : null; }
+  // the panel's footprint (css px) the site keeps the words out of: the open column (or the sheet), else the tab; hint: the
+  // first-visit hint's rect while it shows (the words keep out of it too), else null
+  function panelMsg(rect, open, sheet, hint) {
+    var m = { type: "oeuvre-panel", x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.w), h: Math.round(rect.h), open: !!open, sheet: !!sheet, hint: null };
+    if (hint) m.hint = { x: Math.round(hint.x), y: Math.round(hint.y), w: Math.round(hint.w), h: Math.round(hint.h) };
+    return m;
+  }
+  // the share of a screen rect (css px) that lies on the person (the identity's luminance mask): where the hint can be read
+  function maskCover(mask, mw, mh, lay, lift, r, W, H) {
+    if (!mask) return 0;
+    var n = 0, on = 0;
+    for (var y = r.y; y <= r.y + r.h; y += 4) for (var x = r.x; x <= r.x + r.w; x += 6) { n++; if (onPerson(mask, mw, mh, lay, lift, x, y, W, H)) on++; }
+    return n ? on / n : 0;
+  }
+  // a click/touch may change the face: not while it talks or changes, and COOL ms after the last change
+  var COOL = 4000;
+  function canChange(st) { return !st.trans && st.convo === "idle" && st.t - st.last >= COOL && st.ready; }
   // camera landmarks (normalised picture coordinates) -> centred, in face widths, mirrored like a mirror
   function readLandmarks(lm, asp, out, pos, a, a2) {
     var mx = 0, my = 0, mz = 0, i;
@@ -652,7 +817,10 @@
   // collar and chest to RMAX by FRONT_END; the last grains land before 1. The rings' field scale (RING_FIELD, and less again
   // under the chin) brings the hair, collar and chest along with the face they frame instead of leaving "a new face in the
   // old wig" and dust on the chest. A transition takes 4.5-6 s.
-  var FRONT_END = 0.82, FRONT_T1 = 0.6, FRONT_POW = 1.55, FRONT_POW2 = 1.0, FACE_SHARE = 0.6, HOLD_MIN = 20000, HOLD_MAX = 30000, DUR_MIN = 4500, DUR_MAX = 6000, FIELD_AMP = 0.32, FIELD_BAND = 0.3, GEO_BAND = 0.3, GEO_STEEP = 1.0;
+  // A hold is one clip or one and a half (CUTS, at random): the face changes every ~6 or ~9 s. A one-and-a-half hold cuts half-way
+  // through a calm clip (its pose is near the still there) and the transition starts from that live video frame.
+  var CUTS = [1, 1.5];
+  var FRONT_END = 0.82, FRONT_T1 = 0.6, FRONT_POW = 1.55, FRONT_POW2 = 1.0, FACE_SHARE = 0.6, DUR_MIN = 4500, DUR_MAX = 6000, FIELD_AMP = 0.32, FIELD_BAND = 0.3, GEO_BAND = 0.3, GEO_STEEP = 1.0;
   // the texture's band (~0.3 face widths, up to 1.3x wider over a hard contrast, 0.75x on the rings) is an erosion, not a
   // dither: a fine grain pattern fixed to the surface sets the order in which it thins into 1-4 px holes, and the new identity
   // shows through the holes only. The geometry's weight is the share of the band's texels gone (GEO_STEEP 1: it never leads the
@@ -666,8 +834,9 @@
     var cur = startId, lap = [cur].concat(shuffle(ids.filter(function (i) { return i !== cur; }), rng)), pos = 1;
     function plan(from, to) {
       var name = opts.region || REGION_NAMES[Math.floor(rng() * REGION_NAMES.length)], r = REGIONS[name], side = rng() < 0.5 ? -1 : 1;
+      var cut = opts.hold ? cutOfHold(opts.hold) : CUTS[Math.floor(rng() * CUTS.length)];
       return { from: from, to: to, region: name, seed: [r[0] * side + (rng() - 0.5) * 0.1, r[1] + (rng() - 0.5) * 0.1], noff: [rng() * 97, rng() * 97],
-        hold: opts.hold || HOLD_MIN + rng() * (HOLD_MAX - HOLD_MIN), dur: DUR_MIN + rng() * (DUR_MAX - DUR_MIN) };
+        cut: cut, hold: opts.hold || cut * CLIP_MS, dur: DUR_MIN + rng() * (DUR_MAX - DUR_MIN) };
     }
     function next() {
       if (pos >= lap.length) {
@@ -812,28 +981,40 @@
     return bs > 0 ? best : null;
   }
   // --- the clips (being4). Two per identity, each starting and ending on its photo: 1 calm (breath, blink, glance), 2 expressive
-  // (a small turn and a faint smile). A hold opens on the calm clip; after that the clips come in shuffled blocks of
-  // calm, calm, expressive, never expressive twice in a row (across blocks too). Talking (or reduced motion) asks for the calm clip
-  // only, which loops while it speaks; the block is left where it was.
-  var CLIP_MS = 6000;
+  // (a small turn and a faint smile). The clips that open the holds run through one order across the holds: shuffled blocks of
+  // calm, calm, expressive, never expressive twice in a row (across blocks too). The half clip of a one-and-a-half hold is always
+  // the calm one (clipFor). Talking (or reduced motion) asks for the calm clip only, which loops while it speaks; the order is left where it was.
+  var CLIP_MS = 6000, CUT_MID = 0.5;
   function makeClipOrder(rng) {
-    var queue = [], last = 0, opened = false;
+    var queue = [], last = 0;
     function refill() {
       var b = shuffle([1, 1, 2], rng);
-      if ((!opened || last === 2) && b[0] === 2) { b[0] = b[1]; b[1] = 2; }               // b[1] is a 1 (one 2 per block)
-      opened = true; queue = b;
+      if (last === 2 && b[0] === 2) { b[0] = b[1]; b[1] = 2; }                         // b[1] is a 1 (one 2 per block)
+      queue = b;
     }
     return {
-      startHold: function () { queue = []; last = 0; opened = false; },
-      next: function (calmOnly) { if (calmOnly) { last = 1; return 1; } if (!queue.length) refill(); last = queue.shift(); return last; },
+      startHold: function () {},
+      next: function (calmOnly) { if (calmOnly) { return 1; } if (!queue.length) refill(); last = queue.shift(); return last; },
+      peek: function () { if (!queue.length) refill(); return queue[0]; },
       get last() { return last; }
     };
   }
-  // the hold ends at the end of a clip once it has run (nearly) its length: a clip that would end past the hold by more than
-  // half a clip is not started
+  // ?hold=S (debug): the nearest number of half clips, at least one half
+  function cutOfHold(ms) { return Math.max(0.5, Math.round(ms / CLIP_MS * 2) / 2); }
+  // the clip to start when `done` clips of a hold of `cut` clips have played: the calm one when the hold ends half-way through
+  // it (or while it talks), else the next in the order
+  function clipFor(order, cut, done, calmOnly) { if (calmOnly) return order.next(true); if (cut - done <= CUT_MID + 1e-6) return 1; return order.next(false); }
+  // whether the hold may end at this point of the current clip (frac 0..1 of it played; `done` clips before it): at the end of the
+  // clip that completes the hold, or at the calm clip's cut point `mid` (the frame nearest the still between 25 and 75 % of it,
+  // tools/clip_cuts.py -> ids.json video["1"].cutAt; half-way without one) when that clip completes a half
+  function cutHere(cut, done, frac, calm, mid) {
+    if (frac >= 1) return done + 1 >= cut - 1e-6;
+    return !!calm && frac >= (mid || CUT_MID) && done + CUT_MID >= cut - 1e-6;
+  }
+  // legacy (the stills-only hold): the hold ends once within half a clip of its length
   function holdOver(elapsed, hold, clipMs) { return elapsed + 0.5 * (clipMs || CLIP_MS) >= hold; }
-  // the clips to have loaded: the current identity's two and the next identity's first (a hold always opens on clip 1)
-  function preloadSet(cur, next) { var s = [cur + "1", cur + "2"]; if (next && next !== cur) s.push(next + "1"); return s; }
+  // the clips to have loaded: the current identity's two and the clip the next identity opens on (nextN, 1 by default)
+  function preloadSet(cur, next, nextN) { var s = [cur + "1", cur + "2"]; if (next && next !== cur) s.push(next + (nextN || 1)); return s; }
   // where the video frame sits in the photo's uv (rect: photo px from tools/vid_register.py)
   function vidUvRect(rect, W, H) { return [rect[0] / W, rect[1] / H, rect[2] / W, rect[3] / H]; }
   // the crossfade between the still and a clip's first / last frame: short where they agree, longer where they do not (i's hair)
@@ -842,11 +1023,6 @@
   // so the transition looks the same on the landscape 2400 px portraits with a smaller face share
   var ERODE_CELLS = 131.6;
   function erodeScale(I) { var cx = ERODE_CELLS * I.W / I.fw; return [cx, cx * I.H / I.W]; }
-  // embedded: the talk control's top (css px) just under the face box, never over it, clamped on screen
-  function talkTop(faceY, faceH, H, talkH, pad) {
-    pad = pad || 12; var want = faceY + faceH + 0.1 * faceH, max = H - talkH - pad;
-    return Math.round(Math.max(faceY + faceH + 2, Math.min(want, max)));
-  }
   // @pure-end
 
   var PARAM = parseParams(LOC.search);
@@ -858,7 +1034,7 @@
   // ===========================================================================
   // WebGL2
   // ===========================================================================
-  var gl = cv.getContext("webgl2", { antialias: true, alpha: false, premultipliedAlpha: false, powerPreference: "high-performance" });
+  var gl = cv.getContext("webgl2", { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: "high-performance" });
   if (!gl) { gateText.textContent = "this browser cannot draw it (no WebGL2)."; throw new Error("no webgl2"); }
   // Positions reach the GPU in css px (blended between two identities on the CPU during a transition); uMap = (DPR, 0, 0).
   // The front field (same noise in the face fragment shader and the particle vertex shader): distance from the seed in the
@@ -878,17 +1054,17 @@
     // them; the smoothstep is the sum's own distribution (mean ~0.49, sd ~0.08), so the order is spread evenly over the band:
     // holes open from its leading edge on, not all at once in the middle
     "float erode(vec2 uv){ vec2 q = uv * uErode + uNoff * 1.7; float fine = 0.65 * vnoise(q) + 0.35 * vnoise(q * 2.07 + 19.3);\n" +
-    "  float coarse = fbm(uv * uErode * 0.25 - uNoff * 0.9); return smoothstep(0.30, 0.64, 0.5 * fine + 0.5 * coarse); }\n" +
+    "  float coarse = fbm(uv * uErode * 0.25 - uNoff * 0.9); return smoothstep(0.30, 0.64, 0.78 * fine + 0.22 * coarse); }\n" +
     // the feature clusters (the old picture's uv): an ellipse round each eye and the mouth; inside one every texel takes the
     // cluster's field (uFeatF: the field at its centre landmark) and the one threshold uFeatN, and goes in one beat uFeatSoft wide
     "uniform vec4 uFeatL; uniform vec4 uFeatR; uniform vec4 uFeatM; uniform vec4 uFeatNs; uniform vec4 uFeatF; uniform float uFeatN; uniform float uFeatSoft;\n" +
     "float ell(vec2 uv, vec4 e){ vec2 d = (uv - e.xy) / e.zw; return 1.0 - smoothstep(0.85, 1.15, length(d)); }\n" +
     "vec2 featOf(vec2 uv){ float mL = ell(uv, uFeatL), mR = ell(uv, uFeatR), mM = ell(uv, uFeatM), mN = ell(uv, uFeatNs), s = mL + mR + mM + mN;\n" +   // (mask 0..1, the cluster's field)
     "  return vec2(clamp(s, 0.0, 1.0), (mL * uFeatF.x + mR * uFeatF.y + mM * uFeatF.z + mN * uFeatF.w) / max(1e-4, s)); }\n" +
-    // the picture's own edges: the sides fade wider the lower down (the width grows with the square of the depth: a curve opening
-    // downwards, no corner), the bottom over its last fifth; the face and the grains alike (no dust off the picture's edge)
-    "float edges(vec2 uv){ float t = smoothstep(0.3, 1.0, uv.y); float sw = mix(0.02, 0.1, t * t); float fv = 1.0 - smoothstep(0.88, 1.0, uv.y);\n" +
-    "  return fv * smoothstep(0.0, sw, uv.x) * smoothstep(1.0, 1.0 - sw, uv.x) * smoothstep(0.0, 0.02, uv.y); }\n";
+    // the picture's own edges (v5, full bleed): no bottom fade at all (the picture runs past the screen's bottom); only a soft
+    // horizontal vignette at the left and right borders, for screens wider than the picture (the ground is black: no hard edge),
+    // and a hair at the top. The face and the grains alike (no dust off the picture's sides)
+    "float edges(vec2 uv){ return smoothstep(0.0, 0.07, uv.x) * smoothstep(1.0, 0.93, uv.x) * smoothstep(0.0, 0.015, uv.y); }\n";
   var VS = "#version 300 es\nprecision highp float;\n" +
     "in vec2 aPos; in vec2 aUv; in vec2 aUvB; in float aShade; in vec2 aFld; in vec2 aFsc; uniform vec2 uView; uniform vec3 uMap;\n" +   // uMap: scale, ox, oy (css px -> device px)
     "out vec2 vUv; out vec2 vUvB; out float vShade; out vec2 vScr; out vec2 vFld; out vec2 vFsc;\n" +
@@ -925,104 +1101,144 @@
     "    col = mix(col * (1.0 - 0.08 * rim), colB, m); fe = mix(fe, feB, m); }\n" +
     "  col *= vShade;\n" +
     "  float lum = dot(col, vec3(0.3, 0.59, 0.11)); col *= smoothstep(0.03, 0.09, lum);\n" +            // the photo's near-black ground becomes the page's black
-    "  col = mix(col, col * vec3(0.9, 0.84, 0.79), smoothstep(0.72, 1.0, lum));\n" +                   // the wettest highlights roll off warm, never chalk
-    "  float fy = smoothstep(uView.y, uView.y * uFade, vScr.y) * mix(1.0, smoothstep(0.0, uView.y * 0.08, vScr.y), uTop);\n" +   // the bottom of the frame fades to black (and the top, when the crown runs past it)
+    "  col = mix(col, col * vec3(0.9, 0.84, 0.79), smoothstep(0.72, 1.0, lum));\n" +
+    // the picture's top edge: a grey studio backdrop (the glasses face) would end in a hard line under the header. Over the top
+    // 11 % of the picture its dark pixels (backdrop, dark hair) fade to the page's black; anything lit (blond hair, skin) is kept
+    "  col *= mix(smoothstep(0.0, 0.11, vUv.y), 1.0, smoothstep(0.1, 0.24, lum));\n" +                   // the wettest highlights roll off warm, never chalk
+    "  float fy = mix(1.0, smoothstep(0.0, uView.y * 0.08, vScr.y), uTop);\n" +   // no bottom fade (full bleed); a top vignette only if the crown ever runs past the top
     "  o = vec4(col * fy * fe, 1.0); }";
-  // particles: point sprites and short streak quads whose home is a barycentric point of a mesh triangle, read from a mesh
-  // texture (row 0: css pos, shade; row 1: uv of the old and new identity; row 2: field coords, fake normal; row 3: field scale, ring).
-  // A grain is a piece of the surface. It lifts off the moment its home pixel erodes (the same erosion pattern, band and feature
-  // clusters as the face shader, so every pixel that leaves the surface is seen leaving), along the (screen) normal by 2-6 px,
-  // then drifts 10-30 px outward (half along the head's normal, half away from the front's seed) stirred by curl noise and
-  // sinking a little, and settles back on the same spot of the mesh carrying the new identity's colour, all in 360-1000 ms.
-  // In the air it is lit as dust: its own colour, every grain catching a little of the key light from the upper left and the
-  // grains whose normal faces it up to +70 %, with a slow tumble, and up to 8 % of its light left additive in the fragment
-  // shader; never a tint on the skin, never a sparkle. A dark grain (hair, a black collar) is floored to a warm grey in the
-  // air (lum ~0.2: a glint, never a black fleck), flies at 0.7 size and 0.55 alpha and takes the new colour only at the landing
+  // particles (v6, in depth): point sprites and a few short streak quads whose home is a barycentric point of a mesh triangle,
+  // read from a mesh texture (row 0: css pos, shade; row 1: uv of the old and new identity; row 2: field coords, normal xy;
+  // row 3: field scale, ring, normal z; row 4: depth from the head's axis, face widths).
+  // A grain is a fine piece of the surface (1-1.8 css px in focus). It leaves the moment its home pixel erodes (the same
+  // erosion pattern, band and feature clusters as the face shader). Every grain has a 3D place: x right, y down, z towards the
+  // camera, in face widths from the head's vertical axis; the screen is a perspective of it (camera DC face widths in front of
+  // the axis), so a grain that lifts off along its surface normal towards the camera grows and speeds up as it comes forward,
+  // and a slow sway of the camera over the transition gives the grains a parallax against the face (the surface itself never
+  // moves). Depth of field: the focal plane is on the face; a grain off it is drawn bigger and softer (its circle of confusion,
+  // its light spread), the in-focus ones tiny and sharp. Three kinds:
+  //  - lift (most): off along the normal (biased to the camera) by 0.03-0.16 fw, a drift outward with curl turbulence in 3D,
+  //    back onto the same spot carrying the new identity's colour, 0.1-0.2 of the transition;
+  //  - swirl (one in five): an arc of 1.6-2.4 rad round the head's axis, away from the face's centre and on behind the head,
+  //    where the silhouette (both pictures' luminance at the grain's screen point) hides it; half of them go out (the old
+  //    colour, fading as they go), half come in (the same arc played backwards, the new colour) and settle onto the new face;
+  //  - near (one in seventy): lifts far towards the camera, a large out-of-focus disc in front of the face, very faint.
+  // Monochrome-warm: in the air a grain keeps its colour 30 % desaturated to a warm grey, catches a little key light from the
+  // upper left; no sparkle. A dark grain (black hair, a collar) is never a black fleck over skin: floored to a warm grey glint
+  // at low alpha in the air, never swirls, and a grain whose new colour is dark fades out instead of turning dark.
   var VS_P = "#version 300 es\nprecision highp float;\n" +
     "in vec3 aTri; in vec2 aBary; in vec4 aRnd; in float aEnd; uniform sampler2D uMesh; uniform sampler2D uTex; uniform sampler2D uTexB;\n" +
     "uniform vec2 uView; uniform float uDpr; uniform float uT; uniform float uFrontEnd; uniform float uT1; uniform float uPow1; uniform float uPow2; uniform float uRmax; uniform float uRface; uniform float uRmin; uniform float uBand;\n" +
-    "uniform float uFw; uniform float uMot; uniform float uFade; uniform float uTop;\n" +
-    "out vec3 vCol; out float vA; out float vLine; out vec2 vQ; out float vAir;\n" + NOISE +
+    "uniform float uFw; uniform float uMot; uniform float uFade; uniform float uTop; uniform sampler2D uVidTex; uniform float uVid; uniform vec4 uVidR;\n" +
+    "uniform vec2 uHead; uniform float uZf; uniform vec2 uCam; uniform vec4 uRectA; uniform vec4 uRectB; uniform float uGw; uniform float uFine;\n" +
+    "out vec3 vCol; out float vA; out float vLine; out vec2 vQ; out float vAir; out float vBlur;\n" + NOISE +
+    "const float DC = 3.2;\n" +                                                                  // the camera, face widths in front of the head's axis
+    "float persp(float z){ return DC / max(0.6, DC - z); }\n" +
     "vec2 curl(vec2 p){ float e = 0.02; return vec2(vnoise(p + vec2(0.0, e)) - vnoise(p - vec2(0.0, e)), vnoise(p - vec2(e, 0.0)) - vnoise(p + vec2(e, 0.0))) / (2.0 * e); }\n" +
-    // when the front passes a field value (the page's frontTime: the face piece, then the rings')
     "float frontTime(float phi){ if (phi <= uRface) return uT1 * pow(clamp((phi - uRmin) / (uRface - uRmin), 0.0, 1.0), 1.0 / uPow1);\n" +
     "  return uT1 + (uFrontEnd - uT1) * pow(clamp((phi - uRface) / max(1e-4, uRmax - uRface), 0.0, 1.0), 1.0 / uPow2); }\n" +
-    // the flight (face widths). Every term is windowed by h (0 at lift-off and at landing), so the grain re-gathers where it left:
-    // the lift along the normal first (liftPx), then the outward drift (the normal n2 and the field's outward direction g2, with
-    // a sideways share t2) with the curl turbulence (about a third of the drift, different for every grain), a scatter and gravity
-    "vec2 flight(float age, float amp, float liftPx, vec2 n2, vec2 g2, vec2 t2, vec2 fld, vec4 rnd){ float a1 = clamp(age, 0.0, 1.0), h = sin(3.14159 * pow(a1, 0.85)), drift = smoothstep(0.06, 0.55, a1);\n" +
-    "  vec2 cu = curl(fld * 2.2 + uNoff * 0.37 + vec2(uT * 0.9, rnd.y * 4.0)) * 0.35;\n" +
-    "  vec2 d = n2 * (liftPx / uFw) * smoothstep(0.0, 0.3, a1) + ((n2 * 0.45 + g2 * (0.5 + 0.3 * rnd.y) + t2 * 0.3) * amp + cu * amp * 2.0 + vec2(0.3 * amp * (rnd.w - 0.5), 0.5 * amp * a1)) * drift;\n" +
-    "  return d * h; }\n" +
-    "void main(){ vec3 b = vec3(aBary, 1.0 - aBary.x - aBary.y); ivec3 ix = ivec3(aTri);\n" +
-    "  vec4 p0 = texelFetch(uMesh, ivec2(ix.x, 0), 0), p1 = texelFetch(uMesh, ivec2(ix.y, 0), 0), p2 = texelFetch(uMesh, ivec2(ix.z, 0), 0);\n" +
+    // the person at a screen point (css px): the two pictures' luminance there (mip-blurred: a soft silhouette), as the front has them
+    "float lumAt(sampler2D T, vec2 s, vec4 r){ vec2 u = (s - r.xy) / r.zw; if (u.x < 0.0 || u.y < 0.0 || u.x > 1.0 || u.y > 1.0) return 0.0; return dot(textureLod(T, u, 3.0).rgb, vec3(0.3, 0.59, 0.11)); }\n" +
+    "float person(vec2 s){ return smoothstep(0.035, 0.11, mix(lumAt(uTex, s, uRectA), lumAt(uTexB, s, uRectB), uGw)); }\n" +
+    // the 3D place at age a (face widths): H the home, n3 the lift direction, dv the outward drift, kind 0 lift / 1 swirl;
+    // every offset is windowed by h (0 at lift-off and at landing), so a lift grain re-gathers where it left
+    "vec3 place(float a, vec3 H, vec3 n3, float liftL, vec3 dv, float amp, float kind, float arc, vec4 rnd, vec2 fld){\n" +
+    "  float a1 = clamp(a, 0.0, 1.0), h = sin(3.14159 * pow(a1, 0.85));\n" +
+    "  vec2 c2 = curl(fld * 2.2 + uNoff * 0.37 + vec2(uT * 0.9, rnd.y * 4.0)); float cz = vnoise(fld * 3.1 + vec2(uT * 1.3, rnd.z * 9.0)) - 0.5;\n" +
+    "  vec3 off = n3 * liftL * smoothstep(0.0, 0.3, a1) + (dv + vec3(c2, cz * 1.5) * amp * 0.7 + vec3(0.0, 0.4 * amp * a1, 0.0)) * smoothstep(0.06, 0.55, a1);\n" +
+    "  if (kind < 0.5) return H + off * h;\n" +
+    // swirl: the arc round the axis (an ease-in: it leaves slowly and sweeps on), the radius opening by a third, a rise, a tilt
+    "  float e = a1 * a1, th = arc * e, r0 = length(H.xz); vec2 d0 = r0 > 1e-3 ? H.xz / r0 : vec2(0.0, 1.0);\n" +
+    "  float R = r0 + (max(0.0, 0.45 - r0) + 0.3 * r0 + 0.12) * smoothstep(0.0, 0.5, a1);\n" +
+    "  float c = cos(th), s = sin(th); vec2 v = vec2(c * d0.x + s * d0.y, -s * d0.x + c * d0.y) * R;\n" +
+    "  return vec3(v.x, H.y - (0.08 + 0.12 * rnd.z) * smoothstep(0.0, 1.0, a1) + 0.1 * sin(th) * (rnd.w - 0.5), v.y) + off * smoothstep(0.0, 0.2, a1); }\n" +
+    "vec2 project(vec3 P, vec3 H, vec2 home){ float sp = persp(P.z), sh = persp(H.z); return home + ((P.xy * sp - H.xy * sh) + uCam * (sp - sh)) * uFw; }\n" +
+    "void main(){ gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 1.0; vCol = vec3(0.0); vA = 0.0; vLine = 0.0; vQ = vec2(0.0); vAir = 0.0; vBlur = 0.0;\n" +
+    "  if (aRnd.z > uFine) return;\n" +                                                      // fewer grains on a small screen
+    "  vec3 b = vec3(aBary, 1.0 - aBary.x - aBary.y); ivec3 ix = ivec3(aTri);\n" +
     "  vec4 u0 = texelFetch(uMesh, ivec2(ix.x, 1), 0), u1 = texelFetch(uMesh, ivec2(ix.y, 1), 0), u2 = texelFetch(uMesh, ivec2(ix.z, 1), 0);\n" +
     "  vec4 f0 = texelFetch(uMesh, ivec2(ix.x, 2), 0), f1 = texelFetch(uMesh, ivec2(ix.y, 2), 0), f2 = texelFetch(uMesh, ivec2(ix.z, 2), 0);\n" +
-    "  vec4 s0 = texelFetch(uMesh, ivec2(ix.x, 3), 0); vec2 fsc = s0.xy * b.x + texelFetch(uMesh, ivec2(ix.y, 3), 0).xy * b.y + texelFetch(uMesh, ivec2(ix.z, 3), 0).xy * b.z;\n" +   // (scale, offset); s0.z: the ring (0 face, 1 hair, 2 collar, 3 chest)
+    "  vec4 s0 = texelFetch(uMesh, ivec2(ix.x, 3), 0), s1 = texelFetch(uMesh, ivec2(ix.y, 3), 0), s2 = texelFetch(uMesh, ivec2(ix.z, 3), 0); vec2 fsc = s0.xy * b.x + s1.xy * b.y + s2.xy * b.z;\n" +   // (scale, offset); .z the ring (0 face, 1 hair, 2 collar, 3 chest); .w the normal's z
     "  float hair = s0.z > 0.5 && s0.z < 1.5 ? 1.0 : 0.0, onRing = step(0.5, s0.z);\n" +
-    "  vec2 home = p0.xy * b.x + p1.xy * b.y + p2.xy * b.z; float sh = p0.z * b.x + p1.z * b.y + p2.z * b.z;\n" +
-    "  vec4 uv = u0 * b.x + u1 * b.y + u2 * b.z; vec4 fl = f0 * b.x + f1 * b.y + f2 * b.z; vec2 fld = fl.xy, nraw = fl.zw, nrm = normalize(nraw + vec2(0.0, 1e-4));\n" +
-    "  vec3 cA = textureLod(uTex, uv.xy, 1.0).rgb, cB = textureLod(uTexB, uv.zw, 1.0).rgb; float lumA = dot(cA, vec3(0.3, 0.59, 0.11)), lumB = dot(cB, vec3(0.3, 0.59, 0.11)), lum = max(lumA, lumB);\n" +
-    // the grain lifts when its home pixel erodes: the front's band (as wide as the face shader's: 1.3x over a contrast, 0.75x on
-    // the rings) has reached its place in the erosion pattern; inside a feature cluster, at the cluster's one beat. One in
-    // sixteen goes early, 0.1-0.2 fw ahead of the front, at half alpha: the surface starts to loosen before it opens. A grain
-    // lives 0.08-0.17 of the transition (360-1020 ms): the band in flight stays narrow, the arriving face reads through it
+    "  vec4 uv = u0 * b.x + u1 * b.y + u2 * b.z; vec4 fl = f0 * b.x + f1 * b.y + f2 * b.z; vec2 fld = fl.xy;\n" +
+    "  vec3 cA = textureLod(uTex, uv.xy, 1.0).rgb; if (uVid > 0.0) { vec2 vu = (uv.xy - uVidR.xy) / uVidR.zw; if (vu.x >= 0.0 && vu.y >= 0.0 && vu.x <= 1.0 && vu.y <= 1.0) cA = mix(cA, textureLod(uVidTex, vu, 0.0).rgb, uVid); }\n" +   // the old surface: the live frame a cut left it on
+    "  vec3 cB = textureLod(uTexB, uv.zw, 1.0).rgb; float lumA = dot(cA, vec3(0.3, 0.59, 0.11)), lumB = dot(cB, vec3(0.3, 0.59, 0.11)), lum = max(lumA, lumB);\n" +
+    "  if (lum < 0.08) return;\n" +                                                             // nothing lifts off the black ground
+    // the grain leaves when its home pixel erodes (the face shader's band and pattern; inside a feature cluster, at its one beat);
+    // one in sixteen goes early, at half alpha: the surface loosens before it opens
     "  float dl = abs(lumA - lumB) + 0.3 * length(cA - cB), band = uBand * (1.0 + 0.3 * smoothstep(0.0, 0.5, dl)) * mix(1.0, 0.75, onRing);\n" +
     "  vec2 ft = featOf(uv.xy); float f = mix(field(fld, fsc), ft.y, ft.x), n = mix(erode(uv.xy), uFeatN, ft.x);\n" +
-    "  float early = step(aRnd.y, 0.06) * (1.0 - ft.x); float phi = f + n * band, tp = frontTime(phi) - 0.06 * early, life = mix(0.08, 0.17, aRnd.x);\n" +
-    "  float isLine = aEnd >= 0.0 ? 1.0 : 0.0, along = isLine > 0.5 ? mod(aEnd, 2.0) : 0.0, side = isLine > 0.5 ? (aEnd >= 2.0 ? 1.0 : -1.0) : 0.0;\n" +   // a streak quad's corner
-    "  float age = (uT - tp) / life;\n" +
-    "  float bokeh = step(0.98, aRnd.w) * (1.0 - isLine), h = 0.0, air = 0.0, dark = step(lumA, 0.12);\n" +         // one in fifty is a large soft grain in front of the face, for depth
-    "  vec2 n2 = vec2(nrm.x, -nrm.y), t2 = vec2(-n2.y, n2.x) * (aRnd.y > 0.5 ? 1.0 : -1.0);\n" +
-    "  vec2 gh = (fld - uSeed) * vec2(1.0, 1.15) + vec2(1e-4, 0.0); gh /= length(gh); vec2 g2 = vec2(gh.x, -gh.y);\n" +   // away from the seed, on the screen (the head frame's y is up)
-    "  vec2 pos = home; vec3 col = cA * sh; float size = 3.0 * uDpr; vec2 vel = t2;\n" +
-    "  if (age >= 0.0) {\n" +
-    "    float a1 = clamp(age, 0.0, 1.0); h = sin(3.14159 * pow(a1, 0.85)); air = h * smoothstep(0.04, 0.35, a1);\n" +
-    "    float amp = mix(0.03, 0.09, aRnd.z) * (isLine > 0.5 ? 1.3 : 1.0) * (1.0 + 0.4 * hair) * uMot, liftPx = mix(2.0, 6.0, aRnd.w) * uMot;\n" +   // 10-30 px of drift at a 340 px face, 2-6 px of lift; hair strands drift further
-    "    vec2 d0 = flight(age, amp, liftPx, n2, g2, t2, fld, aRnd); vel = d0 - flight(max(0.0, age - 0.04), amp, liftPx, n2, g2, t2, fld, aRnd);\n" +
-    "    pos = home + d0 * uFw;\n" +
-    // the sampled surface, the new identity's from mid-flight (a dark grain's only at the landing), a dark grain floored to a
-    // warm grey in the air; the key light from the upper left on every grain, most on those whose normal faces it, with a slow
-    // tumble, and a faint neutral lift: dust catches the light the face is lit by instead of vanishing against the skin
-    "    vec3 c = mix(cA, cB, smoothstep(0.55, 0.8, a1)) * sh;\n" +
-    "    c = mix(c, max(c, vec3(0.30, 0.27, 0.25) * sh), dark * 0.7 * air);\n" +                       // a dark grain: its luminance floored in the air (a glint), its hue kept
-    "    float facing = dot(vec2(nraw.x, -nraw.y), vec2(-0.85, -0.35)), lit = clamp(0.35 + 1.4 * facing, 0.0, 1.0) * (0.75 + 0.25 * sin(a1 * 7.0 + aRnd.z * 6.28));\n" +
-    "    col = c * (1.0 + 0.35 * air * lit) + vec3(0.03, 0.029, 0.027) * air * lit;\n" +
-    "    size = mix(3.6, 5.6, aRnd.x) * (1.0 + 0.15 * h) * uDpr * mix(1.0, 0.7, dark);\n" +   // a gaussian disc: 1.9-3 css px across at half height
-    "  }\n" +
-    "  if (bokeh > 0.5) size = mix(10.0, 16.0, aRnd.x) * uDpr * (0.6 + 0.4 * h);\n" +
-    // a streak: a quad lying along its own velocity (the normal lift + the outward drift), its length the speed (up to 0.05 fw,
-    // hair strands 1.5x), ~2 css px wide, the tail behind the head; drawn only once the grain is clear of the surface (air > 0.3)
-    // and only for the fast ones (the slow fifth of a streak's life shows nothing), so it reads as the motion blur of dust in
-    // flight, never a scratch lying on the skin
-    "  if (isLine > 0.5) { float vl = length(vel); vec2 dir = vl > 1e-6 ? vel / vl : t2; float len = clamp(vl * 6.0, 0.004, 0.05) * (1.0 + 0.5 * hair) * uFw;\n" +
-    "    pos += dir * len * (along - 1.0) + vec2(-dir.y, dir.x) * side * 1.0; }\n" +
-    // the alpha: ahead of the front the head is intact; a grain lifts as its pixel erodes, one in five streams off for good, all are
-    // gone by the time they settle; early grains at half alpha, dark grains at 0.55, streaks at 0.45 (hair 0.35) and only in the air
-    "  float a = 0.0; if (age >= 0.0) { a = smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.85, 1.0, age)) * step(age, 1.0);\n" +
-    "    if (aRnd.y > 0.8) a *= 1.0 - smoothstep(0.35, 0.65, age); }\n" +
-    "  a *= mix(1.0, 0.5, early) * mix(1.0, 0.55, dark);\n" +
-    "  if (isLine > 0.5) { float spd = clamp(length(vel) * 6.0 / 0.05, 0.0, 1.0); a *= (0.45 - 0.1 * hair) * smoothstep(0.15, 0.4, air) * smoothstep(0.25, 0.7, spd); }\n" +
-    // sparse: a third of the homes where the two pictures agree, up to 55 % where they differ (a dark face meeting a light
-    // neck, a hairline, a collar): the front is owned by grains where it would otherwise show as an edge, never silted up.
-    // Half as many inside a feature cluster (its texels all go in one beat: no burst over an eye) and on the chest (under the fade)
-    "  float chest = step(2.5, s0.z) * (1.0 - step(3.5, s0.z));\n" +
-    "  float keep = step(fract(aRnd.x * 7.31 + aRnd.w * 3.17), clamp(0.32 + 0.3 * dl, 0.0, 0.55) * mix(1.0, 0.45, max(ft.x, chest)));\n" +
-    "  a *= keep * (bokeh > 0.5 ? 0.12 : 0.6);\n" +
-    "  if (lum < 0.08) a = 0.0;\n" +                                                            // nothing lifts off the black ground
-    "  if (phi > 0.96 * uRmax) a = 0.0;\n" +                                                    // nothing leaves the picture's outer edge
-    "  a *= edges(uv.xy);\n" +                                                                  // and nothing off the picture's faded sides and bottom
-    "  vec2 s = pos * uDpr; a *= smoothstep(uView.y, uView.y * uFade, s.y) * mix(1.0, smoothstep(0.0, uView.y * 0.08, s.y), uTop);\n" +   // no dust in the vignettes
-    "  if (isLine > 0.5) { float l = dot(col, vec3(0.3, 0.59, 0.11)); col = mix(col, vec3(l), 0.2); }\n" +                              // a streak is 20 % desaturated: motion blur, not a fibre
-    "  vCol = col; vA = a; vLine = isLine; vQ = vec2(along, side); vAir = air; gl_PointSize = size;\n" +
-    "  gl_Position = a > 0.001 ? vec4(s.x / uView.x * 2.0 - 1.0, 1.0 - s.y / uView.y * 2.0, 0.0, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); }";
-  // a soft gaussian disc (no square sprite edge at any DPR; half height at 0.53 of the point size); a streak is brightest at its
-  // head, rounds off there and fades to nothing at its tail, falling off across its width (motion blur). Plain 'over', except
-  // that up to 8 % of an airborne grain's light is left additive: a glow only while it flies, never a pile of gold on the skin
-  var FS_P = "#version 300 es\nprecision highp float;\nin vec3 vCol; in float vA; in float vLine; in vec2 vQ; in float vAir; out vec4 o;\n" +
-    "void main(){ float a = vA; if (vLine < 0.5) { vec2 d = gl_PointCoord - 0.5; a *= exp(-dot(d, d) * 10.0); }\n" +
+    "  float early = step(aRnd.y, 0.06) * (1.0 - ft.x); float phi = f + n * band; if (phi > 0.96 * uRmax) return;\n" +   // nothing leaves the picture's outer edge
+    "  float tp = frontTime(phi) - 0.06 * early;\n" +
+    "  float isLine = aEnd >= 0.0 ? 1.0 : 0.0, along = isLine > 0.5 ? mod(aEnd, 2.0) : 0.0, side = isLine > 0.5 ? (aEnd >= 2.0 ? 1.0 : -1.0) : 0.0;\n" +
+    "  float darkA = step(lumA, 0.12), darkB = step(lumB, 0.12);\n" +
+    "  float swirl = step(0.8, aRnd.y) * (1.0 - isLine) * (1.0 - darkA) * (1.0 - ft.x), inbound = swirl * step(0.5, aRnd.w);\n" +
+    "  float near = step(0.986, aRnd.w) * (1.0 - isLine) * (1.0 - swirl) * (1.0 - darkA);\n" +
+    "  float life = swirl > 0.5 ? mix(0.3, 0.42, aRnd.x) : mix(0.1, 0.2, aRnd.x) * (near > 0.5 ? 1.6 : 1.0);\n" +
+    "  if (tp + life > 0.995) { swirl = 0.0; inbound = 0.0; life = min(life, max(0.08, 0.995 - tp)); }\n" +   // no flight outlives the transition
+    "  float age = (uT - tp) / life; if (age < 0.0 || age > 1.0) return;\n" +
+    "  float keep = step(fract(aRnd.x * 7.31 + aRnd.w * 3.17), clamp(0.36 + 0.3 * dl, 0.0, 0.6) * mix(1.0, 0.45, max(ft.x, step(2.5, s0.z) * 0.5)));\n" +
+    "  if (keep < 0.5) return;\n" +
+    // the home in 3D: its css place, its depth (row 4), the normal (screen: y down)
+    "  vec4 p0 = texelFetch(uMesh, ivec2(ix.x, 0), 0), p1 = texelFetch(uMesh, ivec2(ix.y, 0), 0), p2 = texelFetch(uMesh, ivec2(ix.z, 0), 0);\n" +
+    "  vec2 home = p0.xy * b.x + p1.xy * b.y + p2.xy * b.z; float sh = p0.z * b.x + p1.z * b.y + p2.z * b.z;\n" +
+    "  float zh = texelFetch(uMesh, ivec2(ix.x, 4), 0).x * b.x + texelFetch(uMesh, ivec2(ix.y, 4), 0).x * b.y + texelFetch(uMesh, ivec2(ix.z, 4), 0).x * b.z;\n" +
+    "  vec3 nr = vec3(fl.zw, s0.w * b.x + s1.w * b.y + s2.w * b.z); vec3 n3 = normalize(vec3(nr.x, -nr.y, nr.z) + vec3(0.0, 0.0, 0.5) + 1e-4);\n" +
+    "  vec3 H = vec3((home - uHead) / uFw, zh);\n" +
+    "  vec2 gh = (fld - uSeed) * vec2(1.0, 1.15) + vec2(1e-4, 0.0); gh /= length(gh);\n" +   // away from the seed (the head frame's y is up)
+    "  vec2 t2 = vec2(n3.y, -n3.x) * (aRnd.y > 0.5 ? 1.0 : -1.0);\n" +
+    "  float amp = mix(0.03, 0.08, aRnd.z) * (1.0 + 0.4 * hair) * uMot;\n" +
+    "  vec3 dv = vec3(n3.xy * 0.4 + vec2(gh.x, -gh.y) * (0.5 + 0.3 * aRnd.y) + t2 * 0.3, 0.25 + 0.3 * aRnd.x) * amp;\n" +
+    "  float liftL = (near > 0.5 ? mix(0.9, 1.5, aRnd.x) : mix(0.03, 0.16, aRnd.w) * (1.0 + 0.5 * swirl)) * uMot;\n" +
+    "  vec3 nl = near > 0.5 ? normalize(n3 * 0.3 + vec3(0.0, 0.0, 1.0)) : n3;\n" +
+    "  float arc = (abs(H.x) > 0.05 ? sign(H.x) : (aRnd.z > 0.5 ? 1.0 : -1.0)) * mix(1.6, 2.4, aRnd.x) * uMot;\n" +   // round the nearer side, on behind the head
+    "  float ap = inbound > 0.5 ? 1.0 - age : age;\n" +                                        // an inbound grain flies the arc backwards, onto the new face
+    "  vec3 P = place(ap, H, nl, liftL, dv, amp, swirl, arc, aRnd, fld);\n" +
+    "  vec2 pos = project(P, H, home);\n" +
+    "  float a1 = age, h = sin(3.14159 * pow(a1, 0.85)), air = h * smoothstep(0.04, 0.35, a1);\n" +
+    "  if (swirl > 0.5) air = smoothstep(0.0, 0.25, ap);\n" +
+    // colour: the old surface, the new one from mid-flight (an inbound grain: the new one throughout); dark grains floored to a
+    // warm grey glint; in the air 30 % desaturated to a warm grey and a little key light
+    "  float toB = swirl > 0.5 ? inbound : smoothstep(0.55, 0.8, a1) * (1.0 - darkB);\n" +
+    "  vec3 c = mix(cA, cB, toB) * sh; float cl = dot(c, vec3(0.3, 0.59, 0.11));\n" +
+    "  c = mix(c, max(c, vec3(0.30, 0.27, 0.25) * sh), max(darkA * (1.0 - toB), darkB * toB) * air);\n" +
+    "  c = mix(c, cl * vec3(1.05, 0.98, 0.9), 0.3 * air);\n" +
+    // dust catches the light: never darker than the new surface at its home (the hole it left shows that surface: an old,
+    // darker grain sitting on it would read as a fleck of dirt), and in the air its luminance lifted towards ~0.55
+    "  float lift0 = max(lumB * sh * (1.0 - darkB), 0.55 * 0.75 * air);\n" +
+    "  c *= clamp(lift0 / max(cl, 0.04), 1.0, 2.4);\n" +
+    "  float facing = dot(n3.xy, vec2(-0.85, -0.35)) + 0.4 * n3.z, lit = clamp(0.35 + 1.2 * facing, 0.0, 1.0);\n" +
+    "  vec3 col = c * (1.0 + 0.25 * air * lit) + vec3(0.025, 0.024, 0.022) * air * lit;\n" +
+    // size: fine in focus (1-1.8 css px), the perspective's growth, and the circle of confusion away from the focal plane
+    "  float sp = persp(P.z) / persp(H.z), coc = min(abs(P.z - uZf) * 4.5, 9.0) * smoothstep(0.0, 0.15, air);\n" +
+    "  float base = mix(1.0, 1.8, aRnd.x) * mix(1.0, 0.75, darkA) * sp, sizeC = sqrt(base * base + coc * coc);\n" +
+    "  float sizeD = max(sizeC * uDpr, 1.8), blur = clamp(coc / max(base, 0.5) / 3.0, 0.0, 1.0);\n" +
+    // alpha: in on lift-off, out by the landing; an outbound swirl fades over its arc, an inbound one appears from behind
+    "  float a = smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.85, 1.0, age));\n" +
+    "  if (swirl > 0.5) a = inbound > 0.5 ? smoothstep(0.0, 0.35, age) * (1.0 - smoothstep(0.88, 1.0, age)) : smoothstep(0.0, 0.06, age) * (1.0 - smoothstep(0.6, 1.0, age));\n" +
+    "  a *= (1.0 - darkB * (1.0 - darkA) * smoothstep(0.45, 0.75, a1) * (1.0 - swirl));\n" +   // a light grain whose new colour is dark fades out instead of turning dark
+    "  a *= mix(1.0, 0.5, early) * mix(1.0, 0.3, darkA) * (swirl > 0.5 ? 0.8 : 0.75) * (near > 0.5 ? 0.35 : 1.0);\n" +
+    "  a *= clamp(pow(base / sizeC, 1.5), swirl > 0.5 ? 0.3 : 0.1, 1.0) * min(1.0, (sizeC * uDpr) / sizeD * (sizeC * uDpr) / sizeD + 0.25);\n" +   // its light spread over its blur disc; a sub-2-device-px grain dimmer, not bigger
+    // behind the head's axis the person's silhouette hides it
+    "  a *= 1.0 - smoothstep(0.05, -0.2, P.z) * person(pos);\n" +
+    // a streak: a quad along the grain's screen velocity, its length the speed, ~1.2 css px wide; only fast and in the air
+    "  if (isLine > 0.5) { vec2 pb = project(place(max(0.0, ap - 0.04), H, nl, liftL, dv, amp, swirl, arc, aRnd, fld), H, home); vec2 vel = pos - pb; float vl = length(vel); vec2 dir = vl > 1e-4 ? vel / vl : t2;\n" +
+    "    float len = clamp(vl * 5.0, 0.0, 0.045 * uFw) * (1.0 + 0.5 * hair); pos += dir * len * (along - 1.0) + vec2(-dir.y, dir.x) * side * 0.6;\n" +
+    "    a *= (0.4 - 0.1 * hair) * smoothstep(0.15, 0.4, air) * smoothstep(0.3, 0.8, vl * 5.0 / (0.045 * uFw));\n" +
+    "    float l = dot(col, vec3(0.3, 0.59, 0.11)); col = mix(col, vec3(l), 0.2); sizeD = 1.0; blur = 0.0; }\n" +
+    "  a *= edges(uv.xy);\n" +
+    "  vec2 s = pos * uDpr; a *= mix(1.0, smoothstep(0.0, uView.y * 0.08, s.y), uTop);\n" +
+    "  vCol = col; vA = a; vLine = isLine; vQ = vec2(along, side); vAir = air; vBlur = blur; gl_PointSize = sizeD;\n" +
+    "  if (a > 0.002) gl_Position = vec4(s.x / uView.x * 2.0 - 1.0, 1.0 - s.y / uView.y * 2.0, 0.0, 1.0); }";
+  // a sharp little disc in focus (an anti-aliased edge, no square sprite edge at any DPR), a flat soft disc with a gentle rim
+  // out of focus (a lens's bokeh, not a glow); a streak brightest at its head, fading to its tail, falling off across its
+  // width. Plain 'over', except that up to 6 % of an airborne grain's light is left additive: never a pile of gold on the skin
+  var FS_P = "#version 300 es\nprecision highp float;\nin vec3 vCol; in float vA; in float vLine; in vec2 vQ; in float vAir; in float vBlur; out vec4 o;\n" +
+    "void main(){ float a = vA; if (vLine < 0.5) { float r = length(gl_PointCoord - 0.5) * 2.0;\n" +
+    "    float sharp = exp(-r * r * 3.2) * (1.0 - smoothstep(0.8, 1.0, r)), soft = (1.0 - smoothstep(0.55, 1.0, r)) * (0.85 + 0.15 * smoothstep(0.3, 0.8, r));\n" +
+    "    a *= mix(sharp, soft, vBlur); }\n" +
     "  else a *= vQ.x * vQ.x * smoothstep(1.0, 0.88, vQ.x) * exp(-vQ.y * vQ.y * 2.5);\n" +
-    "  if (a < 0.01) discard; o = vec4(vCol * a, a * (1.0 - 0.08 * vAir)); }";
+    "  if (a < 0.004) discard; o = vec4(vCol * a, a * (1.0 - 0.06 * vAir)); }";
   var FS_CAV = "#version 300 es\nprecision highp float;\nin vec2 vUv; in float vShade; in vec2 vScr; uniform float uOpen; out vec4 o;\n" +
     "void main(){ float v = vUv.y, e = abs(v - 0.5) * 2.0, c = 1.0 - abs(vUv.x - 0.5) * 2.0;\n" +   // wet, dark red at the lips, near black in the middle; darker towards the corners
     "  vec3 edge = vec3(0.30, 0.10, 0.09), deep = vec3(0.04, 0.011, 0.011);\n" +
@@ -1039,7 +1255,7 @@
   var FEAT_U = ["uFeatL", "uFeatR", "uFeatM", "uFeatNs", "uFeatF", "uFeatN", "uFeatSoft"];
   ["uView", "uMap", "uTex", "uTexB", "uEye", "uIrisL", "uIrisR", "uIrisLB", "uIrisRB", "uGaze", "uFade", "uTop", "uTrans", "uR", "uBand", "uSoft", "uDpr", "uSeed", "uNoff", "uAmp", "uErode", "uVidTex", "uVid", "uVidR"].concat(FEAT_U).forEach(function (k) { U[k] = gl.getUniformLocation(PRG, k); });
   ["uView", "uMap", "uOpen"].forEach(function (k) { UC[k] = gl.getUniformLocation(PRC, k); });
-  ["uMesh", "uTex", "uTexB", "uView", "uDpr", "uT", "uFrontEnd", "uT1", "uPow1", "uPow2", "uRmax", "uRface", "uRmin", "uBand", "uFw", "uMot", "uFade", "uTop", "uSeed", "uNoff", "uAmp", "uErode"].concat(FEAT_U).forEach(function (k) { UP[k] = gl.getUniformLocation(PRP, k); });
+  ["uMesh", "uTex", "uTexB", "uVidTex", "uVid", "uVidR", "uView", "uDpr", "uT", "uFrontEnd", "uT1", "uPow1", "uPow2", "uRmax", "uRface", "uRmin", "uBand", "uFw", "uMot", "uFade", "uTop", "uSeed", "uNoff", "uAmp", "uErode", "uHead", "uZf", "uCam", "uRectA", "uRectB", "uGw", "uFine"].concat(FEAT_U).forEach(function (k) { UP[k] = gl.getUniformLocation(PRP, k); });
   // the feature clusters of the identity leaving (its uv ellipses, the field at their centres) for a transition's shaders
   function featUniforms(Ux) {
     var ft = ID.feat;
@@ -1090,6 +1306,10 @@
 
   // --- identities: all five are first class. IDENT[id] = { ID, RT, tex, lay }; the current one is CUR_ID; the figure cycles through them
   var IDENT = {}, IDS_JSON = null, CUR_ID = PARAM.id, FLD = null, FSC = null, GPOS = null, GSH = null, GCAV = new Float32Array(INNER_UP.length * 4), GFB = [0, 0, 0, 0], GIRIS = new Float32Array(4);
+  var LIFT = 0, LIFT_T = 0, lastChange = -1e9, readyAt = 0, touched = false, KB = 0;
+  // SHIFT: a horizontal offset (css px) the figure eases to over 1.2 s: to the true centre when the desktop column is collapsed,
+  // left of centre when a landscape phone's drawer is open
+  var SHIFT = 0, SHM = { from: 0, to: 0, t0: 0 }, GEO = { key: "", n: 0 };
   var TR = null, CYCLE = null, holdUntil = 0, DV = null, WV = null, MROW = new Float32Array(MESH_TW * 4), NP = 0, NLN = 0, loadingAll = false;
   function makeTexture(img) {
     var t = gl.createTexture();
@@ -1102,15 +1322,27 @@
     if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
     return t;
   }
+  // a small luminance mask of the portrait (where the person is, against the black ground): what a click lands on
+  var MASK_W = 160, MASK_H = 120;
+  function lumMask(img) {
+    try {
+      var c = document.createElement("canvas"); c.width = MASK_W; c.height = MASK_H; var g = c.getContext("2d", { willReadFrequently: true });
+      g.drawImage(img, 0, 0, MASK_W, MASK_H); var d = g.getImageData(0, 0, MASK_W, MASK_H).data, m = new Uint8Array(MASK_W * MASK_H);
+      for (var i = 0; i < m.length; i++) m[i] = 0.3 * d[i * 4] + 0.59 * d[i * 4 + 1] + 0.11 * d[i * 4 + 2];
+      return m;
+    } catch (e) { return null; }
+  }
   async function loadOne(id) {
     if (IDENT[id]) return IDENT[id];
     if (!IDS_JSON) { var r = await fetch("assets/ids4/ids.json"); IDS_JSON = await r.json(); MESH = IDS_JSON.mesh; }
     var data = IDS_JSON.ids[id]; if (!data) throw new Error("no identity " + id);
     var I = prepIdentity(data, MESH);
     var img = new Image(); img.decoding = "async"; img.src = data.web.file;
-    await img.decode();
+    // decode() alone can stall (a throttled or virtual-time embed): whichever comes first, decode, load, or 1.5 s
+    await Promise.race([img.decode().catch(function () {}), new Promise(function (r) { if (img.complete) r(); else { img.addEventListener("load", r, { once: true }); img.addEventListener("error", r, { once: true }); } }), new Promise(function (r) { setTimeout(r, 1500); })]);
+    if (!img.naturalWidth) await new Promise(function (r, j) { if (img.complete && img.naturalWidth) r(); else { img.addEventListener("load", r, { once: true }); img.addEventListener("error", function () { j(new Error("portrait " + id + " did not load")); }, { once: true }); } });
     if (IDENT[id]) return IDENT[id];
-    var e = { ID: I, RT: makeRetarget(I), tex: makeTexture(img), lay: layoutFor(I), eyes: I.eyes, video: data.video || {}, erode: erodeScale(I) };
+    var e = { ID: I, RT: makeRetarget(I), tex: makeTexture(img), lay: layoutFor(I), eyes: I.eyes, video: data.video || {}, erode: erodeScale(I), mask: lumMask(img) };
     IDENT[id] = e; return e;
   }
   async function loadRest() {                                                        // the other identities arrive in the background, one at a time
@@ -1136,16 +1368,19 @@
     gl.bindVertexArray(null);
     // the mesh texture the particles read: row 0 pos/shade (per frame), row 1 uv old/new (per transition), row 2 field coords + normal, row 3 field scale + ring (static)
     gl.bindTexture(gl.TEXTURE_2D, meshTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, MESH_TW, 4, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, MESH_TW, 5, 0, gl.RGBA, gl.FLOAT, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     MROW.fill(0); for (var q = 0; q < ID.n; q++) { MROW[q * 4] = FLD[q * 2]; MROW[q * 4 + 1] = FLD[q * 2 + 1]; MROW[q * 4 + 2] = ID.N[q * 3]; MROW[q * 4 + 3] = ID.N[q * 3 + 1]; }
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 2, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
-    MROW.fill(0); for (q = 0; q < ID.n; q++) { MROW[q * 4] = FSC[q * 2]; MROW[q * 4 + 1] = FSC[q * 2 + 1]; MROW[q * 4 + 2] = q < NL ? 0 : (ID.ring[q] < 0 ? 4 : ID.ring[q] + 1); }
+    MROW.fill(0); for (q = 0; q < ID.n; q++) { MROW[q * 4] = FSC[q * 2]; MROW[q * 4 + 1] = FSC[q * 2 + 1]; MROW[q * 4 + 2] = q < NL ? 0 : (ID.ring[q] < 0 ? 4 : ID.ring[q] + 1); MROW[q * 4 + 3] = ID.N[q * 3 + 2]; }
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 3, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
-    // the particles: 48k grains + 9.6k streak homes (a fifth) so 3-5 grains lift from every eroding cluster and the band in
-    // flight covers about a third of its area (it reads as dust, the arriving face through it); a third as many on a phone
-    var phone = W <= 640, prng = mulberry32(7919), homesP = particleHomes(ID, FLD, phone ? 16000 : 48000, prng), homesL = particleHomes(ID, FLD, phone ? 3200 : 9600, prng, 1);
+    // row 4: each vertex's depth from the head's vertical axis (face widths, towards the camera), for the grains' 3D flight
+    var ZH = depthFromAxis(ID); MROW.fill(0); for (q = 0; q < ID.n; q++) MROW[q * 4] = ZH[q];
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 4, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
+    // the particles (v6): 120k fine grains + 6k streak homes, so the band in flight is a fine dust at 1-1.8 css px (the old
+    // 48k at 2-3 px read as flakes); 40k + 2k on a phone
+    var phone = W <= 640, prng = mulberry32(7919), homesP = particleHomes(ID, FLD, phone ? PARTS.phone[0] : PARTS.desk[0], prng), homesL = particleHomes(ID, FLD, phone ? PARTS.phone[1] : PARTS.desk[1], prng, 1);
     NP = bindParticles(vaoP, bP, homesP, homesP.length / 9, false); NLN = bindParticles(vaoL, bL, homesL, homesL.length / 9 * 4, true, bLI);
     // the mouth cavity: a fan over the inner lip loop, drawn behind the face
     var m = INNER_UP.length, i;
@@ -1162,6 +1397,20 @@
     EYE_IDX = bEyeIdx; gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EYE_IDX); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ID.eyeTris, gl.STATIC_DRAW); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
   }
   var EYE_IDX = null;
+  // the grains' counts (points, streak homes) and their 3D frame: the head's vertical axis sits ZAX face widths behind the
+  // landmarks' mean depth (a head is ~1.3 face widths deep); the hair, collar and chest rings at the depth of the face oval
+  // beside them, each a little further back; the focal plane on the cheeks
+  var PARTS = { desk: [120000, 6000], phone: [40000, 2000] }, ZAX = 0.45, ZFOCUS = 0.5;
+  function depthFromAxis(I) {
+    var Z = new Float32Array(I.n), mz = 0, i, q;
+    for (i = 0; i < NL; i++) mz += I.L[i * 3 + 2] / NL;
+    for (i = 0; i < NL; i++) Z[i] = (I.L[i * 3 + 2] - mz) / I.fw + ZAX;
+    for (i = NL; i < I.n; i++) {
+      var zb = 0; for (q = 0; q < 4; q++) zb += I.ringW[i * 4 + q] * I.L[I.oval[I.ringK[i * 4 + q]] * 3 + 2];
+      Z[i] = (zb - mz) / I.fw + ZAX - 0.06 * ((I.ring[i] < 0 ? 3 : I.ring[i]) + 1);
+    }
+    return Z;
+  }
 
   // ===========================================================================
   // Identity transitions: the front field (seed region + noise) reveals the next identity's texture; the geometry and the
@@ -1169,7 +1418,9 @@
   // back on the same mesh positions carrying the new colours. The driver landmarks never stop, so a turn or smile
   // carries across; both identities' retargets run on the same driver during the transition.
   // ===========================================================================
-  function layoutFor(I) { var l = layout(W, H, I.faceBox, I); if (EMBED && W <= 640) l.oy += 0.06 * H; return l; }   // embedded on a phone the site's words sit above it: the face a little lower
+  // the composition leaves room for the conversation panel on the right; collapsing it eases the face to the true centre (SHIFT)
+  function panelRight() { return isCompact(W, H) ? 0 : Math.min(372, Math.max(320, 0.24 * W)) + clamp(0.04 * W, 16, 56); }
+  function layoutFor(I) { return layout(W, H, I.faceBox, { right: panelRight(), imgH: I.H }); }
   var pending = null, PRE = null;
   // the buffers a transition needs (the field distances, both uv sets, the particles' uv row) are built during the hold, in the
   // last second before it starts, and the next identity's retarget pre-steps are spread over the hold's last frames: no spike
@@ -1198,7 +1449,7 @@
   }
   function endTransition() {
     if (!TR) return;
-    CUR_ID = TR.to; var e = IDENT[CUR_ID]; ID = e.ID; RT = e.RT; tex = e.tex; LAY = e.lay; TR = null;
+    CUR_ID = TR.to; var e = IDENT[CUR_ID]; ID = e.ID; RT = e.RT; tex = e.tex; LAY = e.lay; TR = null; lastChange = NOW; VS.frozen = null; VS.mix = 0;
     gl.bindBuffer(gl.ARRAY_BUFFER, bUv); gl.bufferData(gl.ARRAY_BUFFER, ID.uv, gl.STATIC_DRAW);
   }
   // ===========================================================================
@@ -1209,10 +1460,13 @@
   // so it sits exactly on the still (the rect from tools/vid_register.py). Phases of a hold:
   //   wait (clip asked for, the still showing) -> in (crossfade still -> clip) -> play (clip after clip, back to back)
   //   -> out (the last clip has ended on the photo: crossfade its last frame -> still) -> trans (the particle transition) -> next hold
+  // A one-and-a-half hold (and a touch) skips 'out': the clip is paused on its live frame (VS.frozen) and the transition erodes
+  // that frame, still in register on the photo's mesh, into the next identity.
   // Without video (?video=0, a refusal, a clip that never arrives) a hold is a still that ends on time.
   // ===========================================================================
   var VIDEO_ON = PARAM.video, VPOOL = {}, vidTex = gl.createTexture(), vidW = 0, vidH = 0, vidFresh = false, VORDER = null;
-  var VS = { key: null, el: null, phase: "none", mix: 0, t0: 0, fade: 350, holdStart: 0, hold: 0, plays: 0, fails: 0, askedAt: 0, hasFrame: false, still: false, seq: [] };
+  var VS = { key: null, el: null, phase: "none", mix: 0, t0: 0, fade: 350, holdStart: 0, hold: 0, plays: 0, fails: 0, askedAt: 0, hasFrame: false, still: false, seq: [],
+    cut: 1, done: 0, frozen: null, swap: false, cuts: [] };
   var hasRVFC = typeof HTMLVideoElement !== "undefined" && "requestVideoFrameCallback" in HTMLVideoElement.prototype;
   gl.bindTexture(gl.TEXTURE_2D, vidTex);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -1234,8 +1488,8 @@
     if (v.parentNode) v.parentNode.removeChild(v);
     delete VPOOL[key];
   }
-  function preload(cur, next) {
-    var want = preloadSet(cur, next), k;
+  function preload(cur, next, nextN) {
+    var want = preloadSet(cur, next, nextN), k;
     for (k in VPOOL) if (want.indexOf(k) < 0 && k !== VS.key) releaseVid(k);
     want.forEach(getVid);
   }
@@ -1271,36 +1525,54 @@
   }
   function clipInfo(id, n) { var e = IDENT[id], v = e && e.video && e.video[n]; return v || null; }
   function calmOnly() { return convo !== "idle" || reduce; }
-  // a new hold on the current identity: the next identity is chosen now (its first clip preloads), the calm clip asked for
+  // a new hold on the current identity: the next identity is chosen now (the clip it opens on preloads), the opening clip asked for
   function startHold(t) {
     pending = PARAM.cycle ? CYCLE.next() : null;
-    VS.holdStart = t; VS.hold = pending ? pending.hold : 1e12; VS.still = !VIDEO_ON || VS.fails > 3; VS.mix = 0; VS.hasFrame = false;
+    VS.holdStart = t; VS.hold = pending ? pending.hold : 1e12; VS.cut = pending ? pending.cut : 1e9; VS.done = 0; VS.frozen = null; VS.swap = false;
+    VS.still = !VIDEO_ON || VS.fails > 3; VS.mix = 0; VS.hasFrame = false;
     if (VS.still) { VS.phase = "still"; return; }
     if (!VORDER) VORDER = makeClipOrder(VRNG);
-    VORDER.startHold(); preload(CUR_ID, pending ? pending.to : null);
-    var n = VORDER.next(false), ci = clipInfo(CUR_ID, n);
+    var n = clipFor(VORDER, VS.cut, 0, calmOnly()), ci = clipInfo(CUR_ID, n);
+    preload(CUR_ID, pending ? pending.to : null, VORDER.peek());
     VS.fade = fadeMs(ci ? ci.firstGray || 0 : 0);
     VS.phase = "wait";
     if (PARAM.clip && PARAM.clip[0] === CUR_ID && PARAM.vt !== null) { holdClip(PARAM.clip, PARAM.vt, t); VS.fade = 1; return; }
     playClip(CUR_ID + n, t);
   }
-  function readyToGo(t) { return !!pending && !!IDENT[pending.to] && convo === "idle" && holdOver(t - VS.holdStart, VS.hold); }
+  // the hold may end (at the point cutHere allows): the next identity is loaded and it is not talking
+  function readyToGo() { return !!pending && !!IDENT[pending.to] && convo === "idle"; }
   function goOut(t) {
     var n = +VS.key.slice(-1), ci = clipInfo(CUR_ID, n);
     VS.phase = "out"; VS.t0 = t; VS.fade = fadeMs(ci ? ci.lastGray || 0 : 0);
     if (!PRE || PRE.plan !== pending) prepTransition(pending);
   }
+  // the clip stops on its live frame and the transition starts from it (a one-and-a-half hold, a touch)
+  function freezeOut(t) {
+    var v = VS.el;
+    if (v) { try { v.pause(); } catch (e) {} }
+    VS.frozen = { key: VS.key, mix: VS.mix, at: v ? +v.currentTime.toFixed(3) : null, el: v };
+    VS.el = null;                                                                   // no more uploads: vidTex keeps the frame
+    if (!PRE || PRE.plan !== pending) prepTransition(pending);
+    startTransition(t);
+  }
   function startTransition(t) {
-    VS.mix = 0;
-    if (beginTransition(pending, t)) { pending = null; VS.phase = "trans"; if (VS.el) { try { VS.el.pause(); } catch (e) {} } VS.key = null; VS.el = null; }
-    else { VS.holdStart = t; VS.hold = 1000; VS.phase = VS.still ? "still" : "play"; }
+    var cutAt = { at: Math.round(t - VS.holdStart), cut: VS.cut, done: VS.done, frozen: VS.frozen ? VS.frozen.key + "@" + VS.frozen.at : null };
+    if (beginTransition(pending, t)) {
+      VS.cuts.push(cutAt); if (VS.cuts.length > 12) VS.cuts.shift();
+      pending = null; VS.phase = "trans"; if (VS.el) { try { VS.el.pause(); } catch (e) {} } VS.key = null; VS.el = null; if (!VS.frozen) VS.mix = 0;
+    }
+    else {                                                                          // could not start: the clip plays on (a frozen one resumes)
+      if (VS.frozen && VS.frozen.el) { VS.el = VS.frozen.el; var p = VS.el.play(); if (p && p.catch) p.catch(function () {}); }
+      else VS.mix = 0;
+      VS.frozen = null; VS.holdStart = t; VS.hold = 1000; VS.phase = VS.still ? "still" : "play";
+    }
   }
   function videoStep(t) {
     var v = VS.el;
     if (VS.phase === "still") {                                                     // no clips: a still hold that ends on time
       var hin = VS.holdStart + VS.hold - t;
       if (pending && IDENT[pending.to] && hin > 0 && hin < 1000 && !PRE) prepTransition(pending);
-      if (readyToGo(t + 0.5 * CLIP_MS) && t >= VS.holdStart + VS.hold) startTransition(t);
+      if (readyToGo() && t >= VS.holdStart + VS.hold) startTransition(t);
       return;
     }
     if (VS.phase === "wait") {
@@ -1312,17 +1584,33 @@
     if (PARAM.clip) return;                                                         // ?clip=: held, never advanced
     if (VS.phase === "in" || VS.phase === "play") {
       if (v && v.ended) {
-        if (readyToGo(t)) { goOut(t); return; }
-        var n = VORDER.next(calmOnly());
-        playClip(CUR_ID + n, t);
+        VS.done++;
+        if (readyToGo() && cutHere(VS.cut, VS.done - 1, 1, false)) { goOut(t); return; }
+        playClip(CUR_ID + clipFor(VORDER, VS.cut, VS.done, calmOnly()), t);
       } else if (v && v.paused && !document.hidden && t - VS.askedAt > 1500) { VS.askedAt = t; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+      else if (v && VS.phase === "play" && v.duration > 0 && readyToGo()) {
+        // half-way through a calm clip: the transition is prepared a little ahead (no spike), then starts from the live frame
+        var frac = v.currentTime / v.duration, calm = VS.key && VS.key.slice(-1) === "1", ci1 = calm ? clipInfo(CUR_ID, 1) : null;
+        var mid = ci1 && ci1.cutAt ? clamp(ci1.cutAt / v.duration, 0.2, 0.8) : CUT_MID;
+        if (cutHere(VS.cut, VS.done, frac, calm, mid) && frac < mid + 0.1) freezeOut(t);
+        else if (cutHere(VS.cut, VS.done, frac + 0.12, calm, mid) && frac < mid) { if (!PRE || PRE.plan !== pending) prepTransition(pending); else if (PRE.steps < 6) preStep(); }
+      }
       return;
     }
     if (VS.phase === "out") {
       VS.mix = 1 - clamp((t - VS.t0) / VS.fade, 0, 1);
+      if (VS.swap) {                                                                // talking: the expressive clip let go of, the calm one asked for
+        if (VS.mix <= 0) { VS.swap = false; VS.hasFrame = false; VS.fade = 300; VS.phase = "wait"; VS.done += 0.5; playClip(CUR_ID + "1", t); }
+        return;
+      }
       if (PRE && PRE.plan === pending && PRE.steps < 6) preStep();
       if (VS.mix <= 0) startTransition(t);
     }
+  }
+  // it starts to listen, think or speak while the expressive clip plays: back to the still in 300 ms, then the calm clip
+  function calmDown() {
+    if (!VS.key || VS.key.slice(-1) !== "2" || (VS.phase !== "in" && VS.phase !== "play") || PARAM.clip) return;
+    var t = NOW; VS.phase = "out"; VS.swap = true; VS.t0 = t - (1 - VS.mix) * 300; VS.fade = 300;
   }
   document.addEventListener("visibilitychange", function () {
     var v = VS.el; if (!v) return;
@@ -1340,24 +1628,24 @@
   function compose(Oa, La, Ob, Lb, R, gw) {
     var n = ID.n, i, k, m = INNER_UP.length, w = 0, ax, ay, bx, by;
     for (i = 0; i < n; i++) {
-      ax = La.ox + Oa.pos[i * 2] * La.S; ay = La.oy + Oa.pos[i * 2 + 1] * La.S;
+      ax = La.ox + SHIFT + Oa.pos[i * 2] * La.S; ay = (La.oy + LIFT) + Oa.pos[i * 2 + 1] * La.S;
       if (Ob) {
         // the weight is the share of the band's texels already gone at this vertex (the erosion order is spread evenly over the
         // band), so the shape never leads the surface; a feature's vertices share their cluster's one beat (as its texels do)
         var fi = i < NL ? FEAT_OF[i] : 0, kk = (R - DV[fi ? FEAT_C[fi - 1] : i]) / GEO_BAND;
         w = WV[i] = fi ? smooth((kk - (FEAT_N - FEAT_SOFT)) / (2 * FEAT_SOFT)) : clamp((smooth(kk) - 0.5) * GEO_STEEP + 0.5, 0, 1);
-        bx = Lb.ox + Ob.pos[i * 2] * Lb.S; by = Lb.oy + Ob.pos[i * 2 + 1] * Lb.S; ax += (bx - ax) * w; ay += (by - ay) * w; GSH[i] = Oa.shade[i] + (Ob.shade[i] - Oa.shade[i]) * w;
+        bx = Lb.ox + SHIFT + Ob.pos[i * 2] * Lb.S; by = (Lb.oy + LIFT) + Ob.pos[i * 2 + 1] * Lb.S; ax += (bx - ax) * w; ay += (by - ay) * w; GSH[i] = Oa.shade[i] + (Ob.shade[i] - Oa.shade[i]) * w;
       }
       else GSH[i] = Oa.shade[i];
       GPOS[i * 2] = ax; GPOS[i * 2 + 1] = ay;
     }
     for (k = 0; k < 2 * m; k++) {
-      ax = La.ox + Oa.cavity[k * 2] * La.S; ay = La.oy + Oa.cavity[k * 2 + 1] * La.S;
-      if (Ob) { w = WV[k < m ? INNER_UP[k] : INNER_LO[k - m]]; bx = Lb.ox + Ob.cavity[k * 2] * Lb.S; by = Lb.oy + Ob.cavity[k * 2 + 1] * Lb.S; ax += (bx - ax) * w; ay += (by - ay) * w; }
+      ax = La.ox + SHIFT + Oa.cavity[k * 2] * La.S; ay = (La.oy + LIFT) + Oa.cavity[k * 2 + 1] * La.S;
+      if (Ob) { w = WV[k < m ? INNER_UP[k] : INNER_LO[k - m]]; bx = Lb.ox + SHIFT + Ob.cavity[k * 2] * Lb.S; by = (Lb.oy + LIFT) + Ob.cavity[k * 2 + 1] * Lb.S; ax += (bx - ax) * w; ay += (by - ay) * w; }
       GCAV[k * 2] = ax; GCAV[k * 2 + 1] = ay;
     }
-    var fa = [La.ox + Oa.faceBox[0] * La.S, La.oy + Oa.faceBox[1] * La.S, Oa.faceBox[2] * La.S, Oa.faceBox[3] * La.S], mo = Oa.mouthOpen;
-    if (Ob) { var fb = [Lb.ox + Ob.faceBox[0] * Lb.S, Lb.oy + Ob.faceBox[1] * Lb.S, Ob.faceBox[2] * Lb.S, Ob.faceBox[3] * Lb.S]; for (k = 0; k < 4; k++) fa[k] += (fb[k] - fa[k]) * gw; mo += (Ob.mouthOpen - mo) * gw; }
+    var fa = [La.ox + SHIFT + Oa.faceBox[0] * La.S, (La.oy + LIFT) + Oa.faceBox[1] * La.S, Oa.faceBox[2] * La.S, Oa.faceBox[3] * La.S], mo = Oa.mouthOpen;
+    if (Ob) { var fb = [Lb.ox + SHIFT + Ob.faceBox[0] * Lb.S, (Lb.oy + LIFT) + Ob.faceBox[1] * Lb.S, Ob.faceBox[2] * Lb.S, Ob.faceBox[3] * Lb.S]; for (k = 0; k < 4; k++) fa[k] += (fb[k] - fa[k]) * gw; mo += (Ob.mouthOpen - mo) * gw; }
     for (k = 0; k < 4; k++) GFB[k] = fa[k];
     return mo;
   }
@@ -1367,7 +1655,7 @@
   // ===========================================================================
   var live = false;
   function canCamera() { return false; }
-  window.addEventListener("pointermove", function (e) { mx = e.clientX; my = e.clientY; moved = performance.now(); overUI = !!(e.target && e.target.closest && e.target.closest("#talk button, #talk input, #talk a")); });
+  window.addEventListener("pointermove", function (e) { mx = e.clientX; my = e.clientY; moved = performance.now(); overUI = !!(e.target && e.target.closest && e.target.closest("#panel, #tab")); });
   var noticeT = 0;
   function notice(msg, ms) { noticeEl.textContent = msg; noticeEl.classList.add("on"); clearTimeout(noticeT); noticeT = setTimeout(function () { noticeEl.classList.remove("on"); }, ms || 7000); }
 
@@ -1391,12 +1679,14 @@
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function cancelSpeech() { if (SP && SP.tts && SYNTH) { try { SYNTH.cancel(); } catch (e) {} } SP = null; }
-  // opt: sim (silent, for ?speak=1), dim (an aside, not an answer), after (html shown once the text is typed), silent (text only)
+  // opt: sim (silent, for ?speak=1), dim (an aside, not an answer), after (html shown once the text is typed), silent (text only),
+  // acts (the action chips: shown faint under the reply from the start, lit once it is typed)
   function say(text, opt) {
     opt = opt || {}; cancelSpeech();
     var s = SP = { text: String(text), pos: 0, last: 0, tw: 0, t0: NOW, sim: !!opt.sim, tts: false, started: false, audio: false, ended: false,
-      segBase: 0, segEnd: String(text).length, segT: NOW, cps: 14.5, doneAt: 0, dwell: 0, after: opt.after || "", painted: -1 };
-    if (opt.dim) saidEl.classList.add("dim"); else saidEl.classList.remove("dim");
+      segBase: 0, segEnd: String(text).length, segT: NOW, cps: 14.5, doneAt: 0, dwell: 0, after: opt.after || "", painted: -1, actsEl: null };
+    saidEl = replyLine(!!opt.dim, opt.acts);
+    s.txEl = saidEl.querySelector(".tx") || saidEl; s.actsEl = saidEl.querySelector(".acts");
     setConvo("speaking");
     if (s.sim) { s.audio = true; s.started = true; return; }
     if (!SYNTH || !UTTER || opt.silent) return;
@@ -1461,7 +1751,9 @@
     var shownN = s.tw | 0;
     if (shownN !== s.painted) {
       s.painted = shownN;
-      saidEl.innerHTML = shownN >= n ? esc(s.text) + (s.after ? " " + s.after : "") : esc(s.text.slice(0, shownN)) + '<span class="caret"></span>';
+      if (s.txEl) s.txEl.innerHTML = shownN >= n ? esc(s.text) + (s.after ? " " + s.after : "") : esc(s.text.slice(0, shownN)) + '<span class="caret"></span>';
+      if (shownN >= n && s.actsEl) litActs(s.actsEl);
+      threadToEnd();
     }
     var finished = s.sim || s.tts ? s.ended : true;
     if (finished && s.tw >= n && !playing) {
@@ -1488,6 +1780,7 @@
     ["listening", "thinking", "speaking"].forEach(function (c) { if (c === s) document.body.classList.add(c); else document.body.classList.remove(c); });
     if (AUTO && AUTO.AU) { if (s === "listening" || s === "thinking") AUTO.AU.side = RNG() < 0.5 ? -1 : 1; if (s !== "idle") AUTO.AU.sacAt = 0; }   // look again, now
     micLabel.textContent = s === "listening" ? "listening" : "speak";
+    onConvo(s);
   }
   var CLOSED_HTML = 'if you would like to keep talking, write to <a href="mailto:info@bnbmanagement.co.nz">info@bnbmanagement.co.nz</a>.';
   function closeTalk() {
@@ -1499,7 +1792,7 @@
     if (!text || sending) return;
     if (talkClosed) { closeTalk(); return; }
     cancelSpeech(); sending = true;
-    heardEl.textContent = "you: " + text;
+    youLine(text);
     talkLog.push({ role: "user", content: text });
     setConvo("thinking");
     var msgs = talkLog.slice(-20); if (msgs[0].role !== "user") msgs = msgs.slice(1);
@@ -1513,7 +1806,7 @@
     var reply = data && typeof data.reply === "string" ? data.reply.trim() : "";
     if (res && res.ok && reply) {
       talkLog.push({ role: "assistant", content: reply }); if (talkLog.length > 40) talkLog = talkLog.slice(-40);
-      say(reply); return;
+      say(reply, { acts: intentsOf(reply, text) }); return;
     }
     talkLog.pop();                                                                     // the unanswered question leaves the history, so turns stay paired
     var code = String((data && data.code) || "");
@@ -1575,7 +1868,6 @@
     if (v.trim() && !sending) { if (rec) { recAbort = true; stopListening(); } sayEl.value = ""; sayEl.classList.remove("interim"); send(v); }
   });
   sayEl.addEventListener("input", function () { sayEl.classList.remove("interim"); if (rec) { recAbort = true; stopListening(); } });
-  if (EMBED) sayEl.placeholder = "type to it";
   if (!SR) micBtn.title = "this browser can't turn speech into text; type to it instead";
   window.__talk = { say: say, send: send, speechStep: speechStep, setConvo: setConvo, listen: listen, closeTalk: closeTalk, cancelSpeech: cancelSpeech,
     get SP() { return SP; }, get talkLog() { return talkLog; }, get talkClosed() { return talkClosed; }, set talkClosed(v) { talkClosed = v; }, get sending() { return sending; }, get SESSION() { return SESSION; } };
@@ -1597,6 +1889,12 @@
       var w = +d.w, h = +d.h; mx = w > 0 ? x * W / w : x; my = h > 0 ? y * H / h : y; moved = Math.max(performance.now(), NOW); overUI = false;
     }
     else if (d.type === "oeuvre-camera") { if (d.on) post({ type: "oeuvre-camera", on: false }); }   // no camera in this figure
+    else if (d.type === "oeuvre-next") { var ok = changeFace(null, null); if (ok && faceCss[2]) ripple(faceCss[0] + faceCss[2] / 2, faceCss[1] + faceCss[3] * 0.45, true); }   // the site's 'N' key
+    else if (d.type === "oeuvre-viewport") { setKb(+d.kb); }                       // the on-screen keyboard (the site's visualViewport)
+    else if (d.type === "oeuvre-touch") {                                          // a click the site's word box passed on (not on its ink)
+      var tx = +d.x, ty = +d.y; if (!isFinite(tx) || !isFinite(ty) || !personAt(tx, ty)) return;
+      var tok = changeFace(tx, ty); ripple(tx, ty, tok);
+    }
   });
 
   // ===========================================================================
@@ -1607,11 +1905,19 @@
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); gl.viewport(0, 0, cv.width, cv.height);
     for (var idk in IDENT) IDENT[idk].lay = layoutFor(IDENT[idk].ID);                 // every identity has its own composition (layoutFor: the embedded phone offset)
     if (ID && IDENT[CUR_ID]) LAY = IDENT[CUR_ID].lay;
-    if (EMBED) { if (W < 700) document.body.classList.add("narrow"); else document.body.classList.remove("narrow"); placeTalk(); }
+    if (isCompact(W, H)) document.body.classList.add("narrow"); else document.body.classList.remove("narrow");
+    if (narrowWas !== null && narrowWas !== (isCompact(W, H))) setPanel(!isCompact(W, H) && panelWanted(), false);   // crossing the phone width: the sheet starts closed, the column open
+    narrowWas = isCompact(W, H); postPanel();
   }
   window.addEventListener("resize", resize);
-  var talkEl = document.getElementById("talk"), faceCss = [0, 0, 0, 0], facePostAt = 0, readyPosted = false;
-  function placeTalk() { if (!LAY) return; talkEl.style.top = talkTop(faceCss[1], faceCss[3], H, talkEl.offsetHeight || 0, 12) + "px"; }
+  // the on-screen keyboard: the sheet rides above it and the face rises with it. Embedded, the site posts it (oeuvre-viewport);
+  // standalone, this page's own visualViewport
+  function setKb(kb) { kb = isFinite(kb) ? clamp(Math.round(kb), 0, 0.7 * (H || 800)) : 0; if (kb === KB) return; KB = kb; document.body.style.setProperty("--kb", KB + "px"); liftTarget(); setTimeout(postPanel, 30); }
+  if (window.visualViewport) {
+    var vvKb = function () { if (EMBED) return; var vv = window.visualViewport; setKb(window.innerHeight - vv.height - vv.offsetTop); };
+    window.visualViewport.addEventListener("resize", vvKb); window.visualViewport.addEventListener("scroll", vvKb);
+  }
+  var faceCss = [0, 0, 0, 0], facePostAt = 0, readyPosted = false, narrowWas = null;
   var NZT = null; try { NZT = new Intl.DateTimeFormat("en-NZ", { timeZone: "Pacific/Auckland", hour: "2-digit", minute: "2-digit", hour12: false }); } catch (e) {}
   var clockT = 0;
   function clock(t) { if (t - clockT < 1000) return; clockT = t; try { clockEl.textContent = NZT ? NZT.format(new Date()) : ""; } catch (e) {} }
@@ -1631,15 +1937,25 @@
     cycleStep(t);                                                                      // holds, clips, transitions
     if (VS.el && uploadVideo()) VS.hasFrame = true;
     OPT.dt = dt;
-    var O = RT.step(D, Nn, OPT), Ob = null, R = 0, gw = 0;
-    if (TR) { TR.p = PARAM.t !== null ? PARAM.t : clamp((t - TR.t0) / TR.dur, 0, 1); Ob = IDENT[TR.to].RT.step(D, Nn, OPT); R = frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin); gw = smooth(TR.p); }
-    compose(O, IDENT[CUR_ID].lay, Ob, TR ? IDENT[TR.to].lay : null, R, gw);
-    var vmix = TR || !VS.hasFrame ? 0 : VS.mix;
+    shiftStep(t);
+    // the figure is a still mesh between transitions: once it has settled (30 frames on the same composition) the retarget and the
+    // compose are skipped and the vertex buffers are left as they are; only the clip's frame changes
+    var gk = CUR_ID + "|" + LAY.ox + "|" + LAY.oy + "|" + LAY.S + "|" + LIFT.toFixed(2) + "|" + SHIFT.toFixed(2);
+    if (gk !== GEO.key) { GEO.key = gk; GEO.n = 0; }
+    var O = RT.out, Ob = null, R = 0, gw = 0, geo = !!TR || GEO.n < 30;
+    if (geo) {
+      GEO.n++; O = RT.step(D, Nn, OPT);
+      if (TR) { TR.p = PARAM.t !== null ? PARAM.t : clamp((t - TR.t0) / TR.dur, 0, 1); Ob = IDENT[TR.to].RT.step(D, Nn, OPT); R = frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin); gw = smooth(TR.p); }
+      compose(O, IDENT[CUR_ID].lay, Ob, TR ? IDENT[TR.to].lay : null, R, gw);
+    }
+    GEO.upload = geo;
+    var vmix = TR ? (VS.frozen ? VS.frozen.mix : 0) : !VS.hasFrame ? 0 : VS.mix;   // a transition from a live frame erodes that frame
     draw(O, TR ? IDENT[TR.to] : null, R, vmix);
     // the face box in css px (the photo's: the clips stay inside it), for the parent and the talk control
     faceCss[0] = GFB[0]; faceCss[1] = GFB[1] - 0.22 * GFB[3]; faceCss[2] = GFB[2]; faceCss[3] = GFB[3] * 1.22;
-    if (!readyPosted) { readyPosted = true; post({ type: "oeuvre-ready", camera: false }); gate.classList.add("off"); document.body.classList.remove("loading"); if (EMBED) placeTalk(); }
-    if (t - facePostAt > 100) { facePostAt = t; post({ type: "oeuvre-face", x: faceCss[0], y: faceCss[1], w: faceCss[2], h: faceCss[3], state: stateName() }); if (EMBED) placeTalk(); }
+    if (!readyPosted) { readyPosted = true; post({ type: "oeuvre-ready", camera: false }); gate.classList.add("off"); document.body.classList.remove("loading"); readyAt = t; }
+    if (t - facePostAt > 100) { facePostAt = t; post({ type: "oeuvre-face", x: faceCss[0], y: faceCss[1], w: faceCss[2], h: faceCss[3], state: stateName() }); postPanel(); liftTarget(); placeHint(t); }
+    LIFT += (LIFT_T - LIFT) * ease(0.09, dt);
     if (t - stateT > 500) { stateT = t; stateEl.textContent = stateName(); }
     clock(t);
     if (PARAM.perf) perf(t, performance.now() - t0);
@@ -1647,7 +1963,7 @@
     B.face = faceCss.slice(); B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY; B.faceFrac = GFB[2] / W; B.convo = convo;
     B.transition = TR ? { from: TR.from, to: TR.to, t: TR.p, region: TR.region } : null; B.loaded = Object.keys(IDENT); B.next = pending ? pending.to : null;
     B.video = { phase: VS.phase, key: VS.key, mix: +vmix.toFixed(3), time: VS.el ? +VS.el.currentTime.toFixed(3) : null, ended: VS.el ? VS.el.ended : null, hasFrame: VS.hasFrame, endedAt: VS.endedAt || null,
-      holdIn: VS.holdStart ? Math.round(VS.holdStart + VS.hold - t) : null, plays: VS.plays, fails: VS.fails, seq: VS.seq.slice(), pool: Object.keys(VPOOL), elements: vidsEl.childElementCount };
+      holdIn: VS.holdStart ? Math.round(VS.holdStart + VS.hold - t) : null, cut: VS.cut, done: VS.done, frozen: VS.frozen ? VS.frozen.key : null, cuts: VS.cuts.slice(), plays: VS.plays, fails: VS.fails, seq: VS.seq.slice(), pool: Object.keys(VPOOL), elements: vidsEl.childElementCount };
   }
   function perf(t, ms) {
     PERF.n++; PERF.sum += ms; if (ms > PERF.max) PERF.max = ms; PERF.frames++;
@@ -1660,12 +1976,11 @@
     gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
     var vw = cv.width, vh = cv.height, k, trans = next ? 1 : 0, texB = next ? next.tex : tex, cur = IDENT[CUR_ID], er = cur.erode;
     gl.useProgram(PRG); gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bPos); gl.bufferSubData(gl.ARRAY_BUFFER, 0, GPOS);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bSh); gl.bufferSubData(gl.ARRAY_BUFFER, 0, GSH);
+    if (GEO.upload) { gl.bindBuffer(gl.ARRAY_BUFFER, bPos); gl.bufferSubData(gl.ARRAY_BUFFER, 0, GPOS); gl.bindBuffer(gl.ARRAY_BUFFER, bSh); gl.bufferSubData(gl.ARRAY_BUFFER, 0, GSH); }
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(U.uTex, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texB); gl.uniform1i(U.uTexB, 1);
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, vidTex); gl.uniform1i(U.uVidTex, 3);
-    var vi = VS.key ? clipInfo(CUR_ID, +VS.key.slice(-1)) : null, vr = vi ? vidUvRect(vi.rect, ID.W, ID.H) : [0, 0, 1, 1];
+    var vkey = VS.key || (VS.frozen && VS.frozen.key), vi = vkey ? clipInfo(CUR_ID, +vkey.slice(-1)) : null, vr = vi ? vidUvRect(vi.rect, ID.W, ID.H) : [0, 0, 1, 1];
     gl.uniform1f(U.uVid, vi ? vmix : 0); gl.uniform4f(U.uVidR, vr[0], vr[1], vr[2], vr[3]);
     var topFade = clamp(-LAY.oy / (0.03 * H), 0, 1);                                    // the crown runs past the top of the frame: a top vignette instead of a cut
     gl.uniform2f(U.uView, vw, vh); gl.uniform3f(U.uMap, DPR, 0, 0); gl.uniform1i(U.uEye, 0); gl.uniform1f(U.uFade, 0.8); gl.uniform1f(U.uTop, topFade);
@@ -1684,10 +1999,15 @@
     for (k = 0; k < ID.n; k++) { MROW[k * 4] = GPOS[k * 2]; MROW[k * 4 + 1] = GPOS[k * 2 + 1]; MROW[k * 4 + 2] = GSH[k]; MROW[k * 4 + 3] = WV[k]; }
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, meshTex); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, MESH_TW, 1, gl.RGBA, gl.FLOAT, MROW);
     gl.useProgram(PRP);
-    gl.uniform1i(UP.uMesh, 2); gl.uniform1i(UP.uTex, 0); gl.uniform1i(UP.uTexB, 1);
+    gl.uniform1i(UP.uMesh, 2); gl.uniform1i(UP.uTex, 0); gl.uniform1i(UP.uTexB, 1); gl.uniform1i(UP.uVidTex, 3); gl.uniform1f(UP.uVid, vi ? vmix : 0); gl.uniform4f(UP.uVidR, vr[0], vr[1], vr[2], vr[3]);
     gl.uniform2f(UP.uView, vw, vh); gl.uniform1f(UP.uDpr, DPR); gl.uniform1f(UP.uT, TR.p); gl.uniform1f(UP.uFrontEnd, FRONT_END); gl.uniform1f(UP.uT1, FRONT_T1); gl.uniform1f(UP.uPow1, FRONT_POW); gl.uniform1f(UP.uPow2, FRONT_POW2); gl.uniform1f(UP.uRmax, TR.rmax); gl.uniform1f(UP.uRface, TR.rface); gl.uniform1f(UP.uRmin, TR.rmin); gl.uniform1f(UP.uBand, FIELD_BAND);
     gl.uniform1f(UP.uFw, GFB[2]); gl.uniform1f(UP.uMot, reduce ? 0.5 : 1); gl.uniform1f(UP.uAmp, FIELD_AMP); gl.uniform1f(UP.uFade, 0.8); gl.uniform1f(UP.uTop, topFade);
     gl.uniform2f(UP.uSeed, TR.seed[0], TR.seed[1]); gl.uniform2f(UP.uNoff, TR.noff[0], TR.noff[1]); gl.uniform2f(UP.uErode, er[0], er[1]); featUniforms(UP);
+    // the 3D frame: the head's axis on the screen, the focal plane, a slow camera sway (parallax), both pictures' rects (the silhouette)
+    var La = cur.lay, Lb = next.lay, sway = Math.sin(Math.PI * TR.p) * (reduce ? 0.4 : 1), sg = TR.seed[0] < 0 ? -1 : 1;
+    gl.uniform2f(UP.uHead, GFB[0] + GFB[2] / 2, GFB[1] + 0.45 * GFB[3]); gl.uniform1f(UP.uZf, ZFOCUS); gl.uniform2f(UP.uCam, 0.2 * sway * sg, -0.05 * sway);
+    gl.uniform4f(UP.uRectA, La.ox + SHIFT, La.oy + LIFT, ID.W * La.S, ID.H * La.S); gl.uniform4f(UP.uRectB, Lb.ox + SHIFT, Lb.oy + LIFT, next.ID.W * Lb.S, next.ID.H * Lb.S);
+    gl.uniform1f(UP.uGw, smooth(TR.p)); gl.uniform1f(UP.uFine, 1);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(vaoP); gl.drawArrays(gl.POINTS, 0, NP);
     gl.bindVertexArray(vaoL); gl.drawElements(gl.TRIANGLES, NLN, gl.UNSIGNED_SHORT, 0);
@@ -1695,8 +2015,203 @@
   }
 
   // the talk pill (embedded): a compact 'talk' under the chin that opens into the input and the mic
-  openBtn.addEventListener("click", function () { document.body.classList.add("talkopen"); openBtn.setAttribute("aria-expanded", "true"); primeTTS(); try { sayEl.focus(); } catch (e) {} placeTalk(); });
-  sayEl.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sayEl.value && EMBED) { document.body.classList.remove("talkopen"); openBtn.setAttribute("aria-expanded", "false"); try { openBtn.focus(); } catch (e2) {} placeTalk(); } });
+  // ===========================================================================
+  // The conversation panel (v5): a slim column on the right (phones: a bottom sheet), the thread, suggestion chips, action chips
+  // that navigate the parent, a mic with a live input meter, and the 'thinking' streaks. Its footprint goes to the parent
+  // (oeuvre-panel) so the menu words keep out of it.
+  // ===========================================================================
+  var PANEL_KEY = "oeuvre.panel", lastPanel = "";
+  function panelWanted() { try { return sessionStorage.getItem(PANEL_KEY) !== "0"; } catch (e) { return true; } }
+  function setPanel(open, focus) {
+    document.body.classList.toggle("panelopen", !!open);
+    tabBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    tabBtn.inert = !!open; panelEl.inert = !open;                                     // the hidden one is out of the tab order
+    if (open && focus) { primeTTS(); setTimeout(function () { try { sayEl.focus({ preventScroll: true }); } catch (e) {} }, 60); }
+    if (!open && focus) { try { tabBtn.focus({ preventScroll: true }); } catch (e) {} }
+    setTimeout(postPanel, 20); setTimeout(postPanel, 760);
+  }
+  function postPanel() {
+    var open = document.body.classList.contains("panelopen"), el = open ? panelEl : tabBtn, r = el.getBoundingClientRect();
+    if (document.body.classList.contains("loading")) return;
+    var m = panelMsg({ x: r.left, y: r.top, w: r.width, h: r.height }, open, isCompact(W, H), HINT.rect), k = JSON.stringify(m);
+    if (k === lastPanel) return; lastPanel = k; post(m);
+    var B = window.__being4 = window.__being4 || {}; B.panel = m;
+  }
+  if (typeof ResizeObserver !== "undefined") { try { new ResizeObserver(function () { postPanel(); }).observe(panelEl); } catch (e) {} }
+  panelEl.addEventListener("transitionend", function (e) { if (e.target === panelEl) postPanel(); });
+  tabBtn.addEventListener("click", function () { try { sessionStorage.setItem(PANEL_KEY, "1"); } catch (e) {} setPanel(true, true); });
+  closeBtn.addEventListener("click", function () { try { sessionStorage.setItem(PANEL_KEY, "0"); } catch (e) {} setPanel(false, true); });
+  sayEl.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sayEl.value) { e.preventDefault(); closeBtn.click(); } });
+  // the thread: the visitor's lines right-aligned, small and grey; the replies typed out in white; the last four exchanges
+  function trimThread() { while (threadEl.children.length > 8) threadEl.removeChild(threadEl.firstChild); }
+  function threadToEnd() { threadEl.scrollTop = threadEl.scrollHeight; }
+  function youLine(text) { panelEl.classList.add("talked"); var li = document.createElement("li"); li.className = "you"; li.textContent = text; threadEl.appendChild(li); trimThread(); threadToEnd(); }
+  function replyLine(dim, acts) {
+    var li = document.createElement("li"); li.className = "it" + (dim ? " dim" : "");
+    li.innerHTML = '<span class="tx"><span class="caret"></span></span>' + actsHtml(acts, true); threadEl.appendChild(li); trimThread(); threadToEnd(); return li;
+  }
+  // wait: faint and out of the tab order while the reply types (litActs lights them)
+  function actsHtml(list, wait) {
+    if (!list || !list.length) return "";
+    return '<span class="acts' + (wait ? " wait" : "") + '">' + list.map(function (a) { return '<button class="go" type="button"' + (wait ? ' tabindex="-1"' : "") + ' data-href="' + esc(a.href) + '">Open ' + esc(a.label) + '<span class="ar" aria-hidden="true">&rarr;</span></button>'; }).join("") + "</span>";
+  }
+  function litActs(el) { if (!el.classList.contains("wait")) return; el.classList.remove("wait"); el.querySelectorAll(".go").forEach(function (b) { b.removeAttribute("tabindex"); }); }
+  function navigate(href, x, y) {
+    href = navHref(href); if (!href) return;
+    if (EMBED) post({ type: "oeuvre-nav", href: href, x: Math.round(x), y: Math.round(y) });
+    else location.href = href;
+    var B = window.__being4 = window.__being4 || {}; B.nav = href;
+  }
+  threadEl.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".go"); if (!b) return;
+    var r = b.getBoundingClientRect(); navigate(b.getAttribute("data-href"), r.left + r.width / 2, r.top + r.height / 2);
+  });
+  chipsEl.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".chip"); if (!b || sending) return;
+    primeTTS(); if (rec) { recAbort = true; stopListening(); }
+    b.classList.add("used"); send(b.textContent);
+  });
+  var PSTATE = { idle: "Talk", listening: "Listening", thinking: "Thinking", speaking: "Speaking" };
+  function onConvo(s) {
+    if (pstateEl) pstateEl.textContent = PSTATE[s] || "Talk";
+    if (s === "listening") startMeter(); else stopMeter();
+    if (s !== "idle") calmDown();
+    if (s === "thinking") threadToEnd();
+  }
+  // the mic's live input level: its own analyser on the microphone (asked for only when the visitor taps the mic or holds space)
+  var METER = { on: false, stream: null, ctx: null, an: null, buf: null, raf: 0, bars: micBtn.querySelectorAll(".meter i"), lv: 0 };
+  function meterFrame() {
+    if (!METER.on) return; METER.raf = requestAnimationFrame(meterFrame);
+    var v = 0, i;
+    if (METER.an) { METER.an.getByteTimeDomainData(METER.buf); var s2 = 0; for (i = 0; i < METER.buf.length; i++) { var d = (METER.buf[i] - 128) / 128; s2 += d * d; } v = Math.min(1, Math.sqrt(s2 / METER.buf.length) * 5); }
+    else v = 0.25 + 0.2 * Math.sin(performance.now() / 180);                       // no level available: a slow breath, so it still reads as listening
+    METER.lv += (v - METER.lv) * (v > METER.lv ? 0.6 : 0.15);
+    for (i = 0; i < METER.bars.length; i++) METER.bars[i].style.setProperty("--v", clamp(METER.lv * (0.55 + 0.45 * Math.sin(i * 1.9 + performance.now() / 90)), 0.05, 1).toFixed(3));
+  }
+  function startMeter() {
+    if (METER.on) return; METER.on = true; meterFrame();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (st) {
+      if (!METER.on) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      METER.stream = st;
+      try { var AC = window.AudioContext || window.webkitAudioContext; METER.ctx = new AC(); var src = METER.ctx.createMediaStreamSource(st); METER.an = METER.ctx.createAnalyser(); METER.an.fftSize = 512; METER.buf = new Uint8Array(METER.an.fftSize); src.connect(METER.an); } catch (e) { METER.an = null; }
+    }).catch(function () {});
+  }
+  function stopMeter() {
+    if (!METER.on) return; METER.on = false; cancelAnimationFrame(METER.raf);
+    if (METER.stream) METER.stream.getTracks().forEach(function (tr) { tr.stop(); });
+    if (METER.ctx) { try { METER.ctx.close(); } catch (e) {} }
+    METER.stream = null; METER.ctx = null; METER.an = null; METER.lv = 0;
+    for (var i = 0; i < METER.bars.length; i++) METER.bars[i].style.setProperty("--v", "0");
+  }
+  // phones: while the sheet is open the figure rises so the face stays above it (never the crown off the top, never the picture's
+  // bottom edge above the sheet)
+  function isLand() { return isCompact(W, H) && W / H >= 1; }
+  function liftTarget() {
+    if (!LAY || !isCompact(W, H) || isLand() || !document.body.classList.contains("panelopen")) { LIFT_T = KB > 0 && isCompact(W, H) && !isLand() ? -Math.min(KB, LAY ? LAY.oy + headTop(ID.faceBox) * LAY.S - 10 : 0) : 0; return; }
+    var sheetTop = H - KB - panelEl.offsetHeight, crown = LAY.oy + headTop(ID.faceBox) * LAY.S, chin = LAY.oy + chinY(ID.faceBox) * LAY.S;
+    var want = Math.max(0, chin - sheetTop + 16);
+    LIFT_T = -Math.max(0, Math.min(want, crown - 10, LAY.bottom - sheetTop + KB));
+  }
+  // the horizontal ease (1.2 s, ease in-out): desktop, the column collapsed -> the face to the true centre; a landscape phone's
+  // drawer open -> the face to the middle of what the drawer leaves
+  function shiftTarget() {
+    if (!LAY || !ID) return 0;
+    var open = document.body.classList.contains("panelopen"), cx = LAY.ox + (ID.faceBox[0] + ID.faceBox[2] / 2) * LAY.S;
+    if (isLand()) return open ? (W - Math.min(400, 0.5 * W)) / 2 - cx : 0;
+    if (isCompact(W, H)) return 0;
+    return open ? 0 : W / 2 - cx;
+  }
+  function shiftStep(t) {
+    var to = shiftTarget();
+    if (Math.abs(to - SHM.to) > 0.5) { SHM.from = SHIFT; SHM.to = to; SHM.t0 = t; }
+    var k = clamp((t - SHM.t0) / (reduce ? 1 : 1200), 0, 1), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    SHIFT = SHM.from + (SHM.to - SHM.from) * e;
+  }
+  function layNow() { return LAY ? { ox: LAY.ox + SHIFT, oy: LAY.oy, S: LAY.S } : null; }   // the composition as drawn (with SHIFT)
+
+  // ===========================================================================
+  // Touch the face: a click on the person starts the change to the next identity, its particle front seeded at the touch (the
+  // point in head-frame coordinates). A 4 s cool-down; never while it talks; the 'N' key or the hidden button do the same.
+  // ===========================================================================
+  var TOUCH_KEY = "oeuvre.touched";
+  try { touched = localStorage.getItem(TOUCH_KEY) === "1"; } catch (e) {}
+  function changeState() { return { trans: !!TR, convo: convo, t: NOW || performance.now(), last: lastChange, ready: !!(CYCLE && ID && LAY && !PARAM.to && !PARAM.clip) }; }
+  function changeFace(px, py) {
+    if (!canChange(changeState())) return false;
+    var t = NOW, to = pending && IDENT[pending.to] ? pending.to : null;
+    if (!to) { var c = IDS.filter(function (i) { return i !== CUR_ID && IDENT[i]; }); if (!c.length) return false; to = c[Math.floor(RNG() * c.length)]; }
+    var plan = pending && pending.to === to ? pending : CYCLE.plan(CUR_ID, to);
+    if (px !== null && px !== undefined) { plan.seed = fieldPoint(ID, layNow(), LIFT, px, py); plan.region = "touch"; }
+    plan.dur = Math.min(plan.dur, 5000);
+    pending = plan; PRE = null; lastChange = t;
+    if ((VS.phase === "in" || VS.phase === "play") && VS.el && VS.hasFrame) freezeOut(t);   // at once, from the live frame under the finger
+    else if (VS.phase === "out" && !VS.swap) { prepTransition(pending); }
+    else { VS.swap = false; prepTransition(pending); startTransition(t); }
+    if (!touched) { touched = true; try { localStorage.setItem(TOUCH_KEY, "1"); } catch (e) {} }
+    hintEl.classList.remove("on");
+    var B = window.__being4 = window.__being4 || {}; B.touch = { seed: plan.seed.slice(), to: to, at: Math.round(t) };
+    return true;
+  }
+  function ripple(x, y, ok) {
+    var r = document.createElement("i"); r.className = "ripple" + (ok ? "" : " no"); r.style.left = x + "px"; r.style.top = y + "px";
+    document.body.appendChild(r); setTimeout(function () { if (r.parentNode) r.parentNode.removeChild(r); }, 1200);
+  }
+  function personAt(x, y) { var e = IDENT[CUR_ID]; return !!(e && LAY && onPerson(e.mask, MASK_W, MASK_H, layNow(), LIFT, x, y, ID.W, ID.H)); }
+  cv.addEventListener("click", function (e) {
+    if (!personAt(e.clientX, e.clientY)) return;
+    var ok = changeFace(e.clientX, e.clientY); ripple(e.clientX, e.clientY, ok);
+  });
+  window.addEventListener("pointermove", function (e) {
+    var on = e.target === cv && personAt(e.clientX, e.clientY) && canChange(changeState());
+    document.body.classList.toggle("onface", on);
+  });
+  nextBtn.addEventListener("click", function () { changeFace(null, null); });
+  window.addEventListener("keydown", function (e) {
+    if ((e.key !== "n" && e.key !== "N") || e.metaKey || e.ctrlKey || e.altKey || isField(e.target)) return;
+    changeFace(null, null);
+  });
+  // the first-visit hint, where it can be read: the first of a few spots round the head (beside it at eye level, above the crown,
+  // the other side, beside the neck) that lies on the black ground (maskCover over the identity's mask), clear of the panel; with
+  // none clean and the column open, it moves into the panel (#phint). Its rect rides on oeuvre-panel so the words keep out of it.
+  var HINT = { key: "", rect: null, inPanel: false };
+  function hintSpot() {
+    var e = IDENT[CUR_ID], L = layNow(); if (!e || !L) return null;
+    var fb = ID.faceBox, S = L.S, oy = L.oy + LIFT, cx = L.ox + (fb[0] + fb[2] / 2) * S, fw = fb[2] * S;
+    var crown = oy + headTop(fb) * S, chin = oy + chinY(fb) * S, eyeY = oy + (fb[1] + 0.35 * fb[3]) * S;
+    var hw = hintEl.offsetWidth || 240, hh = hintEl.offsetHeight || 15, open = document.body.classList.contains("panelopen"), pr = open ? panelEl.getBoundingClientRect() : null;
+    var c = [{ x: cx - 0.9 * fw - hw, y: eyeY, cls: "" }, { x: cx - hw / 2, y: crown - 34, cls: "c" }];
+    if (!open || isCompact(W, H)) c.push({ x: cx + 0.9 * fw, y: eyeY, cls: "r" });
+    c.push({ x: cx - 0.55 * fw - hw, y: chin + 14, cls: "" });
+    var best = null;
+    for (var i = 0; i < c.length; i++) {
+      var r = { x: clamp(c[i].x, 16, W - 16 - hw), y: c[i].y, w: hw, h: hh };
+      if (r.y < 64 || r.y > H - 90) continue;
+      if (pr && r.x < pr.right + 8 && r.x + r.w > pr.left - 8 && r.y < pr.bottom + 8 && r.y + r.h > pr.top - 8) continue;
+      var cov = maskCover(e.mask, MASK_W, MASK_H, L, LIFT, { x: r.x - 6, y: r.y - 4, w: r.w + 12, h: r.h + 8 }, ID.W, ID.H);
+      if (cov <= 0.03) return { r: r, cls: c[i].cls, panel: false };
+      if (!best || cov < best.cov) best = { r: r, cls: c[i].cls, cov: cov };
+    }
+    if (open && !isCompact(W, H)) return { r: null, cls: "", panel: true };
+    return best ? { r: best.r, cls: best.cls, panel: false } : null;
+  }
+  function placeHint(t) {
+    var show = !touched && readyAt && t - readyAt > 2500 && !TR && convo === "idle" && !(isCompact(W, H) && document.body.classList.contains("panelopen"));
+    var spot = null;
+    if (show) {
+      var key = CUR_ID + "|" + W + "|" + H + "|" + Math.round(SHIFT) + "|" + Math.round(LIFT) + "|" + document.body.classList.contains("panelopen");
+      if (key !== HINT.key) { HINT.key = key; HINT.spot = hintSpot(); }
+      spot = HINT.spot;
+    } else HINT.key = "";
+    var floating = !!(spot && spot.r), inPanel = !!(spot && spot.panel);
+    if (floating) { hintEl.className = (spot.cls ? spot.cls + " " : "") + "on"; hintEl.style.transform = "translate(" + Math.round(spot.r.x) + "px," + Math.round(spot.r.y) + "px)"; }
+    else hintEl.classList.remove("on");
+    document.body.classList.toggle("phint", inPanel);
+    HINT.rect = floating ? spot.r : null;
+  }
+  window.__panel = { actsHtml: actsHtml, intentsOf: intentsOf, changeFace: changeFace, setPanel: setPanel, youLine: youLine };   // debug / screenshot rig
+  var C0 = isCompact(window.innerWidth || 1024, window.innerHeight || 768); narrowWas = C0;
+  setPanel(!C0 && panelWanted(), false);
   resize();
   var CRNG = PARAM.seed === null ? Math.random : mulberry32((PARAM.seed + 0x5bd1e995) >>> 0);   // the cycle's own seeded stream
   var VRNG = PARAM.seed === null ? Math.random : mulberry32((PARAM.seed + 0x27d4eb2f) >>> 0);   // the clip order's
