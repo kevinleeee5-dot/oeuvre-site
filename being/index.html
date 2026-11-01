@@ -757,7 +757,7 @@
   // allowed down to CROWN_COMPACT of the height so the bust can run off the bottom without a giant face
   // short landscape screens (a phone on its side, H < SHORT_H) are compact too: the sheet, not the column; their face is sized by
   // the height (FACE_H_LAND of it) and centred
-  var REF_FACE_W = 660, FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.58, FACE_FRAC_PORTRAIT = 0.42, HEADROOM = 0.05, CHIN_MAX = 0.74, FACE_Y = 0.42, PHONE_W = 700, CROWN_COMPACT = 0.3, IMG_H = 1792, IMG_W = 2400, BLEED = 2;
+  var REF_FACE_W = 660, FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.58, FACE_FRAC_PORTRAIT = 0.42, HEADROOM = 0.05, CHIN_MAX = 0.74, FACE_Y = 0.42, EYE_Y = 0.36, PHONE_W = 700, CROWN_COMPACT = 0.3, IMG_H = 1792, IMG_W = 2400, BLEED = 2;
   var SHORT_H = 500, FACE_H_LAND = 0.5;
   function isCompact(W, H) { return W < PHONE_W || W / H < 0.8 || H < SHORT_H; }
   function headTop(faceBox) { return Math.max(0, faceBox[1] - 0.5 * faceBox[3]); }
@@ -772,10 +772,11 @@
     var cxI = faceBox[0] + faceBox[2] / 2, cyI = faceBox[1] + faceBox[3] / 2;
     var cx = W / 2;                                                                                           // centred, on every screen
     var ox = cx - cxI * S;
-    var oy = FACE_Y * H - cyI * S;
-    oy = Math.max(oy, HEADROOM * H - top * S);                                                                // the crown in frame, with headroom
-    oy = Math.max(oy, H + BLEED - imgH * S);                                                                  // the picture's bottom past the screen's
-    return { S: S, ox: ox, oy: oy, frac: faceBox[2] * S / W, phone: phone, bottom: oy + imgH * S };
+    var lo = Math.max(HEADROOM * H - top * S,                                                                 // the crown in frame, with headroom
+                      H + BLEED - imgH * S);                                                                  // the picture's bottom past the screen's
+    var oy = opts.eyeV != null ? (opts.eyeT != null ? opts.eyeT : EYE_Y * H) - opts.eyeV * S : FACE_Y * H - cyI * S;   // the eye line is what lines up between people, not the face-box centre (hair and chin differ)
+    oy = Math.max(oy, lo);
+    return { S: S, ox: ox, oy: oy, frac: faceBox[2] * S / W, phone: phone, bottom: oy + imgH * S, eyeMin: lo + (opts.eyeV || 0) * S };
   }
   // a screen point (css px) -> the transition field's coordinates (head frame, face widths, y up), for a touch-seeded transition.
   // lay: the identity's layout, lift: the extra vertical offset the figure is drawn at (the phone sheet). Clamped to the head
@@ -1469,7 +1470,14 @@
   // ===========================================================================
   // the composition leaves room for the conversation panel on the right; collapsing it eases the face to the true centre (SHIFT)
   function panelRight() { return isCompact(W, H) ? 0 : Math.min(372, Math.max(320, 0.24 * W)) + clamp(0.04 * W, 16, 56); }
-  function layoutFor(I) { return layout(W, H, I.faceBox, { right: panelRight(), imgH: I.H }); }
+  function eyeVOf(d) { return (d.landmarks[IRIS[0]][1] + d.landmarks[IRIS[1]][1]) / 2; }
+  // one eye line for everybody: the lowest line every identity can reach (its crown in frame, its bottom edge off screen), never above EYE_Y
+  function eyeTarget() {
+    var t = EYE_Y * H; if (!IDS_JSON) return t;
+    for (var id in IDS_JSON.ids) { var d = IDS_JSON.ids[id], fb = d.faceBox; t = Math.max(t, layout(W, H, [fb.x, fb.y, fb.w, fb.h], { imgH: d.image.h, eyeV: eyeVOf(d) }).eyeMin); }
+    return t;
+  }
+  function layoutFor(I) { return layout(W, H, I.faceBox, { right: panelRight(), imgH: I.H, eyeV: (I.eyes[0].cv + I.eyes[1].cv) / 2 * I.H, eyeT: eyeTarget() }); }
   var pending = null, PRE = null;
   // the buffers a transition needs (the field distances, both uv sets, the particles' uv row) are built during the hold, in the
   // last second before it starts, and the next identity's retarget pre-steps are spread over the hold's last frames: no spike
@@ -2032,7 +2040,7 @@
     clock(t);
     if (PARAM.perf) perf(t, performance.now() - t0);
     var B = window.__being4 = window.__being4 || {};
-    B.face = faceCss.slice(); B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY; B.faceFrac = GFB[2] / W; B.convo = convo;
+    B.face = faceCss.slice(); B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY; B.eyeLine = {}; for (var ik in IDENT) { var il = IDENT[ik].lay, ie = IDENT[ik].eyes; B.eyeLine[ik] = Math.round(il.oy + (ie[0].cv + ie[1].cv) / 2 * IDENT[ik].ID.H * il.S); } B.faceFrac = GFB[2] / W; B.convo = convo;
     B.transition = TR ? { from: TR.from, to: TR.to, t: TR.p, region: TR.region } : null; B.loaded = Object.keys(IDENT); B.next = pending ? pending.to : null;
     B.video = { phase: VS.phase, key: VS.key, mix: +vmix.toFixed(3), time: VS.el ? +VS.el.currentTime.toFixed(3) : null, ended: VS.el ? VS.el.ended : null, hasFrame: VS.hasFrame, endedAt: VS.endedAt || null,
       holdIn: VS.holdStart ? Math.round(VS.holdStart + VS.hold - t) : null, cut: VS.cut, done: VS.done, frozen: VS.frozen ? VS.frozen.key : null, cuts: VS.cuts.slice(), plays: VS.plays, fails: VS.fails, seq: VS.seq.slice(), pool: Object.keys(VPOOL), elements: vidsEl.childElementCount };
