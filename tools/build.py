@@ -73,6 +73,8 @@ def jsonld(c, page_id, canonical, full_title, description):
            "areaServed": {"@type": "Country", "name": "New Zealand"},
            "location": {"@type": "Place", "address": {"@type": "PostalAddress", "addressLocality": "Auckland", "addressCountry": "NZ"}},
            "knowsAbout": [i["name"] for i in c["services"]["items"] if not i.get("soon")]}
+    if s.get("sameAs"):
+        org["sameAs"] = s["sameAs"]
     if page_id == "home":
         graph = [org, {"@type": "WebSite", "@id": s["url"] + "/#site", "url": s["url"] + "/", "name": s["name"],
                        "inLanguage": c["htmlLang"], "publisher": {"@id": s["url"] + "/#org"}}]
