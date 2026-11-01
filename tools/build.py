@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102g"  # bump to bust caches of css/js
+VERSION = "20261102h"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -92,6 +92,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>{esc(full_title)}</title>
 <meta name="description" content="{esc(description)}">
+<meta name="google-site-verification" content="HdM9d1ZrdcDQDWXiHn4fNgn0pB8N0wssrnslsydQ_Ps">
 <link rel="canonical" href="{esc(canonical)}">
 {alt_links}
 <meta property="og:type" content="website">
