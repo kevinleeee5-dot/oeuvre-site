@@ -243,13 +243,14 @@
       const pts = w.pts, n = pts.length / 2;
       for (let i = 0; i < N; i++) {
         if (!n) { TX[i] = R() * W; TY[i] = R() * H; continue; }
-        const j = (R() * n | 0) * 2;
+        const j = (R() * n | 0) * 2; HI[i] = j;
         TX[i] = p.x + pts[j] * p.fs + (R() - 0.5) * 1.6; TY[i] = p.y + pts[j + 1] * p.fs + (R() - 0.5) * 1.6;
       }
     }
+    const HI = new Int32Array(N);                      // each particle's current glyph point (index into w.pts)
 
     /* ---- the cycle: gather → hold → dissolve → drift, then the next word somewhere else ---- */
-    const GATHER = 1500, HOLD = 3500, DISSOLVE = 1400, DRIFT = 600, HOLD_END = GATHER + HOLD, CYCLE = HOLD_END + DISSOLVE + DRIFT;
+    const GATHER = 2200, HOLD = 3600, DISSOLVE = 1600, DRIFT = 500, HOLD_END = GATHER + HOLD, CYCLE = HOLD_END + DISSOLVE + DRIFT;
     const RHOLD = 4800, XFADE = 700;                  // reduced motion: hold, then a 700 ms crossfade
     let cur = 0, tw = 0, xf = 1, paused = 0, focused = -1, sharp = 0;
     let mctx = fit(menuC);
@@ -305,8 +306,21 @@
     }
     function step(c) {
       const ts = performance.now() * 0.001;
-      const nf = (0.26 - 0.2 * c) * (1 - 0.6 * sharp * c), k = 0.003 + 0.05 * c;
+      // a soft pull (no spring snap) against a flow that never stops, so a legible word is still streaming
+      const nf = (0.28 - 0.19 * c) * (1 - 0.35 * sharp * c), k = 0.002 + 0.034 * c, damp = 0.9 - 0.22 * c;   // damping rises with the pull: it settles, never bounces
       const stir = ptr.has, px = ptr.x, py = ptr.y;
+      // while a word is up, a trickle of particles keeps leaving for another part of the letters
+      const w = words[cur], pts = w && w.pts, n = pts ? pts.length / 2 : 0;
+      if (n && pl && c > 0.25) {
+        // the glyph points run row by row, so a step of a few indices is a short hop along a stroke: the ink keeps
+        // creeping through the letters (a particle that would jump a gap between letters stays where it is)
+        const m = Math.ceil(N * 0.08 * c), lim = 0.05;
+        for (let q = 0; q < m; q++) {
+          const i = R() * N | 0, j0 = HI[i], j = j0 + ((R() < 0.5 ? -1 : 1) * (1 + (R() * 3 | 0))) * 2;
+          if (j < 0 || j >= pts.length || Math.abs(pts[j] - pts[j0]) + Math.abs(pts[j + 1] - pts[j0 + 1]) > lim) continue;
+          HI[i] = j; TX[i] = pl.x + pts[j] * pl.fs + (R() - 0.5) * 1.6; TY[i] = pl.y + pts[j + 1] * pl.fs + (R() - 0.5) * 1.6;
+        }
+      }
       for (let i = 0; i < N; i++) {
         const x = X[i], y = Y[i];
         const a = Math.sin(x * 0.0021 + ts * 0.23 + S[i] * 0.3) * 2.4 + Math.cos(y * 0.0027 - ts * 0.17) * 2.4;
@@ -315,7 +329,7 @@
           const dx = x - px, dy = y - py, d2 = dx * dx + dy * dy;
           if (d2 < 14400) { const f = (1 - d2 / 14400) * 0.35 / (Math.sqrt(d2) + 1); vx += (dx * 0.3 - dy * 0.9) * f; vy += (dy * 0.3 + dx * 0.9) * f; }
         }
-        vx *= 0.9; vy *= 0.9; VX[i] = vx; VY[i] = vy; X[i] = x + vx; Y[i] = y + vy;
+        vx *= damp; vy *= damp; VX[i] = vx; VY[i] = vy; X[i] = x + vx; Y[i] = y + vy;
       }
     }
     function streaks(c) {

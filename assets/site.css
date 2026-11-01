@@ -78,7 +78,7 @@ html.busy, html.busy * { cursor: progress !important; }
    screen readers and the keyboard, visually hidden; #wordHit is the click target over the current word */
 .js .p-home:not(.list) .words .word { width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
                                       visibility: visible; transform: none !important; opacity: 0; transition: none; }
-#menu { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; mix-blend-mode: difference; }
+#menu { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; mix-blend-mode: screen; }
 /* an invisible click target: nothing drawn here, ever (the word's hover state lives on the canvas, the
    keyboard focus ring is drawn round the word by the script, and the hit link is out of the tab order) */
 .word-hit { position: absolute; left: 0; top: 0; z-index: 6; display: block; width: 0; height: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
