@@ -825,22 +825,19 @@
         const off = document.createElement("canvas"); off.width = w; off.height = h; const o = off.getContext("2d");
         const fam = getComputedStyle(document.body).fontFamily, pad = Math.max(20, Math.min(w * 0.06, 40));
         o.font = `600 100px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = "-4px";
-        const f1 = Math.min(200, 100 * (w - 2 * pad) / o.measureText("Oeuvre").width), f2 = Math.max(26, f1 * 0.33), lh = f2 * 1.12;
+        const f1 = Math.min(100, 50 * (w - 2 * pad) / o.measureText("Oeuvre").width * 2 * 0.5);   // half the width of a full-measure title
         o.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.04 * f1) + "px";
-        const mN = o.measureText("Oeuvre"), cap = mN.actualBoundingBoxAscent || f1 * 0.72, gap = f1 * 0.24;
-        const blockH = cap + gap + lh * 2, top = Math.round(h * 0.46 - blockH / 2), y1 = top + cap;
-        o.fillStyle = "#fff"; o.textBaseline = "alphabetic"; o.fillText("Oeuvre", pad - (mN.actualBoundingBoxLeft ? -mN.actualBoundingBoxLeft : 0), y1);
-        o.font = `500 ${f2}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.025 * f2) + "px";
-        o.fillText("Creative thinking.", pad, y1 + gap + lh * 0.82); o.fillText("Digital making.", pad, y1 + gap + lh * 1.82);
+        const mN = o.measureText("Oeuvre"), cap = mN.actualBoundingBoxAscent || f1 * 0.72;
+        o.fillStyle = "#fff"; o.textBaseline = "alphabetic"; o.fillText("Oeuvre", Math.round((w - mN.width) / 2), Math.round(h * 0.5 + cap / 2));
         const img = o.getImageData(0, 0, w, h).data, pts = [];
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (img[(y * w + x) * 4 + 3] > 128) pts.push(x, y);
         const n = pts.length / 2; if (!n) { formed = true; check(); return; }
         // the menu's own system: a flow field that never stops, a soft pull to the glyphs, ink creeping along the strokes,
         // short streaks drawn from each particle's velocity (every ninth a bright grain) over a fading trail
         // the line is small: it gets denser ink and a calmer stream than the name, so its strokes hold together
-        const ySplit = y1 + gap * 0.5, nameIdx = [], lineIdx = [];
-        for (let j = 0; j < pts.length; j += 2) (pts[j + 1] < ySplit ? nameIdx : lineIdx).push(j);
-        const nName = Math.min(7000, Math.round(nameIdx.length * 0.45)), nLine = Math.min(7000, Math.round(lineIdx.length * 1.1)), N = Math.max(1, nName + nLine);
+        const nameIdx = [], lineIdx = [];
+        for (let j = 0; j < pts.length; j += 2) nameIdx.push(j);
+        const nName = Math.min(6000, Math.round(nameIdx.length * 1.0)), nLine = 0, N = Math.max(1, nName);
         const X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N),
           TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N), SD = new Float32Array(N), FL = new Float32Array(N), BORN = new Float32Array(N);
         // a few at first, then more and more: each particle enters at its own moment (later ones far more common) and gathers on its own clock

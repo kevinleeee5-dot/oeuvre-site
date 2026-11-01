@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102d"  # bump to bust caches of css/js
+VERSION = "20261102f"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -102,6 +102,11 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <meta property="og:image" content="{esc(s['url'])}/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Oeuvre">
+<link rel="manifest" href="/assets/site.webmanifest">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,7 +170,7 @@ def home(c, P):
         for i, m in enumerate(c["menu"]))
     nm = "".join(f'<span style="animation-delay:{0.12 * i:.2f}s">{esc(ch)}</span>' for i, ch in enumerate(s["name"]))
     ln = "".join(f"<span>{esc(t.strip().rstrip('.'))}.</span>" for t in s["statement"].split(". ") if t.strip().strip("."))
-    body = f"""<div id="intro" aria-hidden="true"><canvas id="introC"></canvas><div class="i-name">{esc(s["name"])}</div><div class="i-line">{ln}</div></div>
+    body = f"""<div id="intro" aria-hidden="true"><canvas id="introC"></canvas><div class="i-name">{esc(s["name"])}</div></div>
 <main id="main" class="home">
   <h1 class="sr-only">{esc(s['name'])} — {esc(s['statement'])}</h1>
   <div class="being">
