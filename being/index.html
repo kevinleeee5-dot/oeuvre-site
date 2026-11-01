@@ -23,7 +23,7 @@
   #gate { position:fixed; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; font:14px/1.7 ui-monospace,"SF Mono",Menlo,monospace; transition:opacity .8s; z-index:2; }
   #gate.off { opacity:0; }
   #gate p { margin:0; color:var(--dim); max-width:40ch; }
-  /* talk: the conversation UI arrives in the next step; for now the camera control and a placeholder, bottom centre */
+  /* talk: what it says, what it heard, the mic and the input, bottom centre (embedded: a compact pill under the chin) */
   #talk { position:fixed; left:50%; transform:translateX(-50%); bottom:max(20px,env(safe-area-inset-bottom)); width:min(600px,calc(100% - 32px));
     display:grid; gap:10px; justify-items:center; text-align:center; font:12px/1.6 ui-monospace,"SF Mono",Menlo,monospace; color:var(--dim); z-index:2; transition:opacity .6s; }
   body.loading #talk { opacity:0; pointer-events:none; }
@@ -52,40 +52,41 @@
   .pill:disabled { color:var(--dim); cursor:default; border-color:var(--line); }
   .pill:focus-visible { outline:1px solid var(--fg); outline-offset:2px; }
   .dot { width:7px; height:7px; border-radius:50%; border:1px solid currentColor; flex:none; }
-  body.live #go .dot { background:var(--fg); }
-  #fine { margin:0; max-width:72ch; font-size:10px; line-height:1.55; color:#8a8a84; letter-spacing:.02em; }
-  /* standalone: the fine print and the heard line sit on a soft black ground so they read over the chest of the lighter identities */
-  body:not(.embed) #fine, body:not(.embed) #heard:not(:empty) { background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); padding:6px 12px; border-radius:8px; }
-  body.nocam #go { display:none; }
+  /* standalone: the heard line sits on a soft black ground so it reads over the chest of the lighter identities */
+  body:not(.embed) #heard:not(:empty) { background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); padding:6px 12px; border-radius:8px; }
+  #open { display:none; }
+  #vids { position:fixed; left:0; top:0; width:2px; height:2px; overflow:hidden; opacity:0; pointer-events:none; z-index:-1; }
+  #vids video { width:2px; height:2px; }
   body.noui .hud, body.noui #talk, body.noui #gate, body.noui #perf { display:none; }
   body.nohud .hud { display:none; }
   @media (max-width: 1180px) { #talk { bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px)); } }   /* above the bottom-left HUD */
-  @media (max-width: 640px) { .tr, .br, #fine { display:none; } .pill { padding:10px 12px; letter-spacing:.08em; } #talk { bottom:max(64px,calc(env(safe-area-inset-bottom) + 48px)); }
-    .row { flex-wrap:wrap; justify-content:center; } #say { order:-1; flex:1 0 100%; } #mic, #go { flex:1 1 0; justify-content:center; } }
+  @media (max-width: 640px) { .tr, .br { display:none; } .pill { padding:10px 12px; letter-spacing:.08em; } #talk { bottom:max(64px,calc(env(safe-area-inset-bottom) + 48px)); } }
   /* embedded in the site's home page (same-origin iframe): the site draws the words, corners and footer. Here: pure black,
      no HUD, the bottom fading to black, and only a compact talk control just under the face box (placed by placeTalk). */
   body.embed .hud, body.embed #gate { display:none; }
   body.embed::after { content:""; position:fixed; left:0; right:0; bottom:0; height:100px; z-index:1; pointer-events:none; background:linear-gradient(to bottom, rgba(0,0,0,0), #000); }
   body.embed #talk { bottom:auto; top:-999px; gap:6px; transition:opacity .6s, top .35s ease-out; }
-  body.embed #talk .row { order:0; } body.embed #fine { order:1; } body.embed #notice { order:2; } body.embed #heard { order:3; } body.embed #said { order:4; max-height:6.7em; overflow-y:auto; }
+  body.embed #talk .row, body.embed #open { order:0; } body.embed #notice { order:2; } body.embed #heard { order:3; } body.embed #said { order:4; max-height:6.7em; overflow-y:auto; }
+  /* embedded: only a compact 'talk' pill under the chin until it is clicked; then the input and the mic */
+  body.embed:not(.talkopen) #open { display:inline-flex; } body.embed:not(.talkopen) #talk .row { display:none; }
+  body.embed #talk .row { width:min(360px,100%); }
   body.embed #said:empty, body.embed #heard:empty { display:none; } body.embed #notice:not(.on) { min-height:0; height:0; }
   body.embed .pill { padding:8px 12px; letter-spacing:.08em; }
   body.embed #say { padding:8px 14px; }
-  #fine .fs { display:none; }
-  body.embed #fine { display:block; font-size:9px; line-height:1.45; max-width:62ch; color:#6d6d68; }
-  body.embed #fine .fl { display:none; } body.embed #fine .fs { display:inline; }
-  /* a soft, light pool of black behind the controls so the fine print reads over the neck (the pills carry their own ground) */
+  /* a soft, light pool of black behind the controls so the reply reads over the neck */
   body.embed #talk::before { content:""; position:absolute; inset:-18px -40px -22px; z-index:-1; pointer-events:none;
     background:radial-gradient(closest-side, rgba(0,0,0,.5) 40%, rgba(0,0,0,.22) 72%, rgba(0,0,0,0)); }
-  body.embed.narrow .row { flex-wrap:wrap; justify-content:center; } body.embed.narrow #say { order:-1; flex:1 0 100%; } body.embed.narrow #mic, body.embed.narrow #go { flex:1 1 0; justify-content:center; }
+  body.embed #talk::before { opacity:0; transition:opacity .5s; }   /* only once there is something to read: the closed pill carries its own ground */
+  body.embed.talkopen #talk::before, body.embed.listening #talk::before, body.embed.thinking #talk::before, body.embed.speaking #talk::before { opacity:1; }
+  body.embed.narrow #talk .row { width:min(320px,100%); }
 </style>
 </head>
 <body class="loading">
   <canvas id="c"></canvas>
   <div class="hud tl"><b>Oeuvre</b><br><span id="state">waking</span> &middot; <span id="clock"></span> Auckland</div>
-  <div class="hud tr">it looks back.<br>move the cursor, it follows</div>
+  <div class="hud tr">it is never one person for long.<br>talk to it, it answers</div>
   <div class="hud bl">BNB Management Consulting Ltd t/a Oeuvre<br>info@bnbmanagement.co.nz</div>
-  <div class="hud br">it borrows your expressions.<br>the rest it makes up.</div>
+  <div class="hud br">every face here is made up.<br>none of them is anyone.</div>
   <div id="perf"></div>
   <div id="gate"><p id="gatetext">it is finding a face…</p></div>
 
@@ -93,32 +94,29 @@
     <div id="said" aria-live="polite"></div>
     <div id="heard"></div>
     <div id="notice" role="status"></div>
+    <button id="open" class="pill" type="button" aria-expanded="false" aria-controls="say"><span class="dot"></span>talk</button>
     <div class="row">
-      <button id="mic" class="pill" type="button" title="tap, or hold the space bar, to talk"><span class="dot"></span><span id="miclabel">talk</span></button>
+      <button id="mic" class="pill" type="button" title="tap, or hold the space bar, to talk"><span class="dot"></span><span id="miclabel">speak</span></button>
       <input id="say" type="text" maxlength="500" autocomplete="off" spellcheck="false" enterkeyhint="send" placeholder="or type to it, then enter" aria-label="type to it">
-      <button id="go" class="pill" type="button"><span class="dot"></span><span id="golabel">let it see you</span></button>
     </div>
-    <p id="fine"><span class="fl">if you let it see you, it uses only the movement of your face: no picture is drawn, kept or sent.
-      what you say or type is sent to oeuvre so it can answer; in some browsers (e.g. chrome) speech is turned into text by the browser's maker.</span><span class="fs">face movement only, no picture kept · what you say goes to oeuvre · some browsers transcribe speech</span></p>
   </section>
+  <div id="vids" aria-hidden="true"></div>
 
 <script type="module">
   var cv = document.getElementById("c");
   var stateEl = document.getElementById("state"), clockEl = document.getElementById("clock"), perfEl = document.getElementById("perf");
   var gate = document.getElementById("gate"), gateText = document.getElementById("gatetext");
-  var goBtn = document.getElementById("go"), goLabel = document.getElementById("golabel"), noticeEl = document.getElementById("notice");
+  var noticeEl = document.getElementById("notice"), openBtn = document.getElementById("open"), vidsEl = document.getElementById("vids");
   var micBtn = document.getElementById("mic"), micLabel = document.getElementById("miclabel"), sayEl = document.getElementById("say"), saidEl = document.getElementById("said"), heardEl = document.getElementById("heard");
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches, REDUCE_MQ = reduce;
   var LOC = typeof location !== "undefined" && location ? location : { search: "", origin: "null" };
-  var MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-  var MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
   var EMBED = (function () {
     try { var p = window.parent; if (!p || p === window) return false; return !!LOC.origin && LOC.origin !== "null" && p.location.origin === LOC.origin; }
     catch (e) { return false; }
   })();
 
   // ===========================================================================
-  // Pure part (no DOM). tools/test_being3.mjs extracts and tests this block.
+  // Pure part (no DOM). tools/test_being4.mjs (and the shared parts in test_being3.mjs's style) extract and test this block.
   // Spaces: image px (x right, y down, z = MediaPipe z·width, negative towards the viewer) for the identity;
   // "world" (x right, y up, z towards the viewer) for every bit of geometry; driver landmarks are in world
   // orientation, centred, with the face width ≈ 1 (the camera read is mirrored, like a mirror).
@@ -128,7 +126,7 @@
   // expression limits (face widths): any landmark's delta, the brows' lift, the inner lips' gap; the lower face drops no more than
   // 1.15x the lower lip (the chin never elongates). Camera-driven extremes are softened by EXPR_GAIN_CAM; its own face keeps gain 1.
   var DELTA_MAX = 0.09, BROW_MAX = 0.05, MOUTH_MAX = 0.065, CHIN_OVER = 1.15, EXPR_GAIN_CAM = 0.7;
-  var IDS = ["a", "b", "c", "d", "e"];
+  var IDS = ["e", "f", "g", "h", "i"];
   function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
   function smooth(x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); }
   // a soft cap: identity below 0.6·m, then eased into m (never reached, never a kink). softLimit is the signed version.
@@ -138,13 +136,16 @@
     a = a >>> 0;
     return function () { a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }
-  // ?id=a|b|c|d|e  ?autostart=1  ?cam=0  ?seed=N  ?yaw=DEG&pitch=DEG (held)  ?ui=0  ?expr=smile|blink|open  ?perf=1  ?speak=1
+  // ?id=e|f|g|h|i  ?seed=N  ?ui=0  ?perf=1  ?speak=1  ?hold=SECONDS (debug: shorter holds)  ?video=0 (stills only)
+  // (being4 has no camera: the videos carry the life; ?yaw/?pitch/?expr are parsed for the shared tests only)
   function parseParams(search) {
     var q = new URLSearchParams(search || "");
-    var o = { id: "a", autostart: false, cam: true, seed: null, yaw: null, pitch: null, ui: true, expr: null, perf: false, speak: false };
+    var o = { id: IDS[0], autostart: false, cam: false, seed: null, yaw: null, pitch: null, ui: true, expr: null, perf: false, speak: false, hold: null, video: true };
     function num(k) { var v = q.get(k); if (v === null || v.trim() === "") return null; v = Number(v); return Number.isFinite(v) ? v : null; }
-    var id = (q.get("id") || "a").toLowerCase(); o.id = IDS.indexOf(id) >= 0 ? id : "a";
-    o.cam = q.get("cam") !== "0"; o.autostart = o.cam && q.get("autostart") === "1";
+    var id = (q.get("id") || IDS[0]).toLowerCase(); o.id = IDS.indexOf(id) >= 0 ? id : IDS[0];
+    var hs = num("hold"); o.hold = hs === null ? null : clamp(hs, 2, 120) * 1000; o.video = q.get("video") !== "0";
+    // registration checks: ?clip=e2&vt=0 shows that clip paused at vt seconds (the hold never ends)
+    var cl = (q.get("clip") || "").toLowerCase(); o.clip = /^[a-z][12]$/.test(cl) && IDS.indexOf(cl[0]) >= 0 ? cl : null; o.vt = o.clip ? num("vt") : null;
     var s = num("seed"); o.seed = s === null ? null : Math.floor(Math.abs(s)) % 4294967296;
     var y = num("yaw"), p = num("pitch");
     if (y !== null || p !== null) { o.yaw = (y === null ? 0 : clamp(y, -45, 45)) * DEG; o.pitch = (p === null ? 0 : clamp(p, -30, 30)) * DEG; }
@@ -317,6 +318,12 @@
     // index buffers: the shared mesh, the two eye fans (centre = iris landmark), the mouth cavity fan
     var tris = Uint16Array.from(mesh.tris), eyeTris = [], j;
     for (k = 0; k < 2; k++) { var loop = EYE_LOOP[k]; for (j = 0; j < loop.length; j++) eyeTris.push(IRIS[k], loop[j], loop[(j + 1) % loop.length]); }
+    // being4: the face never moves, so the eye fans and the mouth are plain picture. The fan centre (the iris landmark) is put
+    // between the lids by the retarget: its uv goes there too (the picture stays affine, nothing in the eye shifts); the inner
+    // lips' gap (a hole in the mesh, the mouth cavity's place in being3) is closed by a strip, so a clip that moves the mouth
+    // never shows a dark line where the still's mouth was
+    for (k = 0; k < 2; k++) { var ic = IRIS[k], uu = EYE_UP[k], dd = EYE_DN[k]; uv[ic * 2] = (uv[uu * 2] + uv[dd * 2]) / 2; uv[ic * 2 + 1] = (uv[uu * 2 + 1] + uv[dd * 2 + 1]) / 2; }
+    for (j = 0; j + 1 < INNER_UP.length; j++) eyeTris.push(INNER_UP[j], INNER_LO[j], INNER_UP[j + 1], INNER_LO[j], INNER_LO[j + 1], INNER_UP[j + 1]);
     var fb = idData.faceBox;
     return { n: n, img: img, uv: uv, W: W, H: H, T: T, L: L, fw: fw, fh: fh, mirror: mirror, ring: ring, ringOval: ringOval, follow: follow, followX: followX,
       ringK: ringK, ringW: ringW, ringRest: ringRest, ringPar: ringPar, zr: zr, par: par,
@@ -603,14 +610,20 @@
   // The face box is FACE_FRAC of the width (desktop 24 %, phone 45 %); the whole head, hair included (taken as half a face
   // height above the face box, never above the picture), stays in frame with HEADROOM of the height above it, and the head
   // plus the talk control under the chin fit the height: on a short wide screen the scale gives way, never the framing.
-  var FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.45, HEADROOM = 0.05;
+  // being4's portraits are landscape busts: the shoulders (taken as SHOULDER x the face height under the chin) stay above
+  // SHOULDER_MAX of the height, so the full width of the shoulders shows before the bottom fades; the scale gives way first, then
+  // the centring (never the headroom)
+  var FACE_FRAC = 0.24, FACE_FRAC_PHONE = 0.45, HEADROOM = 0.05, SHOULDER = 0.45, SHOULDER_MAX = 0.86;
   function headTop(faceBox) { return Math.max(0, faceBox[1] - 0.5 * faceBox[3]); }
+  function shoulderY(faceBox) { return faceBox[1] + faceBox[3] * (1 + SHOULDER); }
   function layout(W, H, faceBox, ID) {
     var phone = W <= 640, frac = phone ? FACE_FRAC_PHONE : FACE_FRAC;
-    var S = frac * W / faceBox[2], top = headTop(faceBox);
+    var S = frac * W / faceBox[2], top = headTop(faceBox), shY = shoulderY(faceBox);
     var maxS = (phone ? 0.82 : 0.78) * H / ((faceBox[1] + faceBox[3] * 1.12) - top); if (S > maxS) S = maxS;   // head + room for the talk control
+    var maxS2 = (SHOULDER_MAX - HEADROOM) * H / (shY - top); if (!phone && S > maxS2) S = maxS2;               // crown to shoulders
     var cxI = faceBox[0] + faceBox[2] / 2, cyI = faceBox[1] + faceBox[3] / 2;
     var ox = W / 2 - cxI * S, oy = (phone ? 0.38 : 0.42) * H - cyI * S;
+    if (!phone) { var oySh = SHOULDER_MAX * H - shY * S; if (oy > oySh) oy = oySh; }  // the shoulders above the fade
     var oyTop = HEADROOM * H - top * S; if (oy < oyTop) oy = oyTop;              // the crown never runs off the top
     return { S: S, ox: ox, oy: oy, frac: faceBox[2] * S / W };
   }
@@ -639,7 +652,7 @@
   // collar and chest to RMAX by FRONT_END; the last grains land before 1. The rings' field scale (RING_FIELD, and less again
   // under the chin) brings the hair, collar and chest along with the face they frame instead of leaving "a new face in the
   // old wig" and dust on the chest. A transition takes 4.5-6 s.
-  var FRONT_END = 0.82, FRONT_T1 = 0.6, FRONT_POW = 1.55, FRONT_POW2 = 1.0, FACE_SHARE = 0.6, HOLD_MIN = 8000, HOLD_MAX = 14000, DUR_MIN = 4500, DUR_MAX = 6000, FIELD_AMP = 0.32, FIELD_BAND = 0.3, GEO_BAND = 0.3, GEO_STEEP = 1.0;
+  var FRONT_END = 0.82, FRONT_T1 = 0.6, FRONT_POW = 1.55, FRONT_POW2 = 1.0, FACE_SHARE = 0.6, HOLD_MIN = 20000, HOLD_MAX = 30000, DUR_MIN = 4500, DUR_MAX = 6000, FIELD_AMP = 0.32, FIELD_BAND = 0.3, GEO_BAND = 0.3, GEO_STEEP = 1.0;
   // the texture's band (~0.3 face widths, up to 1.3x wider over a hard contrast, 0.75x on the rings) is an erosion, not a
   // dither: a fine grain pattern fixed to the surface sets the order in which it thins into 1-4 px holes, and the new identity
   // shows through the holes only. The geometry's weight is the share of the band's texels gone (GEO_STEEP 1: it never leads the
@@ -654,7 +667,7 @@
     function plan(from, to) {
       var name = opts.region || REGION_NAMES[Math.floor(rng() * REGION_NAMES.length)], r = REGIONS[name], side = rng() < 0.5 ? -1 : 1;
       return { from: from, to: to, region: name, seed: [r[0] * side + (rng() - 0.5) * 0.1, r[1] + (rng() - 0.5) * 0.1], noff: [rng() * 97, rng() * 97],
-        hold: HOLD_MIN + rng() * (HOLD_MAX - HOLD_MIN), dur: DUR_MIN + rng() * (DUR_MAX - DUR_MIN) };
+        hold: opts.hold || HOLD_MIN + rng() * (HOLD_MAX - HOLD_MIN), dur: DUR_MIN + rng() * (DUR_MAX - DUR_MIN) };
     }
     function next() {
       if (pos >= lap.length) {
@@ -798,6 +811,37 @@
     for (var i = 0; list && i < list.length; i++) { var s = voiceScore(list[i]); if (s > bs) { bs = s; best = list[i]; } }
     return bs > 0 ? best : null;
   }
+  // --- the clips (being4). Two per identity, each starting and ending on its photo: 1 calm (breath, blink, glance), 2 expressive
+  // (a small turn and a faint smile). A hold opens on the calm clip; after that the clips come in shuffled blocks of
+  // calm, calm, expressive, never expressive twice in a row (across blocks too). Talking (or reduced motion) asks for the calm clip
+  // only, which loops while it speaks; the block is left where it was.
+  var CLIP_MS = 6000;
+  function makeClipOrder(rng) {
+    var queue = [], last = 0, opened = false;
+    function refill() {
+      var b = shuffle([1, 1, 2], rng);
+      if ((!opened || last === 2) && b[0] === 2) { b[0] = b[1]; b[1] = 2; }               // b[1] is a 1 (one 2 per block)
+      opened = true; queue = b;
+    }
+    return {
+      startHold: function () { queue = []; last = 0; opened = false; },
+      next: function (calmOnly) { if (calmOnly) { last = 1; return 1; } if (!queue.length) refill(); last = queue.shift(); return last; },
+      get last() { return last; }
+    };
+  }
+  // the hold ends at the end of a clip once it has run (nearly) its length: a clip that would end past the hold by more than
+  // half a clip is not started
+  function holdOver(elapsed, hold, clipMs) { return elapsed + 0.5 * (clipMs || CLIP_MS) >= hold; }
+  // the clips to have loaded: the current identity's two and the next identity's first (a hold always opens on clip 1)
+  function preloadSet(cur, next) { var s = [cur + "1", cur + "2"]; if (next && next !== cur) s.push(next + "1"); return s; }
+  // where the video frame sits in the photo's uv (rect: photo px from tools/vid_register.py)
+  function vidUvRect(rect, W, H) { return [rect[0] / W, rect[1] / H, rect[2] / W, rect[3] / H]; }
+  // the crossfade between the still and a clip's first / last frame: short where they agree, longer where they do not (i's hair)
+  function fadeMs(gray) { return gray > 10 ? 900 : gray > 6 ? 550 : 350; }
+  // the erosion grain is set in cells per face width (being3's 1536 px portraits: 280 cells across, ~131.6 per face width),
+  // so the transition looks the same on the landscape 2400 px portraits with a smaller face share
+  var ERODE_CELLS = 131.6;
+  function erodeScale(I) { var cx = ERODE_CELLS * I.W / I.fw; return [cx, cx * I.H / I.W]; }
   // embedded: the talk control's top (css px) just under the face box, never over it, clamped on screen
   function talkTop(faceY, faceH, H, talkH, pad) {
     pad = pad || 12; var want = faceY + faceH + 0.1 * faceH, max = H - talkH - pad;
@@ -826,15 +870,15 @@
     "  float a = hashI(i), b = hashI(i + ivec2(1, 0)), c = hashI(i + ivec2(0, 1)), d = hashI(i + ivec2(1, 1));\n" +
     "  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); }\n" +
     "float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int k = 0; k < 4; k++) { v += a * vnoise(p); p = p * 2.07 + 19.3; a *= 0.5; } return v; }\n" +
-    "uniform vec2 uSeed; uniform vec2 uNoff; uniform float uAmp;\n" +
+    "uniform vec2 uSeed; uniform vec2 uNoff; uniform float uAmp; uniform vec2 uErode;\n" +
     "float field(vec2 p, vec2 so){ vec2 d = (p - uSeed) * vec2(1.0, 1.15); return length(d) * so.x + uAmp * (fbm(p * 2.6 + uNoff) - 0.5) * 2.0 + 0.06 * uAmp * (vnoise(p * 14.0 + uNoff) - 0.5) + so.y; }\n" +   // so: (scale, offset) of the vertex
     // the erosion pattern, fixed to the surface through the old picture's uv (1536 x 2048 px; a desktop face is ~345 css px, so a
     // css px is ~2.2 picture px): a two-octave grain at ~2.5 css px over a soft fbm of ~10 px clusters, never the 25 px blotches
     // that read as flaking paint. The order, 0..1, in which the pixels of the old surface go as the front's band passes over
     // them; the smoothstep is the sum's own distribution (mean ~0.49, sd ~0.08), so the order is spread evenly over the band:
     // holes open from its leading edge on, not all at once in the middle
-    "float erode(vec2 uv){ vec2 q = uv * vec2(280.0, 373.0) + uNoff * 1.7; float fine = 0.65 * vnoise(q) + 0.35 * vnoise(q * 2.07 + 19.3);\n" +
-    "  float coarse = fbm(uv * vec2(70.0, 93.0) - uNoff * 0.9); return smoothstep(0.30, 0.64, 0.5 * fine + 0.5 * coarse); }\n" +
+    "float erode(vec2 uv){ vec2 q = uv * uErode + uNoff * 1.7; float fine = 0.65 * vnoise(q) + 0.35 * vnoise(q * 2.07 + 19.3);\n" +
+    "  float coarse = fbm(uv * uErode * 0.25 - uNoff * 0.9); return smoothstep(0.30, 0.64, 0.5 * fine + 0.5 * coarse); }\n" +
     // the feature clusters (the old picture's uv): an ellipse round each eye and the mouth; inside one every texel takes the
     // cluster's field (uFeatF: the field at its centre landmark) and the one threshold uFeatN, and goes in one beat uFeatSoft wide
     "uniform vec4 uFeatL; uniform vec4 uFeatR; uniform vec4 uFeatM; uniform vec4 uFeatNs; uniform vec4 uFeatF; uniform float uFeatN; uniform float uFeatSoft;\n" +
@@ -843,7 +887,7 @@
     "  return vec2(clamp(s, 0.0, 1.0), (mL * uFeatF.x + mR * uFeatF.y + mM * uFeatF.z + mN * uFeatF.w) / max(1e-4, s)); }\n" +
     // the picture's own edges: the sides fade wider the lower down (the width grows with the square of the depth: a curve opening
     // downwards, no corner), the bottom over its last fifth; the face and the grains alike (no dust off the picture's edge)
-    "float edges(vec2 uv){ float t = smoothstep(0.3, 1.0, uv.y); float sw = mix(0.03, 0.36, t * t); float fv = 1.0 - smoothstep(0.78, 1.0, uv.y);\n" +
+    "float edges(vec2 uv){ float t = smoothstep(0.3, 1.0, uv.y); float sw = mix(0.02, 0.1, t * t); float fv = 1.0 - smoothstep(0.88, 1.0, uv.y);\n" +
     "  return fv * smoothstep(0.0, sw, uv.x) * smoothstep(1.0, 1.0 - sw, uv.x) * smoothstep(0.0, 0.02, uv.y); }\n";
   var VS = "#version 300 es\nprecision highp float;\n" +
     "in vec2 aPos; in vec2 aUv; in vec2 aUvB; in float aShade; in vec2 aFld; in vec2 aFsc; uniform vec2 uView; uniform vec3 uMap;\n" +   // uMap: scale, ox, oy (css px -> device px)
@@ -853,7 +897,7 @@
   var FS = "#version 300 es\nprecision highp float;\n" +
     "in vec2 vUv; in vec2 vUvB; in float vShade; in vec2 vScr; in vec2 vFld; in vec2 vFsc; uniform sampler2D uTex; uniform sampler2D uTexB; uniform vec2 uView; uniform int uEye;\n" +
     "uniform vec4 uIrisL; uniform vec4 uIrisR; uniform vec4 uIrisLB; uniform vec4 uIrisRB; uniform vec2 uGaze; uniform float uFade; uniform float uTop;\n" +
-    "uniform int uTrans; uniform float uR; uniform float uBand; uniform float uSoft; uniform float uDpr; out vec4 o;\n" + NOISE +
+    "uniform int uTrans; uniform float uR; uniform float uBand; uniform float uSoft; uniform float uDpr; uniform sampler2D uVidTex; uniform float uVid; uniform vec4 uVidR; out vec4 o;\n" + NOISE +
     "vec3 eye(sampler2D T, vec2 uv, vec4 ir){ vec2 c = ir.xy, r = ir.zw; vec2 g = uGaze * r * 2.2;\n" +           // the iris slides over the sclera
     "  vec2 dn = (uv - (c + g)) / r; float ln = length(dn); vec2 d0 = (uv - c) / r; float l0 = length(d0);\n" +
     "  vec3 moved = texture(T, uv - g, -0.5).rgb;\n" +
@@ -863,7 +907,9 @@
     "  float lid = texture(T, uv).g / max(0.02, texture(T, uv - g).g); col *= mix(1.0, clamp(lid, 0.55, 1.15), 0.35 * inIris);\n" +
     "  return col; }\n" +
     "vec3 pick(sampler2D T, vec2 uv, vec4 iL, vec4 iR){ if (uEye == 1) return eye(T, uv, uv.x < 0.5 ? iL : iR); return texture(T, uv, -0.5).rgb; }\n" +
-    "void main(){ vec3 col = pick(uTex, vUv, uIrisL, uIrisR); float fe = edges(vUv);\n" +                      // edges(): in NOISE, shared with the grains
+    "void main(){ vec3 col = pick(uTex, vUv, uIrisL, uIrisR); float fe = edges(vUv);\n" +
+    // the clip, in register with the still (uVidR: the video frame's rect in the photo's uv), crossfaded by uVid
+    "  if (uVid > 0.0) { vec2 vu = (vUv - uVidR.xy) / uVidR.zw; if (vu.x >= 0.0 && vu.y >= 0.0 && vu.x <= 1.0 && vu.y <= 1.0) col = mix(col, texture(uVidTex, vu).rgb, uVid); }\n" +                      // edges(): in NOISE, shared with the grains
     "  if (uTrans == 1) {\n" +
     // k < 0: still the old face; k > 1: the new one; between (a band uBand wide, up to 1.3x wider where the two pictures differ)
     // the old surface is eroded: a pixel goes when k passes its place n in the erosion pattern, over a soft edge uSoft wide, so
@@ -991,9 +1037,9 @@
   var PRG = program(VS, FS), PRC = program(VS, FS_CAV), PRP = program(VS_P, FS_P);
   var U = {}, UC = {}, UP = {};
   var FEAT_U = ["uFeatL", "uFeatR", "uFeatM", "uFeatNs", "uFeatF", "uFeatN", "uFeatSoft"];
-  ["uView", "uMap", "uTex", "uTexB", "uEye", "uIrisL", "uIrisR", "uIrisLB", "uIrisRB", "uGaze", "uFade", "uTop", "uTrans", "uR", "uBand", "uSoft", "uDpr", "uSeed", "uNoff", "uAmp"].concat(FEAT_U).forEach(function (k) { U[k] = gl.getUniformLocation(PRG, k); });
+  ["uView", "uMap", "uTex", "uTexB", "uEye", "uIrisL", "uIrisR", "uIrisLB", "uIrisRB", "uGaze", "uFade", "uTop", "uTrans", "uR", "uBand", "uSoft", "uDpr", "uSeed", "uNoff", "uAmp", "uErode", "uVidTex", "uVid", "uVidR"].concat(FEAT_U).forEach(function (k) { U[k] = gl.getUniformLocation(PRG, k); });
   ["uView", "uMap", "uOpen"].forEach(function (k) { UC[k] = gl.getUniformLocation(PRC, k); });
-  ["uMesh", "uTex", "uTexB", "uView", "uDpr", "uT", "uFrontEnd", "uT1", "uPow1", "uPow2", "uRmax", "uRface", "uRmin", "uBand", "uFw", "uMot", "uFade", "uTop", "uSeed", "uNoff", "uAmp"].concat(FEAT_U).forEach(function (k) { UP[k] = gl.getUniformLocation(PRP, k); });
+  ["uMesh", "uTex", "uTexB", "uView", "uDpr", "uT", "uFrontEnd", "uT1", "uPow1", "uPow2", "uRmax", "uRface", "uRmin", "uBand", "uFw", "uMot", "uFade", "uTop", "uSeed", "uNoff", "uAmp", "uErode"].concat(FEAT_U).forEach(function (k) { UP[k] = gl.getUniformLocation(PRP, k); });
   // the feature clusters of the identity leaving (its uv ellipses, the field at their centres) for a transition's shaders
   function featUniforms(Ux) {
     var ft = ID.feat;
@@ -1058,13 +1104,13 @@
   }
   async function loadOne(id) {
     if (IDENT[id]) return IDENT[id];
-    if (!IDS_JSON) { var r = await fetch("assets/ids/ids.json"); IDS_JSON = await r.json(); MESH = IDS_JSON.mesh; }
+    if (!IDS_JSON) { var r = await fetch("assets/ids4/ids.json"); IDS_JSON = await r.json(); MESH = IDS_JSON.mesh; }
     var data = IDS_JSON.ids[id]; if (!data) throw new Error("no identity " + id);
     var I = prepIdentity(data, MESH);
     var img = new Image(); img.decoding = "async"; img.src = data.web.file;
     await img.decode();
     if (IDENT[id]) return IDENT[id];
-    var e = { ID: I, RT: makeRetarget(I), tex: makeTexture(img), lay: layoutFor(I), eyes: I.eyes };
+    var e = { ID: I, RT: makeRetarget(I), tex: makeTexture(img), lay: layoutFor(I), eyes: I.eyes, video: data.video || {}, erode: erodeScale(I) };
     IDENT[id] = e; return e;
   }
   async function loadRest() {                                                        // the other identities arrive in the background, one at a time
@@ -1155,17 +1201,140 @@
     CUR_ID = TR.to; var e = IDENT[CUR_ID]; ID = e.ID; RT = e.RT; tex = e.tex; LAY = e.lay; TR = null;
     gl.bindBuffer(gl.ARRAY_BUFFER, bUv); gl.bufferData(gl.ARRAY_BUFFER, ID.uv, gl.STATIC_DRAW);
   }
+  // ===========================================================================
+  // The clips. One <video> per clip key (e1, e2, …), kept in a hidden 2 px box in the page (some browsers stop decoding a detached
+  // or display:none video); at most the current identity's two and the next identity's first exist (preloadSet), the rest are
+  // released (src removed, load()) so cycling never piles up decoders. The frame is copied into one texture when the
+  // video presents a new one (requestVideoFrameCallback; every frame without it) and drawn through the photo's mesh at rest,
+  // so it sits exactly on the still (the rect from tools/vid_register.py). Phases of a hold:
+  //   wait (clip asked for, the still showing) -> in (crossfade still -> clip) -> play (clip after clip, back to back)
+  //   -> out (the last clip has ended on the photo: crossfade its last frame -> still) -> trans (the particle transition) -> next hold
+  // Without video (?video=0, a refusal, a clip that never arrives) a hold is a still that ends on time.
+  // ===========================================================================
+  var VIDEO_ON = PARAM.video, VPOOL = {}, vidTex = gl.createTexture(), vidW = 0, vidH = 0, vidFresh = false, VORDER = null;
+  var VS = { key: null, el: null, phase: "none", mix: 0, t0: 0, fade: 350, holdStart: 0, hold: 0, plays: 0, fails: 0, askedAt: 0, hasFrame: false, still: false, seq: [] };
+  var hasRVFC = typeof HTMLVideoElement !== "undefined" && "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+  gl.bindTexture(gl.TEXTURE_2D, vidTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+  function clipUrl(key) { return "assets/video/web/" + key + ".mp4"; }
+  function getVid(key) {
+    var v = VPOOL[key]; if (v) return v;
+    v = document.createElement("video");
+    v.muted = true; v.defaultMuted = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.setAttribute("muted", ""); v.setAttribute("disablepictureinpicture", "");
+    v.preload = "auto"; v.loop = false; v.controls = false; v.disableRemotePlayback = true;
+    v.src = clipUrl(key); vidsEl.appendChild(v); VPOOL[key] = v;
+    return v;
+  }
+  function releaseVid(key) {
+    var v = VPOOL[key]; if (!v) return;
+    try { v.pause(); } catch (e) {}
+    v.removeAttribute("src"); try { v.load(); } catch (e) {}
+    if (v.parentNode) v.parentNode.removeChild(v);
+    delete VPOOL[key];
+  }
+  function preload(cur, next) {
+    var want = preloadSet(cur, next), k;
+    for (k in VPOOL) if (want.indexOf(k) < 0 && k !== VS.key) releaseVid(k);
+    want.forEach(getVid);
+  }
+  function watchFrames(v) {
+    if (!hasRVFC) return;
+    var cb = function () { if (VS.el !== v) return; vidFresh = true; v.requestVideoFrameCallback(cb); };
+    v.requestVideoFrameCallback(cb);
+  }
+  function playClip(key, t) {
+    var v = getVid(key);
+    if (VS.el && VS.el !== v) { try { VS.el.pause(); } catch (e) {} }
+    VS.key = key; VS.el = v; VS.askedAt = t; VS.plays++; VS.seq.push(key); if (VS.seq.length > 12) VS.seq.shift();
+    try { if (v.currentTime > 0) v.currentTime = 0; } catch (e) {}
+    watchFrames(v);
+    var p = v.play(); if (p && p.catch) p.catch(function (e) { if (VS.el === v && !(e && e.name === "AbortError")) { VS.fails++; } });
+  }
+  function holdClip(key, vt, t) {                                                   // debug: one clip held on its first frame (vt 0) or its last (vt > 0: played to the end; no seeking, the dev server has no ranges)
+    var v = getVid(key); VS.key = key; VS.el = v; VS.askedAt = 1e15; VS.seq.push(key);
+    if (vt > 0) { watchFrames(v); v.addEventListener("ended", function () { vidFresh = true; VS.endedAt = performance.now(); }, { once: true }); var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+    else if (v.readyState >= 2) vidFresh = true; else v.addEventListener("loadeddata", function () { vidFresh = true; }, { once: true });
+  }
+  function uploadVideo() {
+    var v = VS.el; if (!v || v.readyState < 2 || !v.videoWidth) return false;
+    if (hasRVFC || (PARAM.clip && v.paused) ? !vidFresh : v.paused) return false;
+    vidFresh = false;
+    gl.bindTexture(gl.TEXTURE_2D, vidTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+    try {
+      if (v.videoWidth !== vidW || v.videoHeight !== vidH) { vidW = v.videoWidth; vidH = v.videoHeight; gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v); }
+      else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, v);
+    } catch (e) { return false; }
+    return true;
+  }
+  function clipInfo(id, n) { var e = IDENT[id], v = e && e.video && e.video[n]; return v || null; }
+  function calmOnly() { return convo !== "idle" || reduce; }
+  // a new hold on the current identity: the next identity is chosen now (its first clip preloads), the calm clip asked for
+  function startHold(t) {
+    pending = PARAM.cycle ? CYCLE.next() : null;
+    VS.holdStart = t; VS.hold = pending ? pending.hold : 1e12; VS.still = !VIDEO_ON || VS.fails > 3; VS.mix = 0; VS.hasFrame = false;
+    if (VS.still) { VS.phase = "still"; return; }
+    if (!VORDER) VORDER = makeClipOrder(VRNG);
+    VORDER.startHold(); preload(CUR_ID, pending ? pending.to : null);
+    var n = VORDER.next(false), ci = clipInfo(CUR_ID, n);
+    VS.fade = fadeMs(ci ? ci.firstGray || 0 : 0);
+    VS.phase = "wait";
+    if (PARAM.clip && PARAM.clip[0] === CUR_ID && PARAM.vt !== null) { holdClip(PARAM.clip, PARAM.vt, t); VS.fade = 1; return; }
+    playClip(CUR_ID + n, t);
+  }
+  function readyToGo(t) { return !!pending && !!IDENT[pending.to] && convo === "idle" && holdOver(t - VS.holdStart, VS.hold); }
+  function goOut(t) {
+    var n = +VS.key.slice(-1), ci = clipInfo(CUR_ID, n);
+    VS.phase = "out"; VS.t0 = t; VS.fade = fadeMs(ci ? ci.lastGray || 0 : 0);
+    if (!PRE || PRE.plan !== pending) prepTransition(pending);
+  }
+  function startTransition(t) {
+    VS.mix = 0;
+    if (beginTransition(pending, t)) { pending = null; VS.phase = "trans"; if (VS.el) { try { VS.el.pause(); } catch (e) {} } VS.key = null; VS.el = null; }
+    else { VS.holdStart = t; VS.hold = 1000; VS.phase = VS.still ? "still" : "play"; }
+  }
+  function videoStep(t) {
+    var v = VS.el;
+    if (VS.phase === "still") {                                                     // no clips: a still hold that ends on time
+      var hin = VS.holdStart + VS.hold - t;
+      if (pending && IDENT[pending.to] && hin > 0 && hin < 1000 && !PRE) prepTransition(pending);
+      if (readyToGo(t + 0.5 * CLIP_MS) && t >= VS.holdStart + VS.hold) startTransition(t);
+      return;
+    }
+    if (VS.phase === "wait") {
+      if (VS.hasFrame) { VS.phase = "in"; VS.t0 = t; }
+      else if (t - VS.askedAt > 5000) { VS.fails++; VS.phase = "still"; VS.still = true; releaseVid(VS.key); VS.key = null; VS.el = null; }
+      return;
+    }
+    if (VS.phase === "in") { VS.mix = clamp((t - VS.t0) / VS.fade, 0, 1); if (VS.mix >= 1) VS.phase = "play"; }
+    if (PARAM.clip) return;                                                         // ?clip=: held, never advanced
+    if (VS.phase === "in" || VS.phase === "play") {
+      if (v && v.ended) {
+        if (readyToGo(t)) { goOut(t); return; }
+        var n = VORDER.next(calmOnly());
+        playClip(CUR_ID + n, t);
+      } else if (v && v.paused && !document.hidden && t - VS.askedAt > 1500) { VS.askedAt = t; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+      return;
+    }
+    if (VS.phase === "out") {
+      VS.mix = 1 - clamp((t - VS.t0) / VS.fade, 0, 1);
+      if (PRE && PRE.plan === pending && PRE.steps < 6) preStep();
+      if (VS.mix <= 0) startTransition(t);
+    }
+  }
+  document.addEventListener("visibilitychange", function () {
+    var v = VS.el; if (!v) return;
+    if (document.hidden) { try { v.pause(); } catch (e) {} }
+    else if (VS.phase !== "trans" && !v.ended) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+  });
   function cycleStep(t) {
     if (!CYCLE) return;
     if (PARAM.to) { if (!TR && IDENT[PARAM.to]) beginTransition(CYCLE.plan(CUR_ID, PARAM.to), t); return; }   // ?to=&t= holds one transition
-    if (TR) { if (t - TR.t0 >= TR.dur) endTransition(); return; }
-    if (!PARAM.cycle) return;
-    if (!pending) { pending = CYCLE.next(); holdUntil = t + pending.hold; }
-    if (!IDENT[pending.to]) { if (t >= holdUntil) holdUntil = t + 1000; return; }
-    var hin = holdUntil - t;
-    if (hin > 0 && hin < 1000 && !PRE) prepTransition(pending);
-    else if (hin > 0 && hin < 220 && PRE && PRE.plan === pending && PRE.steps < 6) preStep();
-    if (t >= holdUntil) { if (beginTransition(pending, t)) pending = null; else holdUntil = t + 1000; }
+    if (TR) { if (t - TR.t0 >= TR.dur) { endTransition(); startHold(t); } return; }
+    if (VS.phase === "none") startHold(t);
+    videoStep(t);
   }
   // the geometry, shading, cavity and face box in css px: identity A (and B, blended by the front) -> GPOS, GSH, GCAV, GFB
   function compose(Oa, La, Ob, Lb, R, gw) {
@@ -1194,83 +1363,10 @@
   }
 
   // ===========================================================================
-  // Camera -> 478 landmarks (from being2). Only the motion is used; no pixel of the picture is drawn or kept.
+  // No camera in being4: the clips carry the life. The parent may still ask (oeuvre-camera): the answer is always "off".
   // ===========================================================================
-  var vid = document.createElement("video"); vid.muted = true; vid.playsInline = true; vid.setAttribute("playsinline", "");
-  var stream = null, landmarker = null, modelP = null, live = false, starting = false, lastDetect = 0, lastVT = -1, lastTS = 0, detectErr = 0;
-  var you = new Float32Array(NL * 3), neutral = null, hasFace = false, seenAt = -1e9, camPosted = false;
-  var POS = new Float64Array(3), POS0 = new Float64Array(3), SEEDN = 15, SEEDS = [], SEEDP = [], REST_TAU = 60000, FORGET = 2000, restLike = false, lastRead = -1;
-  async function loadModel() {
-    var vision = await import(MP + "/vision_bundle.mjs");
-    var files = await vision.FilesetResolver.forVisionTasks(MP + "/wasm");
-    function make(delegate) { return vision.FaceLandmarker.createFromOptions(files, { baseOptions: { modelAssetPath: MODEL, delegate: delegate }, runningMode: "VIDEO", numFaces: 1 }); }
-    try { landmarker = await make("GPU"); } catch (e) { landmarker = await make("CPU"); }
-    return landmarker;
-  }
-  function getModel() { if (!modelP) modelP = loadModel().catch(function (e) { modelP = null; throw e; }); return modelP; }
-  function forgetRest() { neutral = null; SEEDS = []; SEEDP = []; restLike = false; }
-  function readFace(lm, t) {
-    var dtR = t === undefined || lastRead < 0 ? 33 : Math.max(0, Math.min(200, t - lastRead)); if (t !== undefined) lastRead = t;
-    var i;
-    readLandmarks(lm, (vid.videoWidth / vid.videoHeight) || 16 / 9, you, POS, hasFace ? 0.55 : 1, hasFace ? 0.3 : 1);
-    if (!neutral) {
-      SEEDS.push(Float32Array.from(you)); SEEDP.push(Float64Array.from(POS));
-      if (SEEDS.length >= SEEDN) {
-        neutral = new Float32Array(NL * 3);
-        for (i = 0; i < NL * 3; i++) neutral[i] = median(SEEDS, i);
-        for (i = 0; i < 3; i++) POS0[i] = median(SEEDP, i);
-        SEEDS = []; SEEDP = [];
-      }
-    } else if (restLike) {
-      var a = 1 - Math.exp(-dtR / REST_TAU);
-      for (i = 0; i < NL * 3; i++) neutral[i] += (you[i] - neutral[i]) * a;
-      for (i = 0; i < 3; i++) POS0[i] += (POS[i] - POS0[i]) * a;
-    }
-  }
-  async function start() {
-    if (!PARAM.cam || starting || live) return;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { notice("this browser does not let it see. it carries on by itself."); return; }
-    starting = true; goBtn.disabled = true; var step = "camera";
-    camLabel("opening its eyes…");
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
-      vid.srcObject = stream; await vid.play();
-      step = "model";
-      if (!landmarker) { camLabel("learning how to see…"); await getModel(); }
-      live = true; detectErr = 0; forgetRest(); document.body.classList.add("live");
-      watchVideo(); postCamera();
-    } catch (e) {
-      stop();
-      notice(step === "camera" ? "it cannot see you (the camera was not allowed). it carries on by itself." : "it could not learn how to see (the face model did not load). try again in a moment.");
-    } finally { starting = false; goBtn.disabled = false; camLabel(); }
-  }
-  function stop() {
-    live = false; hasFace = false; document.body.classList.remove("live");
-    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
-    stream = null; vid.srcObject = null; forgetRest(); camLabel(); postCamera();
-  }
-  function camLabel(s) { goLabel.textContent = s || (live ? "close its eyes" : "let it see you"); }
-  function detect(now, mediaTime) {
-    if (!live || !landmarker || vid.readyState < 2) return;
-    if (mediaTime !== undefined && mediaTime === lastVT) return;
-    if (now - lastDetect < 30) return;
-    lastDetect = now; lastVT = mediaTime;
-    var ts = Math.max(now, lastTS + 1); lastTS = ts;
-    try {
-      var res = landmarker.detectForVideo(vid, ts), lm = res.faceLandmarks && res.faceLandmarks[0];
-      detectErr = 0;
-      if (lm) { readFace(lm, now); hasFace = true; seenAt = now; } else if (now - seenAt > 800) hasFace = false;
-    } catch (e) {
-      if (++detectErr > 20) { try { landmarker.close(); } catch (e2) {} landmarker = null; modelP = null; stop(); notice("it lost its sight. let it see you again in a moment."); }
-    }
-  }
-  var hasRVFC = typeof HTMLVideoElement !== "undefined" && "requestVideoFrameCallback" in HTMLVideoElement.prototype;
-  function watchVideo() {
-    if (!hasRVFC) return;
-    var cb = function (now, md) { if (!live) return; detect(now, md && md.mediaTime); vid.requestVideoFrameCallback(cb); };
-    vid.requestVideoFrameCallback(cb);
-  }
-  goBtn.addEventListener("click", function () { if (live) stop(); else start(); if (goBtn.blur) goBtn.blur(); });
+  var live = false;
+  function canCamera() { return false; }
   window.addEventListener("pointermove", function (e) { mx = e.clientX; my = e.clientY; moved = performance.now(); overUI = !!(e.target && e.target.closest && e.target.closest("#talk button, #talk input, #talk a")); });
   var noticeT = 0;
   function notice(msg, ms) { noticeEl.textContent = msg; noticeEl.classList.add("on"); clearTimeout(noticeT); noticeT = setTimeout(function () { noticeEl.classList.remove("on"); }, ms || 7000); }
@@ -1286,7 +1382,7 @@
   var SYNTH = window.speechSynthesis || null, UTTER = window.SpeechSynthesisUtterance || null, VOICE = null, primed = false;
   var SP = null, speakIdx = 0, speakNext = 0, MT = [0, 0, 0];
   var SPEAK_LINES = ["i am made of borrowed movements and weather of my own.", "every few seconds i become someone slightly different. it doesn't hurt.",
-    "oeuvre is a small studio in auckland. we make things that pay attention.", "if you let me see you, i'll wear your face carefully, and give it back."];
+    "oeuvre is a small studio in auckland. we make things that pay attention.", "none of these faces belongs to anyone. i only borrow them for a while."];
   function loadVoices() { try { VOICE = pickVoice(SYNTH.getVoices()); } catch (e) {} }
   if (SYNTH) { loadVoices(); try { SYNTH.addEventListener("voiceschanged", loadVoices); } catch (e) { try { SYNTH.onvoiceschanged = loadVoices; } catch (e2) {} } }
   function primeTTS() {                    // some browsers only let a page speak after a gesture: say nothing, once, inside one
@@ -1391,7 +1487,7 @@
     convo = s;
     ["listening", "thinking", "speaking"].forEach(function (c) { if (c === s) document.body.classList.add(c); else document.body.classList.remove(c); });
     if (AUTO && AUTO.AU) { if (s === "listening" || s === "thinking") AUTO.AU.side = RNG() < 0.5 ? -1 : 1; if (s !== "idle") AUTO.AU.sacAt = 0; }   // look again, now
-    micLabel.textContent = s === "listening" ? "listening" : "talk";
+    micLabel.textContent = s === "listening" ? "listening" : "speak";
   }
   var CLOSED_HTML = 'if you would like to keep talking, write to <a href="mailto:info@bnbmanagement.co.nz">info@bnbmanagement.co.nz</a>.';
   function closeTalk() {
@@ -1490,8 +1586,6 @@
   // ===========================================================================
   function parentWin() { try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; } }
   function post(msg) { var p = parentWin(); if (!p || !LOC.origin || LOC.origin === "null") return; try { p.postMessage(msg, LOC.origin); } catch (e) {} }
-  function postCamera() { if (live !== camPosted) { camPosted = live; post({ type: "oeuvre-camera", on: live }); } }
-  function canCamera() { try { return !!(PARAM.cam && navigator.mediaDevices && navigator.mediaDevices.getUserMedia); } catch (e) { return false; } }
   window.addEventListener("message", function (e) {
     var p = parentWin(); if (!p || e.source !== p) return;
     if (!LOC.origin || LOC.origin === "null" || e.origin !== LOC.origin) return;
@@ -1502,12 +1596,7 @@
       var x = +d.x, y = +d.y; if (!isFinite(x) || !isFinite(y)) return;
       var w = +d.w, h = +d.h; mx = w > 0 ? x * W / w : x; my = h > 0 ? y * H / h : y; moved = Math.max(performance.now(), NOW); overUI = false;
     }
-    else if (d.type === "oeuvre-camera") {
-      if (d.on && !live && !starting) {
-        if (!canCamera()) { post({ type: "oeuvre-camera", on: false }); return; }
-        Promise.resolve(start()).then(function () { if (!live) post({ type: "oeuvre-camera", on: false }); }, function () {});
-      } else if (!d.on && live) stop();
-    }
+    else if (d.type === "oeuvre-camera") { if (d.on) post({ type: "oeuvre-camera", on: false }); }   // no camera in this figure
   });
 
   // ===========================================================================
@@ -1526,83 +1615,68 @@
   var NZT = null; try { NZT = new Intl.DateTimeFormat("en-NZ", { timeZone: "Pacific/Auckland", hour: "2-digit", minute: "2-digit", hour12: false }); } catch (e) {}
   var clockT = 0;
   function clock(t) { if (t - clockT < 1000) return; clockT = t; try { clockEl.textContent = NZT ? NZT.format(new Date()) : ""; } catch (e) {} }
-  var ENV = { st: "idle", cursor: null, reduce: false, still: false, expr: null, mouth: MOUTH }, CUR = [0, 0], FIXED = null, TRN = [0, 0], OPT = { dt: 16.67, pose: null, trans: TRN, gain: 1 };
-  if (PARAM.yaw !== null) FIXED = [PARAM.yaw, PARAM.pitch, 0];
+  // the face never moves by itself in being4 (the clips carry the life, the transition runs on still meshes): the driver is the
+  // rest face, the pose fixed at zero, and every retarget lands on the photo's own landmarks
+  var FIXED = [0, 0, 0], TRN = [0, 0], OPT = { dt: 16.67, pose: FIXED, trans: TRN, gain: 1 };
   var stateT = 0;
-  function stateName() { return convo !== "idle" ? convo : camW > 0.5 ? "mirroring" : "autonomous"; }
+  function stateName() { return convo !== "idle" ? convo : "autonomous"; }
 
   function frame(t) {
     requestAnimationFrame(frame);
     var t0 = performance.now();
     var dt = Math.min(50, last ? t - last : 16); last = t; NOW = t;
     if (!ID || !texReady || !LAY) return;
-    if (live && !hasRVFC) detect(t, vid.currentTime);
-    if (!live) hasFace = false; else if (hasFace && t - seenAt > 1000) hasFace = false;
-    if (neutral && !hasFace && t - seenAt > FORGET) forgetRest();
-    // who moves the face: you, when it sees you; otherwise itself. Crossfaded.
-    var camT = live && neutral && hasFace && convo === "idle" ? 1 : 0, i;
-    camW = camT > camW ? Math.min(1, camW + dt / 900) : Math.max(0, camW - dt / 1300);
-    if (neutral) { CAMS.set(you); CAMN.set(neutral); }
-    // its own face
-    var curOn = mx >= 0 && t - moved < 4000 && !overUI && !EMBED || (EMBED && mx >= 0 && t - moved < 4000);
-    if (curOn) { CUR[0] = (mx - (faceCss[0] + faceCss[2] / 2)) / Math.max(1, faceCss[2]); CUR[1] = (my - (faceCss[1] + faceCss[3] / 2)) / Math.max(1, faceCss[2]); ENV.cursor = CUR; } else ENV.cursor = null;
-    speechStep(t, dt);                                                                 // writes MOUTH while it speaks (or ?speak=1 cycles its lines silently)
-    ENV.st = convo; ENV.reduce = reduce; ENV.still = FIXED !== null; ENV.expr = PARAM.expr; ENV.mouth = MOUTH;
-    AUTO.step(t, dt, ENV, AYOU);
-    if (camW >= 1) { D.set(CAMS); Nn.set(CAMN); }
-    else if (camW <= 0) { D.set(AYOU); Nn.set(AUTO.neutral); }
-    else { var w = smooth(camW); for (i = 0; i < NL * 3; i++) { D[i] = AYOU[i] + (CAMS[i] - AYOU[i]) * w; Nn[i] = AUTO.neutral[i] + (CAMN[i] - AUTO.neutral[i]) * w; } }
-    var f0 = POS0[2] || 1, cw = smooth(camW);
-    TRN[0] = cw * 0.1 * Math.tanh((POS[0] - POS0[0]) / f0 * 0.35 / 0.1); TRN[1] = cw * 0.07 * Math.tanh((POS[1] - POS0[1]) / f0 * 0.35 / 0.07);
-    cycleStep(t);                                                                      // identity transitions start and end here
-    OPT.dt = dt; OPT.pose = FIXED; OPT.trans = TRN; OPT.gain = 1 - (1 - EXPR_GAIN_CAM) * cw;   // camera-driven extremes softened; its own face at full gain
-    var opt = OPT, O = RT.step(D, Nn, opt), Ob = null, R = 0, gw = 0;
-    if (TR) { TR.p = PARAM.t !== null ? PARAM.t : clamp((t - TR.t0) / TR.dur, 0, 1); Ob = IDENT[TR.to].RT.step(D, Nn, opt); R = frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin); gw = smooth(TR.p); }
-    var mouthNow = compose(O, IDENT[CUR_ID].lay, Ob, TR ? IDENT[TR.to].lay : null, R, gw);
-    draw(O, mouthNow, TR ? IDENT[TR.to] : null, R);
-    // the face box in css px, for the parent and the cursor
+    speechStep(t, dt);                                                                 // types the reply out (no mouth: the clip plays on)
+    D.set(AUTO.neutral); Nn.set(AUTO.neutral);
+    cycleStep(t);                                                                      // holds, clips, transitions
+    if (VS.el && uploadVideo()) VS.hasFrame = true;
+    OPT.dt = dt;
+    var O = RT.step(D, Nn, OPT), Ob = null, R = 0, gw = 0;
+    if (TR) { TR.p = PARAM.t !== null ? PARAM.t : clamp((t - TR.t0) / TR.dur, 0, 1); Ob = IDENT[TR.to].RT.step(D, Nn, OPT); R = frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin); gw = smooth(TR.p); }
+    compose(O, IDENT[CUR_ID].lay, Ob, TR ? IDENT[TR.to].lay : null, R, gw);
+    var vmix = TR || !VS.hasFrame ? 0 : VS.mix;
+    draw(O, TR ? IDENT[TR.to] : null, R, vmix);
+    // the face box in css px (the photo's: the clips stay inside it), for the parent and the talk control
     faceCss[0] = GFB[0]; faceCss[1] = GFB[1] - 0.22 * GFB[3]; faceCss[2] = GFB[2]; faceCss[3] = GFB[3] * 1.22;
-    if (!readyPosted) { readyPosted = true; post({ type: "oeuvre-ready", camera: canCamera() }); gate.classList.add("off"); document.body.classList.remove("loading"); if (EMBED) placeTalk(); }
+    if (!readyPosted) { readyPosted = true; post({ type: "oeuvre-ready", camera: false }); gate.classList.add("off"); document.body.classList.remove("loading"); if (EMBED) placeTalk(); }
     if (t - facePostAt > 100) { facePostAt = t; post({ type: "oeuvre-face", x: faceCss[0], y: faceCss[1], w: faceCss[2], h: faceCss[3], state: stateName() }); if (EMBED) placeTalk(); }
-    if (t - stateT > 500) { stateT = t; stateEl.textContent = stateName() + (live ? (hasFace ? " · it sees you" : " · looking for you") : ""); }
+    if (t - stateT > 500) { stateT = t; stateEl.textContent = stateName(); }
     clock(t);
     if (PARAM.perf) perf(t, performance.now() - t0);
-    window.__being3 = window.__being3 || {}; var B = window.__being3; B.pose = [O.pose[0] / DEG, O.pose[1] / DEG, O.pose[2] / DEG]; B.blink = [O.blink[0], O.blink[1]]; B.gaze = [O.gaze[0], O.gaze[1]];
-    B.mouthOpen = O.mouthOpen; B.face = faceCss.slice(); B.camW = camW; B.live = live; B.hasFace = hasFace; B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY; B.gain = OPT.gain; B.faceFrac = GFB[2] / W;
-    B.transition = TR ? { from: TR.from, to: TR.to, t: TR.p, region: TR.region, R: +frontRadius(TR.p, TR.rmax, TR.rface, TR.rmin).toFixed(3), rmax: +TR.rmax.toFixed(3), rface: +TR.rface.toFixed(3), rmin: +TR.rmin.toFixed(3), chin: +DV[152].toFixed(3), brow: +DV[10].toFixed(3) } : null; B.loaded = Object.keys(IDENT); B.next = pending ? pending.to : null; B.holdIn = pending ? Math.max(0, holdUntil - t) : null;
+    var B = window.__being4 = window.__being4 || {};
+    B.face = faceCss.slice(); B.id = CUR_ID; B.fps = PERF.fps; B.ms = PERF.shown; B.lay = LAY; B.faceFrac = GFB[2] / W; B.convo = convo;
+    B.transition = TR ? { from: TR.from, to: TR.to, t: TR.p, region: TR.region } : null; B.loaded = Object.keys(IDENT); B.next = pending ? pending.to : null;
+    B.video = { phase: VS.phase, key: VS.key, mix: +vmix.toFixed(3), time: VS.el ? +VS.el.currentTime.toFixed(3) : null, ended: VS.el ? VS.el.ended : null, hasFrame: VS.hasFrame, endedAt: VS.endedAt || null,
+      holdIn: VS.holdStart ? Math.round(VS.holdStart + VS.hold - t) : null, plays: VS.plays, fails: VS.fails, seq: VS.seq.slice(), pool: Object.keys(VPOOL), elements: vidsEl.childElementCount };
   }
   function perf(t, ms) {
     PERF.n++; PERF.sum += ms; if (ms > PERF.max) PERF.max = ms; PERF.frames++;
     if (t - PERF.lastT > 1000) { PERF.fps = PERF.frames * 1000 / (t - PERF.lastT); PERF.shown = (PERF.sum / PERF.n).toFixed(2) + " ms avg · " + PERF.max.toFixed(1) + " ms max · " + PERF.fps.toFixed(0) + " fps"; perfEl.textContent = PERF.shown + " · " + W + "x" + H + " @" + DPR; PERF.n = 0; PERF.sum = 0; PERF.max = 0; PERF.frames = 0; PERF.lastT = t; }
   }
-  // O: the current identity's retarget output (gaze); mouthOpen: blended; next: IDENT entry of the identity arriving (or null); R: the front radius
-  function draw(O, mouthOpen, next, R) {
+  // O: the current identity's retarget output; next: IDENT entry of the identity arriving (or null); R: the front radius;
+  // vmix: the clip's share over the still (0 while a transition runs). No eye or mouth passes: the face never moves by itself
+  function draw(O, next, R, vmix) {
     gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
-    var vw = cv.width, vh = cv.height, k, trans = next ? 1 : 0, texB = next ? next.tex : tex;
-    // the mouth cavity, behind the lips
-    cavPos.set(GCAV);
-    gl.useProgram(PRC); gl.bindVertexArray(vaoC);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bPosC); gl.bufferSubData(gl.ARRAY_BUFFER, 0, cavPos);
-    gl.uniform2f(UC.uView, vw, vh); gl.uniform3f(UC.uMap, DPR, 0, 0); gl.uniform1f(UC.uOpen, clamp(mouthOpen / MOUTH_MAX, 0, 1));
-    gl.drawElements(gl.TRIANGLES, cavIdx.length, gl.UNSIGNED_SHORT, 0);
-    // the face and the picture around it (two textures while an identity arrives)
+    var vw = cv.width, vh = cv.height, k, trans = next ? 1 : 0, texB = next ? next.tex : tex, cur = IDENT[CUR_ID], er = cur.erode;
     gl.useProgram(PRG); gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, bPos); gl.bufferSubData(gl.ARRAY_BUFFER, 0, GPOS);
     gl.bindBuffer(gl.ARRAY_BUFFER, bSh); gl.bufferSubData(gl.ARRAY_BUFFER, 0, GSH);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(U.uTex, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texB); gl.uniform1i(U.uTexB, 1);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, vidTex); gl.uniform1i(U.uVidTex, 3);
+    var vi = VS.key ? clipInfo(CUR_ID, +VS.key.slice(-1)) : null, vr = vi ? vidUvRect(vi.rect, ID.W, ID.H) : [0, 0, 1, 1];
+    gl.uniform1f(U.uVid, vi ? vmix : 0); gl.uniform4f(U.uVidR, vr[0], vr[1], vr[2], vr[3]);
     var topFade = clamp(-LAY.oy / (0.03 * H), 0, 1);                                    // the crown runs past the top of the frame: a top vignette instead of a cut
     gl.uniform2f(U.uView, vw, vh); gl.uniform3f(U.uMap, DPR, 0, 0); gl.uniform1i(U.uEye, 0); gl.uniform1f(U.uFade, 0.8); gl.uniform1f(U.uTop, topFade);
     var e0 = ID.eyes[0], e1 = ID.eyes[1], f0 = next ? next.ID.eyes[0] : e0, f1 = next ? next.ID.eyes[1] : e1;
-    gl.uniform4f(U.uIrisL, e0.cu, e0.cv, e0.ru, e0.rv); gl.uniform4f(U.uIrisR, e1.cu, e1.cv, e1.ru, e1.rv); gl.uniform2f(U.uGaze, O.gaze[0], -O.gaze[1]);
+    gl.uniform4f(U.uIrisL, e0.cu, e0.cv, e0.ru, e0.rv); gl.uniform4f(U.uIrisR, e1.cu, e1.cv, e1.ru, e1.rv); gl.uniform2f(U.uGaze, 0, 0);
     gl.uniform4f(U.uIrisLB, f0.cu, f0.cv, f0.ru, f0.rv); gl.uniform4f(U.uIrisRB, f1.cu, f1.cv, f1.ru, f1.rv);
     gl.uniform1i(U.uTrans, trans); gl.uniform1f(U.uR, R); gl.uniform1f(U.uBand, FIELD_BAND); gl.uniform1f(U.uSoft, ERODE_SOFT); gl.uniform1f(U.uDpr, DPR); gl.uniform1f(U.uAmp, FIELD_AMP);
-    gl.uniform2f(U.uSeed, TR ? TR.seed[0] : 0, TR ? TR.seed[1] : 0); gl.uniform2f(U.uNoff, TR ? TR.noff[0] : 0, TR ? TR.noff[1] : 0);
+    gl.uniform2f(U.uSeed, TR ? TR.seed[0] : 0, TR ? TR.seed[1] : 0); gl.uniform2f(U.uNoff, TR ? TR.noff[0] : 0, TR ? TR.noff[1] : 0); gl.uniform2f(U.uErode, er[0], er[1]);
     if (trans) featUniforms(U);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx); gl.drawElements(gl.TRIANGLES, ID.tris.length, gl.UNSIGNED_SHORT, 0);
-    gl.uniform1i(U.uEye, 1);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EYE_IDX); gl.drawElements(gl.TRIANGLES, ID.eyeTris.length, gl.UNSIGNED_SHORT, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EYE_IDX); gl.drawElements(gl.TRIANGLES, ID.eyeTris.length, gl.UNSIGNED_SHORT, 0);   // the eyes (the mesh leaves them open): plain texture, uEye 0
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx);
     gl.bindVertexArray(null);
     if (!trans || !PARAM.dust) return;
@@ -1613,23 +1687,25 @@
     gl.uniform1i(UP.uMesh, 2); gl.uniform1i(UP.uTex, 0); gl.uniform1i(UP.uTexB, 1);
     gl.uniform2f(UP.uView, vw, vh); gl.uniform1f(UP.uDpr, DPR); gl.uniform1f(UP.uT, TR.p); gl.uniform1f(UP.uFrontEnd, FRONT_END); gl.uniform1f(UP.uT1, FRONT_T1); gl.uniform1f(UP.uPow1, FRONT_POW); gl.uniform1f(UP.uPow2, FRONT_POW2); gl.uniform1f(UP.uRmax, TR.rmax); gl.uniform1f(UP.uRface, TR.rface); gl.uniform1f(UP.uRmin, TR.rmin); gl.uniform1f(UP.uBand, FIELD_BAND);
     gl.uniform1f(UP.uFw, GFB[2]); gl.uniform1f(UP.uMot, reduce ? 0.5 : 1); gl.uniform1f(UP.uAmp, FIELD_AMP); gl.uniform1f(UP.uFade, 0.8); gl.uniform1f(UP.uTop, topFade);
-    gl.uniform2f(UP.uSeed, TR.seed[0], TR.seed[1]); gl.uniform2f(UP.uNoff, TR.noff[0], TR.noff[1]); featUniforms(UP);
+    gl.uniform2f(UP.uSeed, TR.seed[0], TR.seed[1]); gl.uniform2f(UP.uNoff, TR.noff[0], TR.noff[1]); gl.uniform2f(UP.uErode, er[0], er[1]); featUniforms(UP);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(vaoP); gl.drawArrays(gl.POINTS, 0, NP);
     gl.bindVertexArray(vaoL); gl.drawElements(gl.TRIANGLES, NLN, gl.UNSIGNED_SHORT, 0);
     gl.bindVertexArray(null); gl.disable(gl.BLEND);
   }
 
-  if (!canCamera()) document.body.classList.add("nocam");
+  // the talk pill (embedded): a compact 'talk' under the chin that opens into the input and the mic
+  openBtn.addEventListener("click", function () { document.body.classList.add("talkopen"); openBtn.setAttribute("aria-expanded", "true"); primeTTS(); try { sayEl.focus(); } catch (e) {} placeTalk(); });
+  sayEl.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sayEl.value && EMBED) { document.body.classList.remove("talkopen"); openBtn.setAttribute("aria-expanded", "false"); try { openBtn.focus(); } catch (e2) {} placeTalk(); } });
   resize();
-  var CRNG = PARAM.seed === null ? Math.random : mulberry32((PARAM.seed + 0x5bd1e995) >>> 0);   // the cycle's own seeded stream (its own face keeps RNG)
+  var CRNG = PARAM.seed === null ? Math.random : mulberry32((PARAM.seed + 0x5bd1e995) >>> 0);   // the cycle's own seeded stream
+  var VRNG = PARAM.seed === null ? Math.random : mulberry32((PARAM.seed + 0x27d4eb2f) >>> 0);   // the clip order's
   loadIdentity(PARAM.id).then(function () { return PARAM.to ? loadOne(PARAM.to) : null; }).then(function () {
-    CYCLE = makeCycle(CRNG, IDS, PARAM.id, { region: PARAM.region });
+    CYCLE = makeCycle(CRNG, IDS, PARAM.id, { region: PARAM.region, hold: PARAM.hold });
     resize();
     requestAnimationFrame(frame);
-    if (PARAM.autostart) start();
     if (PARAM.cycle) loadRest();
-  }).catch(function (e) { gateText.textContent = "it could not find its face. open this page from its folder over http (assets/ids/ids.json)."; console.error(e); });
+  }).catch(function (e) { gateText.textContent = "it could not find its face. open this page from its folder over http (assets/ids4/ids.json)."; console.error(e); });
 </script>
 </body>
 </html>
