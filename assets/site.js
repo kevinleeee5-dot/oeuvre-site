@@ -824,13 +824,17 @@
         const off = document.createElement("canvas"); off.width = w; off.height = h; const o = off.getContext("2d");
         const fam = getComputedStyle(document.body).fontFamily, pad = Math.max(24, w * 0.06);
         const f1 = Math.min(w * 0.3, 170), f2 = Math.min(w * 0.082, 50);
-        o.fillStyle = "#fff"; o.textBaseline = "alphabetic";
-        o.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.045 * f1) + "px"; const y1 = h * 0.43; o.fillText("Oeuvre", pad, y1);
-        o.font = `300 ${f2}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.02 * f2) + "px"; o.fillText("Creative thinking.", pad, y1 + f1 * 0.28 + f2 * 1.4); o.fillText("Digital making.", pad, y1 + f1 * 0.28 + f2 * 2.55);
+        const drawText = c => {
+          c.fillStyle = "#fff"; c.textBaseline = "alphabetic";
+          c.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in c) c.letterSpacing = (-0.045 * f1) + "px"; const y1 = h * 0.43; c.fillText("Oeuvre", pad, y1);
+          c.font = `300 ${f2}px ${fam}`; if ("letterSpacing" in c) c.letterSpacing = (-0.02 * f2) + "px"; c.fillText("Creative thinking.", pad, y1 + f1 * 0.28 + f2 * 1.4); c.fillText("Digital making.", pad, y1 + f1 * 0.28 + f2 * 2.55);
+        };
+        drawText(o);
+        const crisp = document.createElement("canvas"); crisp.width = w * dpr; crisp.height = h * dpr; const cc = crisp.getContext("2d"); cc.scale(dpr, dpr); drawText(cc);   // the finished letters at full resolution: the particles settle into them
         const img = o.getImageData(0, 0, w, h).data, pts = [];
-        for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (img[(y * w + x) * 4 + 3] > 140) pts.push(x, y);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (img[(y * w + x) * 4 + 3] > 140) pts.push(x, y);
         const n = pts.length / 2; if (!n) { formed = true; check(); return; }
-        const N = Math.min(9000, Math.max(4000, n)), X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N), TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N);
+        const N = Math.min(14000, Math.max(5000, n >> 1)), X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N), TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N);
         for (let i = 0; i < N; i++) { const j = (Math.random() * n | 0) * 2; TX[i] = pts[j]; TY[i] = pts[j + 1]; HI[i] = j; X[i] = Math.random() * w; Y[i] = Math.random() * h; }
         const GATHER = 2600, HOLD_MIN = 900; let t0 = 0, last = 0;
         g.fillStyle = "#000"; g.fillRect(0, 0, w, h);
@@ -838,16 +842,18 @@
           if (!t0) t0 = now; const t = now - t0, c = Math.min(1, t / GATHER), c2 = c * c * (3 - 2 * c);
           const nf = 0.28 - 0.19 * c2, k = 0.002 + 0.034 * c2, damp = 0.9 - 0.22 * c2, ph = t * 0.0006;
           g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0," + (0.14 + 0.16 * c2) + ")"; g.fillRect(0, 0, w, h);
-          g.globalCompositeOperation = "source-over"; g.strokeStyle = "rgba(255,255,255,1)"; g.lineWidth = 1.6; g.beginPath(); const dots = new Path2D();
+          g.globalCompositeOperation = "source-over"; g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 1; g.beginPath(); const dots = new Path2D();
           const m = Math.ceil(N * 0.08 * c2);
           for (let i = 0; i < N; i++) {
             let x = X[i], y = Y[i];
             if (c2 > 0.55 && i < m) { const hj = HI[i], step = ((Math.random() * 3 | 0) - 1) * 2, nj = hj + step * 2; if (nj >= 0 && nj < pts.length - 1 && Math.hypot(pts[nj] - pts[hj], pts[nj + 1] - pts[hj + 1]) < 7) { HI[i] = nj; TX[i] = pts[nj]; TY[i] = pts[nj + 1]; } }
             const ang = Math.sin(y * 0.011 + ph) * 2.2 + Math.cos(x * 0.013 - ph * 1.3) * 2.2, fx = Math.cos(ang) * nf, fy = Math.sin(ang) * nf;
             VX[i] = (VX[i] + fx + (TX[i] - x) * k) * damp; VY[i] = (VY[i] + fy + (TY[i] - y) * k) * damp;
-            const nx = x + VX[i], ny = y + VY[i]; g.moveTo(x, y); g.lineTo(nx, ny); X[i] = nx; Y[i] = ny; if (c2 > 0.3) dots.rect(nx - 1, ny - 1, 2, 2);
+            const nx = x + VX[i], ny = y + VY[i]; g.moveTo(x, y); g.lineTo(nx, ny); X[i] = nx; Y[i] = ny; if (c2 > 0.3) dots.rect(nx - 0.6, ny - 0.6, 1.2, 1.2);
           }
-          g.stroke(); g.fillStyle = "rgba(255,255,255," + Math.min(1, c2 * 1.2) + ")"; g.fill(dots);
+          const ca = c > 0.6 ? Math.min(1, (c - 0.6) / 0.4) : 0, ce = ca * ca * (3 - 2 * ca);   // the streaks gather, then the clean letters take over
+          g.globalAlpha = 1 - ce; g.stroke(); g.fillStyle = "#fff"; g.globalAlpha = Math.min(0.9, c2) * (1 - ce); g.fill(dots);
+          g.globalAlpha = ce; g.drawImage(crisp, 0, 0, w, h); g.globalAlpha = 1;
           if (!formed && t > GATHER + HOLD_MIN) { formed = true; check(); }
           raf = requestAnimationFrame(frame);
         };
