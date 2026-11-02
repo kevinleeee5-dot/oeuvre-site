@@ -19,12 +19,13 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://oeuvre.co.nz/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://oeuvre.co.nz/services/"},{"@type":"ListItem","position":3,"name":"Brand Workshop","item":"https://oeuvre.co.nz/services/brand-workshop/"}]},{"@type":"Service","name":"Brand Workshop","serviceType":"Skincare brand development","description":"Range planning, formulation and samples, brand design, packaging, website and production for new skincare brands.","provider":{"@id":"https://oeuvre.co.nz/#org"},"areaServed":"NZ"}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&amp;family=Geist+Mono:wght@300;400&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap">
 <style>
 /* Brand Workshop — light, soft, card-based (its own look, apart from the dark site) */
 :root {
   --bg: #fff; --fg: #171717; --dim: #8b8b8b; --card: #efefef; --blue: #d6e2ec; --line: #e6e6e6;
-  --r: 8px; --max: 1080px;
+  --ink: #171717; --ink-dim: #8b8b8b;
+  --r: 8px; --max: 1080px; --gutter: clamp(16px, 4vw, 56px);
   --font: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: "Geist Mono", ui-monospace, Menlo, monospace;
   color-scheme: light;
@@ -44,12 +45,16 @@ figure { margin: 0; }
 .dim { color: var(--dim); }
 section { margin-top: 88px; }
 
-/* top bar */
-.top { display: flex; align-items: center; justify-content: space-between; padding: 26px 0 22px; }
-.top .mark { font-weight: 500; font-size: 18px; letter-spacing: -.03em; }
-.top ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; font-size: 12px; }
-.top li a { color: var(--dim); }
-.top li a:hover, .top li a[aria-current] { color: var(--fg); }
+/* top bar — the same as every other page on the site */
+.bar { position: fixed; inset: 0 0 auto 0; z-index: 60; display: flex; align-items: center; gap: 24px; color: #fff;
+       padding: max(18px, env(safe-area-inset-top, 0px)) var(--gutter) 18px; mix-blend-mode: difference; pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.mark { font-weight: 600; font-size: clamp(26px, 2.4vw, 34px); letter-spacing: -.03em; margin-right: auto; }
+.mini ul { display: flex; gap: clamp(14px, 2.4vw, 32px); list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.mini a { opacity: .62; transition: opacity .2s; position: relative; }
+.mini a:hover, .mini a[aria-current] { opacity: 1; }
+.mini a[aria-current]::before { content: ""; position: absolute; left: -10px; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: currentColor; }
+main { padding-top: 76px; }
 
 /* hero: one rounded picture with small type laid over it */
 .hero { position: relative; overflow: hidden; aspect-ratio: 2 / 1; max-height: 88svh; background: var(--card);
@@ -57,7 +62,7 @@ section { margin-top: 88px; }
 .hero img { position: absolute; inset: 0; will-change: transform; }
 .hero .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 42%, rgba(255,255,255,0) 70%); }
 .hero > div:not(.veil) { position: absolute; z-index: 1; }
-.hero .mid { left: max(20px, calc((100vw - var(--max)) / 2)); top: 50%; transform: translateY(-50%); }
+.hero .mid { color: var(--ink); left: max(20px, calc((100vw - var(--max)) / 2)); top: 50%; transform: translateY(-50%); }
 .hero h1 { margin: 0; font-weight: 300; font-size: clamp(44px, 5.4vw, 80px); line-height: 1; letter-spacing: -.035em; white-space: nowrap; }
 .hero .sub { margin: 26px 0 0; font-size: clamp(14px, 1.25vw, 18px); line-height: 1.4; max-width: 24ch; }
 
@@ -71,34 +76,43 @@ section { margin-top: 88px; }
 .mod { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .mod figure img { will-change: transform; }
 .mod figure { border-radius: var(--r); overflow: hidden; aspect-ratio: 4 / 5; background: var(--card); }
-.mod .txt { background: var(--card); border-radius: var(--r); padding: 26px 28px 30px; display: flex; flex-direction: column; }
+.mod .txt { color: var(--ink); background: var(--card); border-radius: var(--r); padding: 26px 28px 30px; display: flex; flex-direction: column; }
 .mod:nth-child(even) figure { order: 2; }
 .mod .n { font-size: 38px; font-weight: 300; letter-spacing: -.04em; color: #b9b9b9; line-height: 1; }
 .mod h3 { margin: auto 0 22px; font-weight: 300; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; }
 .mod dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); margin: 0; font-size: 12.5px; line-height: 1.5; border-top: 1px solid #dcdcdc; }
 .mod dt, .mod dd { margin: 0; padding: 10px 0; border-bottom: 1px solid #dcdcdc; }
-.mod dt { color: var(--dim); }
+.mod dt { color: var(--ink-dim); }
 .mod .spec { margin-top: 18px; }
 .mod .spec dt, .mod .spec dd { padding: 7px 0; }
 .mod.last .txt { background: var(--blue); }
-.mod.last .n { color: var(--fg); }
+.mod.last .n { color: var(--ink); }
 
 /* how to hire us */
 .ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.way { background: var(--card); border-radius: var(--r); padding: 20px 22px 24px; display: grid; gap: 8px; align-content: start; }
+.way { color: var(--ink); background: var(--card); border-radius: var(--r); padding: 20px 22px 24px; display: grid; gap: 8px; align-content: start; }
 .way h3 { margin: 0; font-weight: 300; font-size: 22px; letter-spacing: -.02em; line-height: 1.1; }
-.way p { margin: 0; font-size: 12.5px; color: var(--dim); }
+.way p { margin: 0; font-size: 12.5px; color: var(--ink-dim); }
 
-/* closing panel */
-.end { margin: 88px 0 16px; background: var(--card); border-radius: var(--r); padding: 56px 24px 26px; text-align: center; display: grid; gap: 22px; justify-items: center; }
-.end p { margin: 0; font-size: 12px; }
-.end .go { font-size: 30px; font-weight: 300; letter-spacing: -.03em; border-bottom: 1px solid var(--fg); padding-bottom: 2px; }
-.end ul { list-style: none; margin: 18px 0 0; padding: 0; display: flex; gap: 18px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
-.legal { text-align: center; color: var(--dim); font-size: 10.5px; margin: 0; padding-bottom: max(32px, env(safe-area-inset-bottom, 0px)); }
+/* closing call to action and footer — the same as every other page on the site */
+.cta, .foot { position: relative; z-index: 1; max-width: calc(1360px + 2 * var(--gutter)); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+.cta { margin-top: clamp(80px, 14vh, 160px); padding-top: clamp(80px, 16vh, 180px); padding-bottom: clamp(40px, 8vh, 80px); border-top: 1px solid var(--line); }
+.kicker { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 500; margin: 0 0 16px; }
+.cta-link { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; font-size: clamp(2.6rem, 9vw, 9rem); font-weight: 500; letter-spacing: -.055em; line-height: .95; }
+.cta-link .arr { font-weight: 300; transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
+.cta-link:hover .arr { transform: translateX(.15em); }
+.cta-link span:first-child { background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; transition: background-size .6s cubic-bezier(.2, .7, .2, 1); }
+.cta-link:hover span:first-child { background-size: 100% 2px; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap; padding-top: 40px; padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); font-size: 13px; color: var(--dim); }
+.foot p { margin: 0; }
+.langs { display: flex; gap: 14px; }
+.langs a { color: var(--fg); }
+.langs a[aria-current] { text-decoration: underline; text-underline-offset: 4px; }
+.langs span[aria-disabled] { opacity: .45; cursor: not-allowed; }
 
 @media (max-width: 760px) {
   section { margin-top: 64px; }
-  .top ul { gap: 14px; }
+  .cta-link { font-size: 11vw; }
   .hero { aspect-ratio: 4 / 5; }
   .hero .veil { background: linear-gradient(180deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.75) 62%, rgba(255,255,255,.9) 100%); }
   .hero h1 { font-size: 40px; white-space: normal; }
@@ -118,11 +132,11 @@ section { margin-top: 88px; }
 </style>
 </head>
 <body>
+<header class="bar">
+  <a class="mark" href="/" aria-label="Oeuvre — Home">Oeuvre</a>
+  <nav class="mini" aria-label="Sections"><ul><li><a href="/work/">Work</a></li><li><a href="/services/" aria-current="page">Services</a></li><li><a href="/studio/">Studio</a></li><li><a href="/contact/">Contact</a></li></ul></nav>
+</header>
 <div class="page">
-  <header class="top">
-    <a class="mark" href="/" aria-label="Oeuvre — Home">Oeuvre</a>
-    <nav aria-label="Sections"><ul><li><a href="/work/">Work</a></li><li><a href="/services/" aria-current="page">Services</a></li><li><a href="/studio/">Studio</a></li><li><a href="/contact/">Contact</a></li></ul></nav>
-  </header>
 
   <main id="main">
     <figure class="hero">
@@ -182,13 +196,12 @@ section { margin-top: 88px; }
     </section>
   </main>
 
-  <footer class="end">
-    <p>From one sentence to a shelf.</p>
-    <a class="go" href="/contact/">Start your brand →</a>
-    <ul><li><a href="/work/">Work</a></li><li><a href="/services/">Services</a></li><li><a href="/studio/">Studio</a></li><li><a href="/contact/">Contact</a></li></ul>
-  </footer>
-  <p class="legal">Oeuvre is a trading name of BNB Management Consulting Ltd.</p>
 </div>
+<aside class="cta"><p class="kicker">Have something in mind?</p><a class="cta-link" href="/contact/"><span>Start a conversation</span><span class="arr" aria-hidden="true">→</span></a></aside>
+<footer class="foot">
+  <p class="foot-legal">Oeuvre is a trading name of BNB Management Consulting Ltd.</p>
+  <div class="langs" role="group" aria-label="Language"><a href="/services/brand-workshop/" lang="en" hreflang="en" aria-current="true" title="English">EN</a><span aria-disabled="true" lang="mi" title="Te reo Māori — Coming soon">MI</span></div>
+</footer>
 <canvas id="grid" aria-hidden="true"></canvas>
 <script>
 /* A layout grid behind the page that only shows where light has passed.
