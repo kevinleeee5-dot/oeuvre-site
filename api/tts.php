@@ -12,8 +12,10 @@ declare(strict_types=1);
  * Counters: oeuvre-secrets/tts-counters.json under flock. Nothing logs the text or the keys.
  */
 
-const VOICE_ID = 'SAz9YHcvj6GT2YYXdXww';            // River
+const VOICE_ID = 'SAz9YHcvj6GT2YYXdXww';            // River (English)
 const MODEL_ID = 'eleven_multilingual_v2';
+const VOICE_ID_ZH = '5qr5FEpvZGzmVOPBS55W';         // Zi Yue, a native Mandarin voice (Chinese replies)
+const MODEL_ID_ZH = 'eleven_v3';
 const OUTPUT = 'mp3_44100_64';
 const MAX_CHARS = 700;
 const IP_PER_HOUR = 60;
@@ -80,11 +82,12 @@ rewind($fp); ftruncate($fp, 0); fwrite($fp, (string) json_encode($st)); fflush($
 if ($deny === 'rate_limited') out_json(429, 'rate_limited', 'too many requests');
 if ($deny === 'budget') out_json(503, 'budget', 'the voice is resting for today');
 
-$ch = curl_init('https://api.elevenlabs.io/v1/text-to-speech/' . VOICE_ID . '?output_format=' . OUTPUT);
+$zh = (bool) preg_match('/\p{Han}/u', $text);
+$ch = curl_init('https://api.elevenlabs.io/v1/text-to-speech/' . ($zh ? VOICE_ID_ZH : VOICE_ID) . '?output_format=' . OUTPUT);
 curl_setopt_array($ch, [
     CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30,
     CURLOPT_HTTPHEADER => ['xi-api-key: ' . $eleven, 'Content-Type: application/json', 'Accept: audio/mpeg'],
-    CURLOPT_POSTFIELDS => json_encode(['text' => $text, 'model_id' => MODEL_ID]),
+    CURLOPT_POSTFIELDS => json_encode(['text' => $text, 'model_id' => $zh ? MODEL_ID_ZH : MODEL_ID]),
 ]);
 $audio = curl_exec($ch);
 $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);

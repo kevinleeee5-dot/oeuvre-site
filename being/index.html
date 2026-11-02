@@ -120,7 +120,7 @@
   #thread li { animation:rise .5s var(--ease) both; }
   @keyframes rise { from { opacity:0; transform:translateY(6px); } }
   #thread .you { align-self:flex-end; max-width:86%; text-align:right; color:var(--soft); font-size:13px; line-height:1.45; }
-  #thread .you::before { content:"you"; display:block; font:500 9.5px/1.6 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+  #thread .you::before { content:var(--you-label, "you"); display:block; font:500 9.5px/1.6 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
   #thread .it { color:var(--fg); font-size:15px; line-height:1.5; white-space:pre-wrap; text-shadow:0 0 12px #000; }
   #thread .it.dim { color:var(--soft); }
   #thread .it a { color:var(--fg); }
@@ -242,6 +242,7 @@
       (function () {
         if (!/[?&]lang=zh\b/.test(location.search)) return;
         document.documentElement.lang = "zh-Hans";
+        document.documentElement.style.setProperty("--you-label", '"你"');
         // three voices for the suggestions; the panel steps through them in time with the typed placeholder
         window.ZH_SETS = [
           { chips: ["除了长得好看，还会什么？", "拿点人类没见过的。", "我有个不太合法的灵感。", "谁把你关在这里的？"], say: "说点让算法意外的。" },

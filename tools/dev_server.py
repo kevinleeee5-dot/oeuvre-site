@@ -42,7 +42,8 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_RTF = "/Users/trevion/Downloads/Oeuvre/Oeuvre API key.rtf"
 ELEVEN_RTF = "/Users/trevion/Downloads/Oeuvre/Elevenlabs API.rtf"   # ElevenLabs key for /api/tts (memory only, never logged)
-TTS_VOICE, TTS_MODEL, TTS_OUTPUT = "SAz9YHcvj6GT2YYXdXww", "eleven_multilingual_v2", "mp3_44100_64"   # River
+TTS_VOICE, TTS_MODEL, TTS_OUTPUT = "SAz9YHcvj6GT2YYXdXww", "eleven_multilingual_v2", "mp3_44100_64"   # River (English)
+TTS_VOICE_ZH, TTS_MODEL_ZH = "5qr5FEpvZGzmVOPBS55W", "eleven_v3"                                    # Zi Yue (Chinese)
 PERSONA_FILE = os.path.join(ROOT, "api", "persona.php")
 
 # ---- model + prices (Claude Haiku 5.5, USD per token, prompts <= 100K tokens) -------------
@@ -454,9 +455,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         import hmac
         if not ELEVEN_KEY or not API_KEY or not hmac.compare_digest(tts_sig(text.strip()), sig):
             return self.reply(403 if ELEVEN_KEY else 500, {"error": "unsigned text or no voice", "code": "bad_request"})
+        zh = bool(re.search(r"[\u3400-\u9fff]", text))
         req = urllib.request.Request(
-            "https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=%s" % (TTS_VOICE, TTS_OUTPUT),
-            data=json.dumps({"text": text.strip(), "model_id": TTS_MODEL}).encode(),
+            "https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=%s" % (TTS_VOICE_ZH if zh else TTS_VOICE, TTS_OUTPUT),
+            data=json.dumps({"text": text.strip(), "model_id": TTS_MODEL_ZH if zh else TTS_MODEL}).encode(),
             headers={"xi-api-key": ELEVEN_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg"})
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
