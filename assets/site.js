@@ -389,6 +389,11 @@
       }
     }
     const HI = new Int32Array(N);                      // each particle's current glyph point (index into w.pts)
+    // "ink in water": between two words each grain lets go on its own, drifts in a soft shared current, and settles
+    // into the next word; until it lets go it stays in the old word (OX/OY), after it lands it is ink again (TX/TY)
+    const MIG = 3400, MD = new Float32Array(N);
+    let mig = null;                                    // { t: ms into the move, ax, aw }: the old word's left edge and width
+    const ssm = k => (k = clamp(k), k * k * (3 - 2 * k));
 
     /* ---- the list (Index): hovering a word turns it into the same streaming ink ---- */
     let listHover = -1, listC = 0;
@@ -449,12 +454,18 @@
       const prev = pl;
       const np = place(words[k], prev);
       if (!np || !Number.isFinite(np.x + np.y + np.fs)) return;      // fonts not measured yet: wait for the next boot
-      cur = k; pl = np; assign(words[k], pl);
+      cur = k; pl = np; assign(words[k], pl); mig = null;
       if (!keepTime) { tw = 0; xf = prev ? 0 : 1; }
       fs = pl.fs; nav.style.setProperty("--fs", fs + "px");
       hit.href = words[k].href; hit.setAttribute("aria-label", words[k].label);
     }
     // asking for a word: it gathers at a new random place, unless it is already the legible one
+    function startMig(k) {
+      const from = pl; if (!from) return show(k);
+      show(k); if (cur !== k) return;
+      for (let i = 0; i < N; i++) MD[i] = R() * 0.5 + clamp((OX[i] - from.x) / Math.max(1, from.w)) * 0.08;
+      mig = { t: 0 }; tw = GATHER;                     // when it has landed, the word simply holds
+    }
     const goTo = k => { if (k < 0 || !pl) return; if (k === cur && tw < HOLD_END) return; show(k); };
     function layout() { if (!body.classList.contains("list") && pl) show(cur); }
     // hover / touch pauses and sharpens; the hit link navigates (the site-wide click handler runs the iris)
@@ -526,10 +537,23 @@
           HI[i] = j; TX[i] = pl.x + pts[j] * pl.fs + (R() - 0.5) * 1.6; TY[i] = pl.y + pts[j + 1] * pl.fs + (R() - 0.5) * 1.6;
         }
       }
+      const mu = mig ? mig.t / MIG : -1, amp = fs * 0.27;
       for (let i = 0; i < N; i++) {
         const x = X[i], y = Y[i];
+        let gx = TX[i], gy = TY[i];
+        if (mig) {
+          const e = (mu - MD[i]) / 0.5;
+          if (e <= 0) { gx = OX[i]; gy = OY[i]; }
+          else if (e < 1) {
+            const q = ssm(e), m = Math.sin(Math.PI * e), bx = OX[i] + (TX[i] - OX[i]) * q, by = OY[i] + (TY[i] - OY[i]) * q;
+            const fx = Math.sin(by * 0.009 + ts * 0.35) + Math.sin((bx + by) * 0.004 - ts * 0.2) * 0.6,
+              fy = Math.cos(bx * 0.008 - ts * 0.3) + Math.cos((bx - by) * 0.005 + ts * 0.25) * 0.6;
+            const nx = bx + (fx + (S[i] * 7.31 % 1 - 0.5) * 0.7) * amp * m, ny = by + (fy * 0.65 + (S[i] * 3.17 % 1 - 0.5) * 0.45) * amp * m;
+            VX[i] = nx - x; VY[i] = ny - y; X[i] = nx; Y[i] = ny; continue;
+          }
+        }
         const a = Math.sin(x * 0.0021 + ts * 0.23 + S[i] * 0.3) * 2.4 + Math.cos(y * 0.0027 - ts * 0.17) * 2.4;
-        let vx = VX[i] + Math.cos(a) * nf + (TX[i] - x) * k, vy = VY[i] + Math.sin(a) * nf + (TY[i] - y) * k;
+        let vx = VX[i] + Math.cos(a) * nf + (gx - x) * k, vy = VY[i] + Math.sin(a) * nf + (gy - y) * k;
         if (stir) {                                   // the pointer stirs nearby particles into a slight eddy
           const dx = x - px, dy = y - py, d2 = dx * dx + dy * dy;
           if (d2 < 14400) { const f = (1 - d2 / 14400) * 0.35 / (Math.sqrt(d2) + 1); vx += (dx * 0.3 - dy * 0.9) * f; vy += (dy * 0.3 + dx * 0.9) * f; }
@@ -540,14 +564,17 @@
     function streaks(c) {
       // fade the last frames to transparent (the figure shows through), then add this frame's streaks
       mctx.globalCompositeOperation = "destination-out";
-      mctx.fillStyle = `rgba(0,0,0,${(0.12 + 0.08 * c).toFixed(3)})`; mctx.fillRect(0, 0, W, H);
+      // on the move the trails are shorter: a haze, not rain
+      mctx.fillStyle = `rgba(0,0,0,${(mig ? 0.3 : 0.12 + 0.08 * c).toFixed(3)})`; mctx.fillRect(0, 0, W, H);
       mctx.globalCompositeOperation = "lighter"; mctx.lineWidth = 1;
       for (let pass = 0; pass < 2; pass++) {
         // the faint ink brightens a little as the word settles, so a held word reads over hair and skin
         mctx.strokeStyle = pass ? "rgba(255,255,255,.85)" : `rgba(242,242,238,${(0.22 + 0.16 * c).toFixed(3)})`; mctx.beginPath();
+        const mu = mig ? mig.t / MIG : -1;
         for (let j = 0; j < N; j++) {
           if ((j % 9 === 0) !== (pass === 1)) continue;
-          let lx = VX[j] * 3, ly = VY[j] * 3; const ln = Math.abs(lx) + Math.abs(ly);
+          let lx = VX[j] * 3, ly = VY[j] * 3;
+          if (mig) { const e = (mu - MD[j]) / 0.5; if (e > 0 && e < 1) { if (S[j] * 13.7 % 1 < 0.45 * Math.sin(Math.PI * e) * (pass ? 0.4 : 1)) continue; lx = VX[j] * 0.8; ly = VY[j] * 0.8; const q = Math.abs(lx) + Math.abs(ly); if (q > 5) { lx *= 5 / q; ly *= 5 / q; } } } const ln = Math.abs(lx) + Math.abs(ly);
           if (ln > 14) { lx *= 14 / ln; ly *= 14 / ln; }
           mctx.moveTo(X[j] - lx, Y[j] - ly); mctx.lineTo(X[j] + 0.9, Y[j] + 0.9);
         }
@@ -610,8 +637,8 @@
         return;
       }
 
-      tw += dt; if (paused) tw = Math.min(tw, HOLD_END - 1);
-      if (tw >= CYCLE) show((cur + 1) % words.length);
+      if (mig) { mig.t += dt; if (mig.t >= MIG) mig = null; }
+      else { tw += dt; if (paused) tw = Math.min(tw, HOLD_END - 1); if (tw >= HOLD_END) startMig((cur + 1) % words.length); }
       const c = clearness();
       // physics at a steady 60 Hz whatever the display rate; nothing changes on a frame with no step
       acc = Math.min(acc + dt, 50);
@@ -619,7 +646,7 @@
       while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }
       if (steps) { streaks(c); focusRing(); }
       if (perf) { const d = performance.now() - t0; perf.n++; perf.sum += d; if (d > perf.max) perf.max = d; if (steps) { perf.drawn++; perf.dsum += d; } }
-      placeHit(c > 0.35 && tw > GATHER * 0.4 && tw < HOLD_END + DISSOLVE * 0.5);
+      placeHit(mig ? mig.t > MIG * 0.6 : c > 0.35 && tw > GATHER * 0.4 && tw < HOLD_END + DISSOLVE * 0.5);
     }
     addEventListener("resize", () => {
       if (!haveFace) face = fallback();
