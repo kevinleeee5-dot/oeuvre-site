@@ -46,10 +46,10 @@ TTS_VOICE, TTS_MODEL, TTS_OUTPUT = "SAz9YHcvj6GT2YYXdXww", "eleven_multilingual_
 PERSONA_FILE = os.path.join(ROOT, "api", "persona.php")
 
 # ---- model + prices (Claude Haiku 5.5, USD per token, prompts <= 100K tokens) -------------
-MODEL = "claude-haiku-5-5"
+MODEL = "claude-sonnet-5-5"
 API_VERSION = "2026-10-21"
-PRICE_IN = 0.10 / 1e6
-PRICE_OUT = 0.50 / 1e6
+PRICE_IN = 2.00 / 1e6
+PRICE_OUT = 10.00 / 1e6
 MAX_TOKENS = 220
 
 # ---- limits ---------------------------------------------------------------------------------
@@ -296,8 +296,8 @@ def call_claude(messages):
         "max_tokens": MAX_TOKENS,
         "system": PERSONA,
         "messages": [{"role": m["role"], "content": m["content"]} for m in messages],
-        # Short spoken replies: no thinking (accepted on Haiku 5.5 at effort <= high), low effort.
-        "thinking": {"type": "disabled"},
+        # Short spoken replies: thinking off (Sonnet 5.5 takes "between_tools" for that, at effort <= high), low effort.
+        "thinking": {"type": "between_tools"},
         "output_config": {"effort": "low"},
     }
     req = urllib.request.Request(

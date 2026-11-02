@@ -1,7 +1,7 @@
 # /api/talk — the figure's voice
 
 `POST /api/talk` lets visitors talk to the figure. It proxies to the Anthropic Claude API
-(model `claude-haiku-5-5`, `max_tokens` 220, no thinking, effort `low`) with a fixed persona
+(model `claude-sonnet-5-5`, `max_tokens` 220, thinking off via `between_tools`, effort `low`) with a fixed persona
 (`api/persona.php`, the single source used by both servers).
 
 | File | Where it runs |
@@ -40,12 +40,12 @@ POST /api/talk   Content-Type: application/json
 | Daily spend (UTC day) | USD 4 |
 | Lifetime spend | USD 80 in production, USD 15 for the dev server |
 
-Spend is computed from the API's `usage` at Claude Haiku 5.5 prices (USD 0.10 / 1M input,
-0.50 / 1M output tokens). Before each upstream call the worst case for that call is reserved
+Spend is computed from the API's `usage` at Claude Sonnet 5.5 prices (USD 2 / 1M input,
+10 / 1M output tokens). Before each upstream call the worst case for that call is reserved
 under an exclusive `flock`, then settled to the real cost, so concurrent requests cannot push a
 counter past its cap. If the counter file is unreadable the endpoint fails closed (`config`)
 instead of resetting. Dev (15) + production (80) lifetime caps add up to USD 95, under the
-USD 100 limit. A real reply costs about USD 0.0001, so USD 4/day is roughly 30,000 replies.
+USD 100 limit. A real reply costs about USD 0.004, so USD 4/day is roughly 1,000 replies.
 
 **Belt and braces:** also set a monthly spend limit for this key's workspace in the Anthropic
 Console (Settings → Limits). That limit is enforced by Anthropic and is the only cap that also

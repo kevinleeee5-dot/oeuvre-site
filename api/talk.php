@@ -14,11 +14,11 @@ declare(strict_types=1);
  * Nothing here logs message text or the key; error_log gets counts and costs only.
  */
 
-const MODEL = 'claude-haiku-5-5';
+const MODEL = 'claude-sonnet-5-5';
 const API_VERSION = '2026-10-21';
 const API_URL = 'https://api.anthropic.com/v1/messages';
-const PRICE_IN = 0.10 / 1e6;   // USD per input token (Claude Haiku 5.5, prompts <= 100K tokens)
-const PRICE_OUT = 0.50 / 1e6;  // USD per output token
+const PRICE_IN = 2.00 / 1e6;   // USD per input token (Claude Sonnet 5.5)
+const PRICE_OUT = 10.00 / 1e6; // USD per output token
 const MAX_TOKENS = 220;
 
 const MAX_MESSAGES = 12;
@@ -229,8 +229,8 @@ function call_claude(string $key, string $system, array $messages): array {
         'max_tokens' => MAX_TOKENS,
         'system' => $system,
         'messages' => array_map(fn($m) => ['role' => $m['role'], 'content' => $m['content']], $messages),
-        // Short spoken replies: no thinking (accepted on Haiku 5.5 at effort <= high), low effort.
-        'thinking' => ['type' => 'disabled'],
+        // Short spoken replies: thinking off (Sonnet 5.5 takes 'between_tools' for that, at effort <= high), low effort.
+        'thinking' => ['type' => 'between_tools'],
         'output_config' => ['effort' => 'low'],
     ];
     $ch = curl_init(API_URL);
