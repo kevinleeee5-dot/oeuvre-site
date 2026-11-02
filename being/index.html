@@ -249,22 +249,13 @@
           { chips: ["正常的事，你们做吗？", "听说你们有点东西？", "我有个想法，先别报警。", "你是活的，还是装的？"], say: "现实有点无聊，我们改改。" }
         ];
         var chips = window.ZH_SETS[0].chips;
-        [].forEach.call(document.querySelectorAll(".chip"), function (b, i) { if (chips[i]) b.textContent = chips[i]; });
+        [].forEach.call(document.querySelectorAll(".chip"), function (b, i) { if (chips[i]) { b.textContent = ""; var t = document.createElement("span"); t.className = "ct"; t.textContent = chips[i]; t.style.transition = "opacity .4s"; b.appendChild(t); } });
         var say = document.getElementById("say");
         if (say) { say.placeholder = window.ZH_SETS[0].say; say.setAttribute("aria-label", "输入后按回车发送"); }
         document.addEventListener("DOMContentLoaded", function () { var tab = document.getElementById("tab"); if (tab && tab.lastChild) tab.lastChild.textContent = "对话"; });
         var ps = document.getElementById("pstate"); if (ps) ps.textContent = "对话";
-        var m = document.querySelectorAll(".foot .meta");
-        // one hint at a time, the two take turns (phones have no space bar: only the first)
-        if (m[1]) m[1].style.display = "none";
-        if (m[0]) {
-          var hints = ["回车，让它发生", "按住空格，打破沉默"], hi = 0, coarse = matchMedia("(pointer: coarse)").matches;
-          m[0].textContent = hints[0]; m[0].style.transition = "opacity .5s";
-          if (!coarse) setInterval(function () {
-            m[0].style.opacity = "0";
-            setTimeout(function () { hi = 1 - hi; m[0].textContent = hints[hi]; m[0].style.opacity = ""; }, 500);
-          }, 3800);
-        }
+        // no key hints on the Chinese panel
+        var foot = document.querySelector(".foot"); if (foot) foot.style.display = "none";
       })();
     </script>
   </aside>
@@ -2387,12 +2378,15 @@
   // the suggestions change with the placeholder: fade out, new words, fade in (chips already used stay hidden)
   function swapChips(k) {
     var box = document.getElementById("chips"); if (!box || !idle()) return;
-    box.style.transition = "opacity .45s"; box.style.opacity = "0";
-    setTimeout(function () {
-      var cs = box.querySelectorAll(".chip"), set = ZH[k].chips;
-      for (var i = 0; i < cs.length && i < set.length; i++) cs[i].textContent = set[i];
-      base = ZH[k].say; box.style.opacity = "";
-    }, 450);
+    var ts = box.querySelectorAll(".chip .ct"), set = ZH[k].chips;
+    base = ZH[k].say;
+    [].forEach.call(ts, function (t, i) {                       // one line after another, not the whole block
+      if (!set[i]) return;
+      setTimeout(function () {
+        t.style.opacity = "0";
+        setTimeout(function () { t.textContent = set[i]; t.style.opacity = ""; }, 400);
+      }, i * 650);
+    });
   }
   say.addEventListener("focus", function () { say.setAttribute("placeholder", base); });
   setTimeout(tick, 1800);
