@@ -213,7 +213,7 @@ def figure(img, cls="", eager=False):
 def home(c, P):
     s = c["site"]
     words = "".join(
-        f'<li><a class="word" data-i="{i}" data-id="{m["id"]}" href="{P}{m["href"]}">{esc(m["label"])}<sup aria-hidden="true">0{i + 1}</sup></a></li>'
+        f'<li><a class="word" data-i="{i}" data-id="{m["id"]}" href="{P}{m["href"]}">{esc(m.get("home", m["label"]))}<sup aria-hidden="true">0{i + 1}</sup></a></li>'
         for i, m in enumerate(c["menu"]))
     nm = "".join(f'<span style="animation-delay:{0.12 * i:.2f}s">{esc(ch)}</span>' for i, ch in enumerate(s["name"]))
     ln = "".join(f"<span>{esc(t.strip().rstrip('.'))}.</span>" for t in s["statement"].split(". ") if t.strip().strip("."))

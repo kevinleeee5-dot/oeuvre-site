@@ -32,22 +32,26 @@
     {
       "id": "work",
       "label": "作品",
-      "href": "/work/"
+      "href": "/work/",
+      "home": "亮亮家伙"
     },
     {
       "id": "services",
       "label": "服务",
-      "href": "/services/"
+      "href": "/services/",
+      "home": "这事儿能办"
     },
     {
       "id": "studio",
       "label": "工作室",
-      "href": "/studio/"
+      "href": "/studio/",
+      "home": "幕后主谋"
     },
     {
       "id": "contact",
       "label": "联系",
-      "href": "/contact/"
+      "href": "/contact/",
+      "home": "一起搞事"
     }
   ],
   "work": {
