@@ -294,10 +294,13 @@
     let R = isStatic ? rng(7) : Math.random;
     function sampleWord(w) {
       const c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
-      const font = `500 ${SAMPLE}px ${getComputedStyle(nav).fontFamily}`;
+      // the word's own weight and tracking (Chinese pages set the menu in 思源黑体 900 with looser tracking)
+      const cs = getComputedStyle(w.el), fsz = parseFloat(cs.fontSize) || 100, lsp = parseFloat(cs.letterSpacing);
+      const font = `${cs.fontWeight || 500} ${SAMPLE}px ${cs.fontFamily || getComputedStyle(nav).fontFamily}`;
+      const track = Number.isFinite(lsp) ? lsp / fsz : -0.05;
       g.font = font; const tw = Math.ceil(g.measureText(w.label).width) + 40;
       c.width = tw; c.height = Math.ceil(SAMPLE * 1.3);
-      g.font = font; if ("letterSpacing" in g) g.letterSpacing = (-0.05 * SAMPLE) + "px";
+      g.font = font; if ("letterSpacing" in g) g.letterSpacing = (track * SAMPLE) + "px";
       g.fillStyle = "#fff"; g.textBaseline = "top"; g.fillText(w.label, 20, SAMPLE * 0.1);
       const d = g.getImageData(0, 0, c.width, c.height).data;
       let minx = c.width, maxx = 0, miny = c.height, maxy = 0, area = 0;

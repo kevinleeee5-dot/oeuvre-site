@@ -16,12 +16,19 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102p"  # bump to bust caches of css/js
+VERSION = "20261102q"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
               '<path class="x" d="M13 8.2l3.6 3.6M16.6 8.2L13 11.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>'
               '</svg><span class="snd" aria-hidden="true"><i></i><i></i><i></i></span>')
+
+
+# Latin: Inter Tight + Geist Mono. Chinese pages add Noto Sans SC (思源黑体): 900 for menus and titles, 300 for the rest,
+# with Inter Tight's heavy weights so Latin words in those titles match
+FONTS = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap"
+FONTS_ZH = ("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;800;900&amp;family=Geist+Mono:wght@300;400"
+            "&amp;family=Noto+Sans+SC:wght@300;900&amp;display=swap")
 
 
 def esc(s):
@@ -130,7 +137,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <meta property="og:title" content="{esc(full_title)}">
 <meta property="og:description" content="{esc(description)}">
 <meta property="og:url" content="{esc(canonical)}">
-<meta property="og:locale" content="{esc(c['htmlLang'].replace('-', '_'))}">
+<meta property="og:locale" content="{esc(c.get('ogLocale', c['htmlLang'].replace('-', '_')))}">
 <meta property="og:image" content="{esc(s['url'])}/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -149,8 +156,8 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap"></noscript>
+<link rel="preload" as="style" href="{FONTS_ZH if c['lang'] == 'zh' else FONTS}" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{FONTS_ZH if c['lang'] == 'zh' else FONTS}"></noscript>
 <link rel="stylesheet" href="/assets/site.css?v={VERSION}">
 <script>(function(d){{d.className=d.className.replace('no-js','js');try{{if(sessionStorage.getItem('oeuvre-iris')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' arriving'}}catch(e){{}}{"try{if(!sessionStorage.getItem('oeuvre-intro')||/[?&]intro(&|$)/.test(location.search))d.className+=' intro'}catch(e){}" if page_id == 'home' else ''}}})(document.documentElement)</script>
 <script src="/assets/site.js?v={VERSION}" defer></script>
@@ -214,14 +221,14 @@ def home(c, P):
 <main id="main" class="home">
   <h1 class="sr-only">{esc(s.get('homeH1', s['name'] + ' — ' + s['statement']))}</h1>
   <div class="being">
-    <iframe id="being" src="/being/index.html" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
+    <iframe id="being" src="/being/index.html{'?lang=zh' if c['lang'] == 'zh' else ''}" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
   </div>
   <nav class="words" aria-label="Main"><ul>{words}</ul></nav>
   <div id="tags" aria-hidden="true" data-tags="{esc(json.dumps(c.get('homeTags', []), ensure_ascii=False))}"></div>
   <canvas id="menu" aria-hidden="true"></canvas>
   <a id="wordHit" class="word-hit" href="{P}{c["menu"][0]["href"]}" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
-    <div class="home-copy"><p class="home-statement">{esc(s['statement']).replace('. ', '.<br>')}</p>
+    <div class="home-copy"><p class="home-statement">{esc(s['statement']).replace('. ', '.<br>').replace('。', '。<br>', 1)}</p>
     <p class="home-support">{esc(s.get('support',''))}</p></div>
   </div>
 </main>"""
@@ -315,7 +322,10 @@ def workshop(w, P):
 
 def studio(c, P):
     V = c["studio"]
-    words = " ".join(f"<span>{esc(w)}</span>" for w in V["statement"].split(" "))
+    st = V["statement"]
+    # word by word; Chinese has no spaces, so it lights up character by character
+    words = (" ".join(f"<span>{esc(w)}</span>" for w in st.split(" ")) if " " in st
+             else "".join(f"<span>{esc(ch)}</span>" for ch in st))
     return f"""<main id="main" class="wrap">
   {back(c, P + '/')}
   <h1 class="page-title">{esc(V['title'])}</h1>
@@ -398,7 +408,8 @@ def build():
         if code == "en":
             written.append(write("404.html", page(c, lang_prefix=P, path="/404.html", page_id="notfound", section="",
                                                   title="404", description=c["notFound"]["text"], body=not_found(c, P))))
-    urls.append(en["site"]["url"] + "/services/brand-workshop/")   # hand-kept page, English only
+    urls.append(en["site"]["url"] + "/services/brand-workshop/")      # hand-kept pages
+    urls.append(en["site"]["url"] + "/zh/services/brand-workshop/")
     sitemap = "\n".join(f"  <url><loc>{esc(u)}</loc><lastmod>{__import__('datetime').date.today().isoformat()}</lastmod></url>" for u in urls)
     written.append(write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap}\n</urlset>\n'))
     written.append(write("robots.txt", f"User-agent: *\nAllow: /\nDisallow: /proto/\nDisallow: /tools/\nSitemap: {en['site']['url']}/sitemap.xml\n"))

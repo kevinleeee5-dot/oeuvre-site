@@ -237,6 +237,19 @@
       <button id="mic" class="ic mic" type="button" title="Tap, or hold the space bar, to talk"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M3 8a5 5 0 0 0 10 0M8 13v2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span id="miclabel" class="sr-only">speak</span></button>
     </div>
     <div class="foot"><span class="meta">Enter to send</span><span class="meta">Hold space to speak</span></div>
+    <script>
+      // the Chinese site loads this frame with ?lang=zh: its own words in Chinese
+      (function () {
+        if (!/[?&]lang=zh\b/.test(location.search)) return;
+        document.documentElement.lang = "zh-Hans";
+        var chips = ["Oeuvre 做什么？", "看看你们的作品", "项目怎么开始？", "你是谁？"];
+        [].forEach.call(document.querySelectorAll(".chip"), function (b, i) { if (chips[i]) b.textContent = chips[i]; });
+        var say = document.getElementById("say");
+        if (say) { say.placeholder = "问它点什么"; say.setAttribute("aria-label", "输入后按回车发送"); }
+        var m = document.querySelectorAll(".foot .meta");
+        if (m[0]) m[0].textContent = "回车发送"; if (m[1]) m[1].textContent = "按住空格说话";
+      })();
+    </script>
   </aside>
   <button id="tab" class="tab" type="button" aria-controls="panel" aria-expanded="false"><i class="live" aria-hidden="true"></i>Talk</button>
   <div id="vids" aria-hidden="true"></div>
@@ -1844,7 +1857,7 @@
     }
   }
   var API = "/api/talk", talkLog = [], talkClosed = false, sending = false;
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null, rec = null, recText = "", recLang = "en-NZ", recRetry = false, recAbort = false, holdSpace = false;
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null, rec = null, recText = "", recLang = /[?&]lang=zh\b/.test(location.search) ? "zh-CN" : "en-NZ", recRetry = false, recAbort = false, holdSpace = false;
   var LINES_NET = ["the line between us went quiet. say that again?", "i lost you for a moment. once more?"];
   var LINES_API = ["my thoughts slipped somewhere i couldn't follow. try me again?", "something in me stalled. say it again?"];
   var SESSION = (function () {
@@ -1866,7 +1879,7 @@
   }
   var CLOSED_HTML = 'if you would like to keep talking, write to <a href="mailto:info@bnbmanagement.co.nz">info@bnbmanagement.co.nz</a>.';
   function closeTalk() {
-    talkClosed = true; sayEl.disabled = true; sayEl.placeholder = "write to info@bnbmanagement.co.nz"; micBtn.disabled = true;
+    talkClosed = true; sayEl.disabled = true; sayEl.placeholder = (/[?&]lang=zh\b/.test(location.search) ? "请写信到 " : "write to ") + "info@bnbmanagement.co.nz"; micBtn.disabled = true;
     say("let's continue another time.", { after: CLOSED_HTML, dim: true });
   }
   async function send(text) {
@@ -2336,7 +2349,9 @@
   var lede = document.querySelector(".lede"), say = document.getElementById("say"), panel = document.getElementById("panel");
   if (lede && !rm) { var words = lede.textContent.trim().split(/\s+/); lede.setAttribute("aria-label", words.join(" ")); lede.innerHTML = words.map(function (w, i) { return '<span class="w" aria-hidden="true" style="animation-delay:' + (0.25 + i * 0.07).toFixed(2) + 's">' + w + "</span>"; }).join(" "); }
   if (!say || rm) return;
-  var Q = ["What could we build for you?", "How does a project start?", "Tell it about your brand", "Show me your work", "Can you make an app for us?", "What does the studio do?", "Who are you?"];
+  var Q = /[?&]lang=zh\b/.test(location.search)
+    ? ["我们能为你做什么？", "项目怎么开始？", "跟它聊聊你的品牌", "看看你们的作品", "能帮我们做个 App 吗？", "我想做自己的护肤品牌", "你是谁？"]
+    : ["What could we build for you?", "How does a project start?", "Tell it about your brand", "Show me your work", "Can you make an app for us?", "What does the studio do?", "Who are you?"];
   var base = say.getAttribute("placeholder"), qi = 0, ci = 0, dir = 1, wait = 0, timer = 0;
   function idle() { return !say.value && document.activeElement !== say && !panel.classList.contains("talked") && !/\b(listening|thinking|speaking)\b/.test(document.body.className); }
   function tick() {

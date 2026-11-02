@@ -1,6 +1,7 @@
 {
   "lang": "en",
   "htmlLang": "en",
+  "ogLocale": "en_NZ",
   "site": {
     "name": "Oeuvre",
     "url": "https://oeuvre.co.nz",
@@ -45,8 +46,7 @@
       "code": "zh",
       "label": "中",
       "name": "中文",
-      "ready": false,
-      "hidden": true
+      "ready": true
     },
     {
       "code": "mi",

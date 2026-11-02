@@ -1,0 +1,389 @@
+{
+  "lang": "zh",
+  "htmlLang": "zh-Hans",
+  "ogLocale": "zh_CN",
+  "site": {
+    "statement": "创意思考。数字制作。",
+    "support": "我们打造品牌、网站和数字体验，让企业脱颖而出。",
+    "description": "创意思考。数字制作。Oeuvre 为企业打造品牌、网站和数字体验，让它们脱颖而出。一间位于奥克兰的小型工作室。",
+    "place": "新西兰奥克兰",
+    "legal": "Oeuvre 是 BNB Management Consulting Ltd 的经营名称。",
+    "back": "返回",
+    "skip": "跳到正文",
+    "index": "目录",
+    "float": "漂浮",
+    "sound_on": "打开声音",
+    "sound_off": "关闭声音",
+    "soon": "即将推出",
+    "languages": "语言",
+    "sections": "栏目",
+    "home": "首页",
+    "seeYou": "让它看见你",
+    "seeYouOff": "关闭摄像头",
+    "beingTitle": "一个可以对话的摄影人像",
+    "ctaLead": "有想法了吗？",
+    "ctaLink": "聊聊你的项目",
+    "homeTitle": "Oeuvre — 奥克兰品牌与数字工作室",
+    "homeH1": "Oeuvre — 奥克兰品牌与数字工作室。创意思考。数字制作。",
+    "metaDescription": "Oeuvre 是奥克兰的品牌与数字工作室。品牌识别、网站、数字产品和动态内容——同一个团队，从第一个想法到上线和后续维护。",
+    "ogAlt": "Oeuvre — 奥克兰品牌与数字工作室"
+  },
+  "menu": [
+    {
+      "id": "work",
+      "label": "作品",
+      "href": "/work/"
+    },
+    {
+      "id": "services",
+      "label": "服务",
+      "href": "/services/"
+    },
+    {
+      "id": "studio",
+      "label": "工作室",
+      "href": "/studio/"
+    },
+    {
+      "id": "contact",
+      "label": "联系",
+      "href": "/contact/"
+    }
+  ],
+  "work": {
+    "title": "作品",
+    "metaTitle": "作品 — 品牌、网站与数字产品项目 | Oeuvre",
+    "metaDescription": "奥克兰工作室 Oeuvre 的品牌、网站和数字产品作品精选：BeiCare、MUZI、Folio 和 ACE。",
+    "intro": "精选项目。每一个都从最初的想法，做到人们真正在用的样子。",
+    "next": "下一个项目",
+    "all": "全部作品",
+    "labels": {
+      "brief": "项目需求",
+      "did": "我们做了什么",
+      "result": "现在的样子",
+      "role": "内容",
+      "year": "年份",
+      "sector": "行业",
+      "visit": "访问"
+    },
+    "projects": [
+      {
+        "slug": "beicare",
+        "name": "BeiCare",
+        "outcome": "新西兰新鲜手作的天然护肤品——顾客看到的网店，和背后支撑工坊运转的 iPad 应用。",
+        "sector": "护肤 / 新西兰制造",
+        "year": "2026",
+        "tags": [
+          "网站",
+          "应用",
+          "运营"
+        ],
+        "link": {
+          "label": "beicare.co.nz",
+          "href": "https://beicare.co.nz"
+        },
+        "hero": {
+          "src": "/assets/img/beicare-site.jpg",
+          "alt": "BeiCare 网站：干花上的一瓶玻璃精油，标语“新鲜手作，自然呵护”。",
+          "w": 1440,
+          "h": 900
+        },
+        "brief": "A small maker blends hydrosols, oils and balms by hand in small batches. The shop had to feel as fresh as the product. The workshop needed one calm screen that says what to make today.",
+        "did": [
+          "Shaped the shop around the product: botanical, warm, made in small batches.",
+          "Designed an iPad instrument panel for the workshop: today's batches, stock and work, on one screen.",
+          "Made every action direct — drag a batch, tap a line, done.",
+          "Built it bilingual: English first, Chinese one tap away."
+        ],
+        "result": "The shop is live at beicare.co.nz. The workshop app is in daily use on iPad.",
+        "gallery": [
+          {
+            "src": "/assets/img/beicare-site-mobile.jpg",
+            "alt": "The BeiCare website on a phone.",
+            "w": 780,
+            "h": 1688,
+            "fit": "contain",
+            "span": "half"
+          },
+          {
+            "kind": "dashboard",
+            "alt": "Workshop app — screens with demo data to come.",
+            "caption": "Workshop app. Screens with demo data to come.",
+            "span": "half"
+          }
+        ]
+      },
+      {
+        "slug": "muzi",
+        "name": "MUZI",
+        "outcome": "一个新西兰家居园艺品牌，从一袋土到线上商店。",
+        "sector": "家居园艺 / 零售",
+        "year": "2026",
+        "tags": [
+          "品牌",
+          "摄影",
+          "电商"
+        ],
+        "link": {
+          "label": "muzi.co.nz",
+          "href": "https://muzi.co.nz"
+        },
+        "hero": {
+          "src": "/assets/img/muzi-site.jpg",
+          "alt": "MUZI 网站：浅色背景上的四只手工釉面花盆。",
+          "w": 1440,
+          "h": 900
+        },
+        "brief": "A specialist range of succulent soils, stones and pots needed to look as considered as the plants they hold — on the shelf, in store and online.",
+        "did": [
+          "Shaped the identity and the voice: Home & Garden, quiet and earthy.",
+          "Photographed the range in one consistent light.",
+          "Organised a catalogue of around three hundred products.",
+          "Built the shop at muzi.co.nz and the retail material around it."
+        ],
+        "result": "The shop is live at muzi.co.nz, with stock in Auckland retail.",
+        "gallery": [
+          {
+            "src": "/assets/img/muzi-site-new-in.jpg",
+            "alt": "The ‘New in’ row of the MUZI shop: soil bags and granules.",
+            "w": 1440,
+            "h": 700,
+            "span": "full"
+          },
+          {
+            "src": "/assets/img/muzi-maifan.jpg",
+            "alt": "An echeveria top-dressed with 2–4 mm Maifan stone.",
+            "w": 1800,
+            "h": 1800,
+            "span": "half"
+          },
+          {
+            "src": "/assets/img/muzi-diatomite.jpg",
+            "alt": "Succulents top-dressed with 2–4 mm diatomite.",
+            "w": 1800,
+            "h": 1800,
+            "span": "half"
+          },
+          {
+            "src": "/assets/img/muzi-site-mobile.jpg",
+            "alt": "The MUZI shop on a phone.",
+            "w": 780,
+            "h": 1688,
+            "fit": "contain",
+            "span": "half"
+          },
+          {
+            "src": "/assets/img/muzi-logo.png",
+            "alt": "The MUZI Home & Garden wordmark.",
+            "w": 520,
+            "h": 241,
+            "fit": "contain",
+            "graphic": true,
+            "span": "half"
+          }
+        ]
+      },
+      {
+        "slug": "folio",
+        "name": "Folio",
+        "outcome": "一款安静的阅读应用，每天一期，可读可听。",
+        "sector": "媒体 / 阅读",
+        "year": "2026",
+        "tags": [
+          "应用",
+          "编辑",
+          "音频"
+        ],
+        "hero": {
+          "src": "/assets/img/folio-five-topics.jpg",
+          "alt": "并排的五篇 Folio 文章：环境、太空、科技、商业和国际。",
+          "w": 2400,
+          "h": 1040
+        },
+        "brief": "Reading apps shout. Folio had to feel like a well-made paper: a daily edition with a beginning and an end, read or narrated, then put down.",
+        "did": [
+          "Designed a daily edition with a clear start and finish.",
+          "Set the type for long reading, in light and dark.",
+          "Chose a calm, natural narration voice and built background listening with lock-screen controls.",
+          "Kept the whole pipeline small enough to run every day."
+        ],
+        "result": "In private testing on iPhone.",
+        "gallery": [
+          {
+            "src": "/assets/img/folio-concept.jpg",
+            "alt": "Folio concept board: onboarding, interests, the daily edition, an article and membership.",
+            "w": 2400,
+            "h": 1600,
+            "span": "full"
+          },
+          {
+            "src": "/assets/img/folio-article.jpg",
+            "alt": "A Folio article: “XRISM sees a pulsar catch stellar wind”.",
+            "w": 740,
+            "h": 1600,
+            "fit": "contain",
+            "span": "full"
+          }
+        ]
+      },
+      {
+        "slug": "ace",
+        "name": "ACE",
+        "outcome": "一个以磁带盘为核心的音乐播放器。",
+        "sector": "音乐 / 交互",
+        "year": "2026",
+        "tags": [
+          "交互",
+          "动态",
+          "应用"
+        ],
+        "hero": {
+          "src": "/assets/img/ace-reel.png",
+          "alt": "ACE 的磁带盘。",
+          "w": 2000,
+          "h": 2000,
+          "fit": "contain",
+          "graphic": true
+        },
+        "brief": "Music apps reduce a track to a progress bar. ACE gives it a body again: a tape reel that turns while the music plays, and that you turn to move through it.",
+        "did": [
+          "Made a tape reel the centre of the player, labelled like a tape box: title, date, master format.",
+          "The reel turns with the music: one full turn every twenty seconds.",
+          "Grab the reel and turn it to scrub, forwards or back.",
+          "Kept everything else quiet: one play button, a countdown, a plain track list."
+        ],
+        "result": "A private tool, used every day on one Mac.",
+        "gallery": [
+          {
+            "src": "/assets/img/ace-player.jpg",
+            "alt": "The ACE player: the reel, a play button, the countdown and the tape label.",
+            "w": 1101,
+            "h": 1400,
+            "fit": "contain",
+            "span": "full"
+          }
+        ]
+      }
+    ]
+  },
+  "services": {
+    "title": "服务",
+    "metaTitle": "服务 — 品牌、网站与数字产品设计 | Oeuvre",
+    "metaDescription": "一间奥克兰工作室，提供品牌识别、网站、数字产品、动态和内容。可以只选一项，也可以全部交给我们。",
+    "intro": "五项专业，一个团队。选一项，或全部。",
+    "closing": "同一个团队，从开始到完成，再到之后。",
+    "cta": "开始一个项目",
+    "labels": {
+      "what": "是什么",
+      "get": "你会得到",
+      "time": "一般周期"
+    },
+    "items": [
+      {
+        "id": "brand",
+        "name": "品牌",
+        "what": "命名、视觉识别和品牌语言。",
+        "get": "标志系统、字体、色彩、语气和品牌规范。",
+        "time": "4–8 周"
+      },
+      {
+        "id": "product",
+        "name": "数字产品",
+        "what": "人们每天都在用的应用和工具。",
+        "get": "调研、体验设计、界面设计、开发、上线和维护。",
+        "time": "8–20 周"
+      },
+      {
+        "id": "web",
+        "name": "网站",
+        "what": "好打理的网站和网店。",
+        "get": "内容设计、开发、托管、基础搜索优化和维护计划。",
+        "time": "4–10 周"
+      },
+      {
+        "id": "motion",
+        "name": "动态与内容",
+        "what": "为屏幕和社交媒体做的动态影像。",
+        "get": "动态设计、视频和社交媒体模板。",
+        "time": "2–6 周"
+      },
+      {
+        "id": "photography",
+        "name": "摄影",
+        "soon": "2027",
+        "what": "产品、空间和人像——同一种眼光。",
+        "get": "2027 年开放。可以提前预约第一次拍摄。",
+        "time": "—"
+      }
+    ],
+    "workshop": {
+      "kicker": "新",
+      "name": "品牌工坊",
+      "text": "你自己的护肤品牌，从想法到上架。",
+      "href": "/services/brand-workshop/"
+    }
+  },
+  "studio": {
+    "title": "工作室",
+    "metaTitle": "工作室 — 奥克兰的品牌与数字工作室 | Oeuvre",
+    "metaDescription": "Oeuvre 是奥克兰的一间小型品牌与数字工作室。设计师和工程师做同一个项目，从第一个想法到上线和后续维护。",
+    "statement": "我们打造品牌、网站和数字体验，让企业脱颖而出。",
+    "body": [
+      "奥克兰的一间小工作室。设计师和工程师在同一个房间，做同一个项目。",
+      "不在多家公司之间转手。开始你项目的人，也是之后照看它的人。",
+      "我们现在用英文和中文工作，毛利语也在路上。"
+    ],
+    "principlesTitle": "原则",
+    "principles": [
+      {
+        "name": "整体，而不是零件。",
+        "text": "品牌、产品和网站是同一种体验，我们把它们当成一件事来做。"
+      },
+      {
+        "name": "默认安静。",
+        "text": "清楚胜过响亮。一直删减，直到它好用为止。"
+      },
+      {
+        "name": "为长期照看而做。",
+        "text": "上线是中点，不是终点。"
+      }
+    ]
+  },
+  "contact": {
+    "title": "联系",
+    "metaTitle": "联系 Oeuvre — 在奥克兰开始你的项目",
+    "metaDescription": "和奥克兰的 Oeuvre 开始一个品牌、网站或数字产品项目。写信到 info@bnbmanagement.co.nz。",
+    "lead": "告诉我们三件事：你做什么、哪里不顺、希望什么时候解决。",
+    "copy": "复制邮箱",
+    "copied": "已复制",
+    "write": "写信给我们",
+    "reply": "我们会在两个工作日内回复。"
+  },
+  "notFound": {
+    "title": "这里还什么都没有。",
+    "text": "这个页面不存在，或者还没做出来。",
+    "home": "回到首页"
+  },
+  "homeTags": [
+    "品牌策略",
+    "视觉识别",
+    "网站",
+    "应用",
+    "产品设计",
+    "AI 智能体",
+    "内容",
+    "营销活动",
+    "动态",
+    "3D 与视觉",
+    "社交媒体",
+    "自动化",
+    "命名",
+    "文案",
+    "电商",
+    "摄影",
+    "视频",
+    "数据分析",
+    "上线",
+    "维护"
+  ]
+}

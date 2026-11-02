@@ -334,3 +334,14 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 .workshop .arr { font-size: clamp(1.6rem, 3vw, 2.6rem); font-weight: 300; transition: transform .6s var(--ease); }
 .workshop:hover .arr { transform: translateX(.15em); }
 @media (max-width: 720px) { .workshop { grid-template-columns: 1fr auto; } .workshop .k, .workshop .wt { grid-column: 1 / -1; } .workshop .wn { grid-column: 1; } }
+
+/* ---------- Chinese (思源黑体): the heaviest weight for menus and titles, light for everything else ---------- */
+:root:lang(zh) { --font: "Inter Tight", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+:lang(zh) body { font-weight: 300; }
+:lang(zh) .page-title, :lang(zh) .word, :lang(zh) .svc .sn, :lang(zh) .workshop .wn, :lang(zh) .cta-link,
+:lang(zh) .principles h3, :lang(zh) .row .nm, :lang(zh) .mail, :lang(zh) .next strong { font-weight: 900; letter-spacing: -.02em; }
+:lang(zh) .statement-big, :lang(zh) .closing { font-weight: 300; letter-spacing: 0; }
+:lang(zh) .page-title { line-height: 1; }
+:lang(zh) .word { line-height: 1.02; }
+:lang(zh) .home-statement, :lang(zh) .lead, :lang(zh) .studio-body, :lang(zh) .big { font-weight: 300; letter-spacing: 0; }
+:lang(zh) .mini ul, :lang(zh) .kicker, :lang(zh) .svc-body h3, :lang(zh) .label { letter-spacing: .04em; }
