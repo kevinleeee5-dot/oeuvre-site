@@ -45,7 +45,7 @@
     },
     {
       "code": "zh",
-      "label": "中",
+      "label": "CN",
       "name": "中文",
       "ready": true
     },
@@ -53,7 +53,7 @@
       "code": "mi",
       "label": "MI",
       "name": "Te reo Māori",
-      "ready": false
+      "ready": true
     }
   ],
   "menu": [
@@ -359,7 +359,7 @@
     "body": [
       "A small studio in Auckland. Designers and engineers in the same room, on the same brief.",
       "No hand-offs between agencies. The people who start your project are the people who look after it.",
-      "We work in English and Chinese, with te reo Māori on the way."
+      "We work in English, Chinese and te reo Māori."
     ],
     "principlesTitle": "Principles",
     "principles": [

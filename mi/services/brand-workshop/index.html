@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="mi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Awheawhe Waitohu — He waitohu tiaki kiri, mai i te whakaaro ki te pae hoko | Oeuvre</title>
+<meta name="description" content="Tō ake waitohu tiaki kiri, mai i te whakaaro ki te pae hoko: te whakamahere hua, te tātai me ngā tauira, te hoahoa waitohu, te takai, te paetukutuku me te whakaputa — kotahi te taiwhanga i Tāmaki Makaurau.">
+<meta name="google-site-verification" content="HdM9d1ZrdcDQDWXiHn4fNgn0pB8N0wssrnslsydQ_Ps">
+<link rel="canonical" href="https://oeuvre.co.nz/mi/services/brand-workshop/">
+<link rel="alternate" hreflang="en" href="https://oeuvre.co.nz/services/brand-workshop/">
+<link rel="alternate" hreflang="zh" href="https://oeuvre.co.nz/zh/services/brand-workshop/">
+<link rel="alternate" hreflang="mi" href="https://oeuvre.co.nz/mi/services/brand-workshop/">
+<link rel="alternate" hreflang="x-default" href="https://oeuvre.co.nz/services/brand-workshop/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Oeuvre">
+<meta property="og:title" content="Awheawhe Waitohu — He waitohu tiaki kiri, mai i te whakaaro ki te pae hoko | Oeuvre">
+<meta property="og:description" content="Tō ake waitohu tiaki kiri, mai i te whakaaro ki te pae hoko — kotahi te taiwhanga i Tāmaki Makaurau.">
+<meta property="og:url" content="https://oeuvre.co.nz/mi/services/brand-workshop/">
+<meta property="og:image" content="https://oeuvre.co.nz/assets/img/brand-workshop/drawing.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Kāinga","item":"https://oeuvre.co.nz/mi/"},{"@type":"ListItem","position":2,"name":"Ratonga","item":"https://oeuvre.co.nz/mi/services/"},{"@type":"ListItem","position":3,"name":"Awheawhe Waitohu","item":"https://oeuvre.co.nz/mi/services/brand-workshop/"}]},{"@type":"Service","name":"Brand Workshop","serviceType":"Skincare brand development","description":"Range planning, formulation and samples, brand design, packaging, website and production for new skincare brands.","provider":{"@id":"https://oeuvre.co.nz/#org"},"areaServed":"NZ"}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap">
+<style>
+/* Brand Workshop — black ground like the rest of the site, soft light cards */
+:root {
+  --bg: #000; --fg: #fff; --dim: rgba(255,255,255,.58); --card: #efefef; --blue: #d6e2ec; --line: rgba(255,255,255,.16);
+  --ink: #171717; --ink-dim: #8b8b8b;
+  --r: 8px; --max: 1080px; --gutter: clamp(16px, 4vw, 56px);
+  --font: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+html { overflow-x: clip; }
+body { font-family: var(--font); font-weight: 300; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; border-radius: 2px; }
+img { display: block; width: 100%; height: 100%; object-fit: cover; }
+figure { margin: 0; }
+.page { max-width: calc(var(--max) + 40px); margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.h { font-size: 15px; font-weight: 300; letter-spacing: .01em; text-transform: uppercase; margin: 0 0 14px; }
+.small { font-size: 11px; line-height: 1.35; }
+.mono { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; }
+.dim { color: var(--dim); }
+section { margin-top: 88px; }
+
+/* top bar — the same as every other page on the site */
+.bar { position: fixed; inset: 0 0 auto 0; z-index: 60; display: flex; align-items: center; gap: 24px; color: #fff;
+       padding: max(18px, env(safe-area-inset-top, 0px)) var(--gutter) 18px; mix-blend-mode: difference; pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.mark { font-weight: 600; font-size: clamp(26px, 2.4vw, 34px); letter-spacing: -.03em; margin-right: auto; }
+.mini ul { display: flex; gap: clamp(14px, 2.4vw, 32px); list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.mini a { opacity: .62; transition: opacity .2s; position: relative; }
+.mini a:hover, .mini a[aria-current] { opacity: 1; }
+.mini a[aria-current]::before { content: ""; position: absolute; left: -10px; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: currentColor; }
+main { padding-top: 76px; }
+
+/* hero: one rounded picture with small type laid over it */
+.hero { position: relative; overflow: hidden; aspect-ratio: 2 / 1; max-height: 88svh; background: var(--card);
+         margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }   /* full bleed, edge to edge */
+.hero img { position: absolute; inset: 0; will-change: transform; }
+.hero .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 42%, rgba(255,255,255,0) 70%); }
+.hero > div:not(.veil) { position: absolute; z-index: 1; }
+.hero .mid { color: var(--ink); left: max(20px, calc((100vw - var(--max)) / 2)); top: 50%; transform: translateY(-50%); }
+.hero h1 { margin: 0; font-weight: 300; font-size: clamp(44px, 5.4vw, 80px); line-height: 1; letter-spacing: -.035em; white-space: nowrap; }
+.hero .sub { margin: 26px 0 0; font-size: clamp(14px, 1.25vw, 18px); line-height: 1.4; max-width: 24ch; }
+
+/* where it starts — narrow column set off-centre */
+.intro { margin-left: 26%; max-width: 380px; }
+.intro p { margin: 0; font-size: 13px; line-height: 1.55; }
+.intro q { quotes: "“" "”"; }
+
+/* six modules, each beside the picture that shows it */
+.mods { display: grid; gap: 8px; }
+.mod { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mod figure img { will-change: transform; }
+.mod figure { border-radius: var(--r); overflow: hidden; aspect-ratio: 4 / 5; background: var(--card); }
+.mod .txt { color: var(--ink); background: var(--card); border-radius: var(--r); padding: 26px 28px 30px; display: flex; flex-direction: column; }
+.mod:nth-child(even) figure { order: 2; }
+.mod .n { font-size: 38px; font-weight: 300; letter-spacing: -.04em; color: #b9b9b9; line-height: 1; }
+.mod h3 { margin: auto 0 22px; font-weight: 300; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; }
+.mod dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); margin: 0; font-size: 12.5px; line-height: 1.5; border-top: 1px solid #dcdcdc; }
+.mod dt, .mod dd { margin: 0; padding: 10px 0; border-bottom: 1px solid #dcdcdc; }
+.mod dt { color: var(--ink-dim); }
+.mod .spec { margin-top: 18px; }
+.mod .spec dt, .mod .spec dd { padding: 7px 0; }
+.mod.last .txt { background: var(--blue); }
+.mod.last .n { color: var(--ink); }
+
+/* how to hire us */
+.ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.way { color: var(--ink); background: var(--card); border-radius: var(--r); padding: 20px 22px 24px; display: grid; gap: 8px; align-content: start; }
+.way h3 { margin: 0; font-weight: 300; font-size: 22px; letter-spacing: -.02em; line-height: 1.1; }
+.way p { margin: 0; font-size: 12.5px; color: var(--ink-dim); }
+
+/* closing call to action and footer — the same as every other page on the site */
+.cta, .foot { position: relative; z-index: 1; max-width: calc(1360px + 2 * var(--gutter)); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+.cta { margin-top: clamp(80px, 14vh, 160px); padding-top: clamp(80px, 16vh, 180px); padding-bottom: clamp(40px, 8vh, 80px); border-top: 1px solid var(--line); }
+.kicker { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 500; margin: 0 0 16px; }
+.cta-link { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; font-size: clamp(2.6rem, 9vw, 9rem); font-weight: 500; letter-spacing: -.055em; line-height: .95; }
+.cta-link .arr { font-weight: 300; transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
+.cta-link:hover .arr { transform: translateX(.15em); }
+.cta-link span:first-child { background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; transition: background-size .6s cubic-bezier(.2, .7, .2, 1); }
+.cta-link:hover span:first-child { background-size: 100% 2px; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap; padding-top: 40px; padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); font-size: 13px; color: var(--dim); }
+.foot p { margin: 0; }
+.langs { display: flex; gap: 14px; }
+.foot-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; margin-left: 10px; }
+.langs a { color: var(--fg); }
+.langs a[aria-current] { text-decoration: underline; text-underline-offset: 4px; }
+.langs span[aria-disabled] { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 760px) {
+  section { margin-top: 64px; }
+  .cta-link { font-size: 11vw; }
+  .hero { aspect-ratio: 4 / 5; }
+  .hero .veil { background: linear-gradient(180deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.75) 62%, rgba(255,255,255,.9) 100%); }
+  .hero h1 { font-size: 40px; white-space: normal; }
+  .hero .mid { top: auto; bottom: 28px; transform: none; }
+  .hero .sub { margin-top: 14px; }
+  .intro { margin-left: 0; }
+  .mod { grid-template-columns: 1fr; }
+  .mod:nth-child(even) figure { order: 0; }
+  .mod .txt { padding: 22px 20px 24px; }
+  .mod h3 { margin-top: 18px; font-size: 28px; }
+  .ways { grid-template-columns: 1fr; }
+}
+
+/* the design grid behind the page (drawn by the script below) */
+#grid { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.page { position: relative; z-index: 1; }
+
+/* the language switch stays in reach on every screen */
+.langs { position: fixed; z-index: 30; right: max(var(--gutter), env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+         gap: 12px; padding: 7px 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
+         background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.langs a { text-decoration: none; color: rgba(255, 255, 255, .7); }
+.langs a[aria-current] { color: #fff; }
+.foot { padding-bottom: max(72px, env(safe-area-inset-bottom, 0px)); }
+</style>
+<script>(function(c,l,a,r,i,t,y){if(c.location.hostname!=="oeuvre.co.nz")return;c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","z7bwtz0c8m");</script>
+</head>
+<body>
+<header class="bar">
+  <a class="mark" href="/mi/" aria-label="Oeuvre — Kāinga">Oeuvre</a>
+  <nav class="mini" aria-label="Ngā wāhanga"><ul><li><a href="/mi/work/">Mahi</a></li><li><a href="/mi/services/" aria-current="page">Ratonga</a></li><li><a href="/mi/studio/">Taiwhanga</a></li><li><a href="/mi/contact/">Whakapā mai</a></li></ul></nav>
+</header>
+<div class="page">
+
+  <main id="main">
+    <figure class="hero">
+      <img src="/assets/img/brand-workshop/drawing.jpg" width="2400" height="1358" alt="Ngā tuhi hangarau o tētahi pounamu tātā me ētahi pounamu pana, kua tāpiritia ki te pakitara o te taiwhanga" fetchpriority="high">
+      <div class="veil"></div>
+      <div class="mid"><h1>Awheawhe Waitohu</h1><p class="sub">Tō ake waitohu tiaki kiri, mai i te whakaaro tuatahi ki te pae hoko.</p></div>
+    </figure>
+
+    <section class="intro">
+      <h2 class="h">Te tīmatanga</h2>
+      <p>Ko te nuinga ka tae mai me te rerenga kōrero kotahi: <q>Kei te hiahia au ki tōku ake waitohu tiaki kiri.</q> Ka āwhina mātou i a koe ki te whakatau he aha hei hanga, mā wai, me pēhea te āhua, ā, me pēhea te hanga me te hoko.</p>
+    </section>
+
+    <section>
+      <h2 class="h">E ono ngā wāhanga</h2>
+      <div class="mods">
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/range.jpg" width="1400" height="1750" loading="lazy" alt="He papa porohita o ngā tauira kirīmi, me tētahi kōkō mā, he ngongo me tētahi pounamu, ka kitea mai i runga"></figure>
+          <div class="txt"><span class="n">01</span><h3>Te whakamahere hua</h3>
+            <dl><dt>Ā mātou mahi</dt><dd>Mā wai, te utu, ngā momo hua me te raupapa whakarewa.</dd><dt>Ka whiwhi koe</dt><dd>He mahere hua: ngā hua, ngā rahi me te raupapa.</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/lens.jpg" width="1400" height="1400" loading="lazy" alt="Ngā pounamu serum kua tapangatia ki ō rātou kaiwhakahohe, kua whakarahia i tētahi arotahi porowhita"></figure>
+          <div class="txt"><span class="n">02</span><h3>Te tātai me ngā tauira</h3>
+            <dl><dt>Ā mātou mahi</dt><dd>Te rongo ki te kiri, te kakara, te kakano, ngā kaiwhakahohe me te utu e whāia ana — kātahi ka puta ngā tauira.</dd><dt>Ka whiwhi koe</dt><dd>Ngā tauira kua whakaaetia me tētahi whakatakotoranga hua.</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/identity.jpg" width="1400" height="1750" loading="lazy" alt="He pūnaha tuakiri, takai hoki kua whakatakotoria: ngā pouaka, te kōpaki, te pēke, ngā tapanga me ngā kāri, me tētahi pānui"></figure>
+          <div class="txt"><span class="n">03</span><h3>Te hoahoa waitohu</h3>
+            <dl><dt>Ā mātou mahi</dt><dd>Te ingoa, te kōrero, te moko, te tae me te momotuhi.</dd><dt>Ka whiwhi koe</dt><dd>He tuakiri waitohu me ngā kōnae hoahoa.</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/spec.jpg" width="1400" height="1750" loading="lazy" alt="He whakatakotoranga takai: te tauira tapahi o tētahi pouaka me ngā tauira mangumangu, me tētahi ngongo kua tuhia"></figure>
+          <div class="txt"><span class="n">04</span><h3>Te takai</h3>
+            <dl><dt>Ā mātou mahi</dt><dd>Ngā pounamu, ngā tapanga me ngā pouaka — ka kimihia, ka whakahaerehia te tānga.</dd><dt>Ka whiwhi koe</dt><dd>Ngā kōnae kua rite mō te tā, ngā tauira takai me tētahi utu tūtohu.</dd></dl>
+            <dl class="spec mono"><dt>Finish</dt><dd>Matte, blind emboss</dd><dt>Inks</dt><dd>Warm Gray 1C · 11C</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/website.jpg" width="1400" height="1750" loading="lazy" alt="He papa rorohiko i runga i te pakitara pouaka e whakaatu ana i te papatohu ota: te kōwhiri, te tākai, te tuku"></figure>
+          <div class="txt"><span class="n">05</span><h3>Te paetukutuku me te ihirangi</h3>
+            <dl><dt>Ā mātou mahi</dt><dd>Te kōrero o te waitohu, ngā whārangi hua me tētahi toa.</dd><dt>Ka whiwhi koe</dt><dd>He paetukutuku e mahi ana, ka tukuna atu ki a koe.</dd></dl></div>
+        </article>
+        <article class="mod last">
+          <figure><img src="/assets/img/brand-workshop/tray.jpg" width="1400" height="1750" loading="lazy" alt="He wahine e kawe ana i tētahi paepae maitai, e whā ngā hua kua oti, kāore anō kia tapangatia, ka kitea mai i runga"></figure>
+          <div class="txt"><span class="n">06</span><h3>Te whakaputa me te tuku</h3>
+            <dl><dt>Ā mātou mahi</dt><dd>Te kimi, te whakakī, te tapanga me te tākai.</dd><dt>Ka whiwhi koe</dt><dd>He hua kua oti, me ngā pūkete puranga.</dd></dl></div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h">Me pēhea te tīmata</h2>
+      <div class="ways">
+        <div class="way"><h3>Kotahi te wāhanga</h3><p>Kōwhiria te wāhanga e ngaro ana i a koe.</p></div>
+        <div class="way"><h3>E ono katoa</h3><p>Kotahi te kapa, mai i te whakaaro ki te pae hoko.</p></div>
+      </div>
+    </section>
+  </main>
+
+</div>
+<aside class="cta"><p class="kicker">He whakaaro tōu?</p><a class="cta-link" href="/mi/contact/"><span>Tīmatahia he kōrero</span><span class="arr" aria-hidden="true">→</span></a></aside>
+<footer class="foot">
+  <p class="foot-legal">Ko Oeuvre te ingoa hokohoko o BNB Management Consulting Ltd. <a class="foot-link" href="/mi/privacy/">Tūmataiti</a></p>
+  <div class="langs" role="group" aria-label="Reo"><a href="/services/brand-workshop/" lang="en" hreflang="en" title="English">EN</a><a href="/zh/services/brand-workshop/" lang="zh" hreflang="zh" title="中文">CN</a><a href="/mi/services/brand-workshop/" lang="mi" hreflang="mi" aria-current="true" title="Te reo Māori">MI</a></div>
+</footer>
+<canvas id="grid" aria-hidden="true"></canvas>
+<script>
+/* A layout grid behind the page that only shows where light has passed.
+   Twelve columns line up with the content; rows every 96px. Each line is broken up by drifting noise,
+   so it reads as fragments, not a rule from top to bottom. The pointer (or, with no pointer, a slowly
+   drifting point) leaves a glow that lights the grid and fades over a few seconds.
+   A picture under the light zooms in very slowly; when the light leaves it eases back. */
+(function () {
+  var cv = document.getElementById('grid'), ctx = cv.getContext('2d');
+  var page = document.querySelector('.page');
+  var imgs = [].slice.call(document.querySelectorAll('.hero img, .mod figure img'));
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W, H, dpr, cols = [], ROW = 96, CELL = 32, GW, GH, field;
+  var fx = -999, fy = -999, tx = 0, ty = 0, lastMove = -1e9, t0 = performance.now(), raf = 0;
+  var zoom = imgs.map(function () { return 1; });
+
+  // smooth 1D value noise
+  function hash(n) { n = Math.sin(n * 127.1) * 43758.5453; return n - Math.floor(n); }
+  function noise(x) { var i = Math.floor(x), f = x - i; f = f * f * (3 - 2 * f); return hash(i) * (1 - f) + hash(i + 1) * f; }
+
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    var r = page.getBoundingClientRect(), cs = getComputedStyle(page);
+    var l = r.left + parseFloat(cs.paddingLeft), w = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var n = W < 760 ? 4 : 12, g = 8, cw = (w - g * (n - 1)) / n;
+    cols = [];
+    for (var i = 0; i < n; i++) { var x = l + i * (cw + g); cols.push(x, x + cw); }
+    GW = Math.ceil(W / CELL) + 1; GH = Math.ceil(H / CELL) + 1;
+    field = new Float32Array(GW * GH);
+    if (still) drawStill();
+  }
+
+  function glow(px, py) {
+    var gx = Math.floor(px / CELL), gy = Math.floor(py / CELL);
+    if (gx < 0 || gy < 0 || gx >= GW || gy >= GH) return 0;
+    return field[gy * GW + gx];
+  }
+
+  // segments are sorted into a few alpha levels so each level is one stroke
+  var LEVELS = 12, paths = [];
+  function seg(level, x1, y1, x2, y2) { (paths[level] || (paths[level] = [])).push(x1, y1, x2, y2); }
+
+  function draw(t) {
+    var s = t / 1000, i, k, a, p, L, STEP = 14, base, lit;
+    paths = [];
+    for (i = 0; i < cols.length; i++) {
+      p = Math.round(cols[i] + 3 * Math.sin(s * (.17 + (i % 5) * .03) + i * 1.7)) + .5;
+      for (L = 0; L < H; L += STEP) {
+        base = noise(i * 13.7 + L / 160 + s * .08);            // fragments along the line
+        lit = glow(p, L + STEP / 2);
+        a = (.012 + lit * .42) * base * base;
+        if (a > .006) seg(Math.min(LEVELS - 1, Math.floor(a / .45 * LEVELS)), p, L, p, L + STEP);
+      }
+    }
+    var k0 = Math.floor(scrollY / ROW) - 1, k1 = Math.ceil((scrollY + H) / ROW) + 1;
+    for (k = k0; k <= k1; k++) {
+      p = Math.round(k * ROW - scrollY + 5 * Math.sin(s * (.13 + ((k % 4) + 4) % 4 * .03) + k * 2.1)) + .5;
+      for (L = 0; L < W; L += STEP) {
+        base = noise(k * 7.3 + 50 + L / 160 + s * .06);
+        lit = glow(L + STEP / 2, p);
+        a = (.012 + lit * .42) * base * base;
+        if (a > .006) seg(Math.min(LEVELS - 1, Math.floor(a / .45 * LEVELS)), L, p, L + STEP, p);
+      }
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = 1;
+    for (var lv = 0; lv < LEVELS; lv++) {
+      var q = paths[lv]; if (!q) continue;
+      ctx.strokeStyle = 'rgba(255,255,255,' + ((lv + .5) / LEVELS * .45).toFixed(3) + ')';
+      ctx.beginPath();
+      for (var j = 0; j < q.length; j += 4) { ctx.moveTo(q[j], q[j + 1]); ctx.lineTo(q[j + 2], q[j + 3]); }
+      ctx.stroke();
+    }
+  }
+
+  function drawStill() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.beginPath();
+    for (var i = 0; i < cols.length; i++) { var c = Math.round(cols[i]) + .5; ctx.moveTo(c, 0); ctx.lineTo(c, H); }
+    for (var y = -(scrollY % ROW); y < H; y += ROW) { ctx.moveTo(0, Math.round(y) + .5); ctx.lineTo(W, Math.round(y) + .5); }
+    ctx.stroke();
+  }
+
+  function frame(now) {
+    var idle = now - lastMove > 2600, i;
+    if (idle) {                                         // drift on a slow Lissajous path
+      var s = (now - t0) / 1000;
+      tx = W * (.5 + .38 * Math.sin(s * .17)); ty = H * (.5 + .34 * Math.sin(s * .23 + 1.3));
+    }
+    if (fx < -500) { fx = tx; fy = ty; }
+    var k = idle ? .03 : .12;
+    fx += (tx - fx) * k; fy += (ty - fy) * k;
+
+    // the glow: fade everything a little, then add light around the focus
+    for (i = 0; i < field.length; i++) field[i] *= .982;
+    var R = 120, gx0 = Math.max(0, Math.floor((fx - R) / CELL)), gx1 = Math.min(GW - 1, Math.floor((fx + R) / CELL));
+    var gy0 = Math.max(0, Math.floor((fy - R) / CELL)), gy1 = Math.min(GH - 1, Math.floor((fy + R) / CELL));
+    for (var gy = gy0; gy <= gy1; gy++) for (var gx = gx0; gx <= gx1; gx++) {
+      var dx = (gx + .5) * CELL - fx, dy = (gy + .5) * CELL - fy, d2 = (dx * dx + dy * dy) / (R * R);
+      if (d2 < 1) { var c = gy * GW + gx; field[c] = Math.min(1, field[c] + .05 * (1 - d2)); }
+    }
+    draw(now);
+
+    // pictures under the light keep zooming in, very slowly; others ease back
+    for (i = 0; i < imgs.length; i++) {
+      var r = imgs[i].parentNode.getBoundingClientRect(), on = fx > r.left && fx < r.right && fy > r.top && fy < r.bottom;
+      zoom[i] = on ? Math.min(1.35, zoom[i] + .00035) : zoom[i] + (1 - zoom[i]) * .015;
+      imgs[i].style.transform = zoom[i] > 1.0005 ? 'scale(' + zoom[i].toFixed(4) + ')' : '';
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  addEventListener('pointermove', function (e) {
+    if (e.pointerType !== 'mouse') return;   // touch and pen keep the drifting light
+    tx = e.clientX; ty = e.clientY; lastMove = performance.now();
+  }, { passive: true });
+  addEventListener('resize', size);
+  if (still) addEventListener('scroll', drawStill, { passive: true });
+  document.addEventListener('visibilitychange', function () {
+    if (still) return;
+    if (document.hidden) cancelAnimationFrame(raf); else raf = requestAnimationFrame(frame);
+  });
+  size();
+  if (!still) raf = requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

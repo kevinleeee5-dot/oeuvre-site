@@ -9,6 +9,7 @@
 <link rel="canonical" href="https://oeuvre.co.nz/zh/services/brand-workshop/">
 <link rel="alternate" hreflang="en" href="https://oeuvre.co.nz/services/brand-workshop/">
 <link rel="alternate" hreflang="zh" href="https://oeuvre.co.nz/zh/services/brand-workshop/">
+<link rel="alternate" hreflang="mi" href="https://oeuvre.co.nz/mi/services/brand-workshop/">
 <link rel="alternate" hreflang="x-default" href="https://oeuvre.co.nz/services/brand-workshop/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Oeuvre">
@@ -141,6 +142,14 @@ main { padding-top: 76px; }
 .h, .mini ul { letter-spacing: .04em; }
 .intro p + p { margin-top: .9em; }
 .cta-link { font-size: clamp(2rem, 4.8vw, 4.8rem); line-height: 1.12; }
+
+/* the language switch stays in reach on every screen */
+.langs { position: fixed; z-index: 30; right: max(var(--gutter), env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+         gap: 12px; padding: 7px 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
+         background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.langs a { text-decoration: none; color: rgba(255, 255, 255, .7); }
+.langs a[aria-current] { color: #fff; }
+.foot { padding-bottom: max(72px, env(safe-area-inset-bottom, 0px)); }
 </style>
 <script>(function(c,l,a,r,i,t,y){if(c.location.hostname!=="oeuvre.co.nz")return;c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","z7bwtz0c8m");</script>
 </head>
@@ -216,7 +225,7 @@ main { padding-top: 76px; }
 <aside class="cta"><p class="kicker">下一个好想法？</p><a class="cta-link" href="/zh/contact/"><span>你负责异想天开，我们负责想办法。</span><span class="arr" aria-hidden="true">→</span></a></aside>
 <footer class="foot">
   <p class="foot-legal">Oeuvre 是 BNB Management Consulting Ltd 的经营名称。 <a class="foot-link" href="/zh/privacy/">隐私说明</a></p>
-  <div class="langs" role="group" aria-label="语言"><a href="/services/brand-workshop/" lang="en" hreflang="en" title="English">EN</a><a href="/zh/services/brand-workshop/" lang="zh" hreflang="zh" aria-current="true" title="中文">中</a><span aria-disabled="true" lang="mi" title="Te reo Māori — 即将推出">MI</span></div>
+  <div class="langs" role="group" aria-label="语言"><a href="/services/brand-workshop/" lang="en" hreflang="en" title="English">EN</a><a href="/zh/services/brand-workshop/" lang="zh" hreflang="zh" aria-current="true" title="中文">CN</a><a href="/mi/services/brand-workshop/" lang="mi" hreflang="mi" title="Te reo Māori">MI</a></div>
 </footer>
 <canvas id="grid" aria-hidden="true"></canvas>
 <script>

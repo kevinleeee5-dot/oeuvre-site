@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261103e"  # bump to bust caches of css/js
+VERSION = "20261103f"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -447,6 +447,7 @@ def build():
             written.append(write(base + ".htaccess", f"ErrorDocument 404 /{code}/404.html\n"))
     urls.append(en["site"]["url"] + "/services/brand-workshop/")      # hand-kept pages
     urls.append(en["site"]["url"] + "/zh/services/brand-workshop/")
+    urls.append(en["site"]["url"] + "/mi/services/brand-workshop/")
     sitemap = "\n".join(f"  <url><loc>{esc(u)}</loc><lastmod>{__import__('datetime').date.today().isoformat()}</lastmod></url>" for u in urls)
     written.append(write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap}\n</urlset>\n'))
     written.append(write("robots.txt", f"User-agent: *\nAllow: /\nDisallow: /proto/\nDisallow: /tools/\nSitemap: {en['site']['url']}/sitemap.xml\n"))

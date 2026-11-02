@@ -301,7 +301,9 @@
     });
 
     /* ---- glyph sampling: each word becomes a cloud of points where the ink is (unit = font size) ---- */
-    const N = W < 860 ? 1400 : W < 1800 ? 2600 : 3400, SAMPLE = 200, NS = 3600;
+    // N is the pool; each word uses as many as its ink needs (same density for every word and size), up to the pool
+    const N = W < 860 ? 2200 : W < 1800 ? 6500 : 8000, SAMPLE = 200, NS = 3600;
+    const DENS = W < 860 ? 0.2 : 0.12;                 // grains per square pixel of ink
     let R = isStatic ? rng(7) : Math.random;
     // one glyph cloud for a text in a given font: points (unit = font size), ink size, and where the ink starts in the text box
     function sampleText(text, font, track) {
@@ -324,7 +326,7 @@
       }
       const gw = (maxx - minx + 1) / SAMPLE, gh = (maxy - miny + 1) / SAMPLE;
       if (!(gw > 0 && gh > 0)) return none;
-      return { pts: Float32Array.from(out), gw, gh, ix: (minx - 20) / SAMPLE, iy: (miny - SAMPLE * 0.1) / SAMPLE };
+      return { pts: Float32Array.from(out), gw, gh, ix: (minx - 20) / SAMPLE, iy: (miny - SAMPLE * 0.1) / SAMPLE, ar: area / (SAMPLE * SAMPLE) };
     }
     // each word has a list shape (its own text, in the list's font) and a floating shape: on the Chinese home the
     // floating words stay English (data-float), set like the English site; opening the list morphs one into the other
@@ -336,7 +338,7 @@
       w.F = w.el.dataset.float ? sampleText(w.el.dataset.float, `500 ${SAMPLE}px "Inter Tight", ${fam}`, -0.05) : w.L;
       useShape(w, body.classList.contains("list") ? w.L : w.F);
     }
-    function useShape(w, v) { w.pts = v.pts; w.gw = v.gw; w.gh = v.gh; w.ix = v.ix; w.iy = v.iy; }
+    function useShape(w, v) { w.pts = v.pts; w.gw = v.gw; w.gh = v.gh; w.ix = v.ix; w.iy = v.iy; w.ar = v.ar || 0.5; }
     const useList = on => words.forEach(w => { if (w.L) useShape(w, on ? w.L : w.F); });
     const sampleAll = () => words.forEach(sampleWord);
 
@@ -379,8 +381,10 @@
       }
       return best;
     }
+    let nOn = N, nWas = N;                             // grains in use for this word, and for the one before
     function assign(w, p, keepOld) {
-      if (!keepOld) { OX.set(TX); OY.set(TY); }
+      if (!keepOld) { OX.set(TX); OY.set(TY); nWas = nOn; }
+      nOn = Math.max(300, Math.min(N, Math.round((w.ar || 0.5) * p.fs * p.fs * DENS)));
       const pts = w.pts, n = pts.length / 2;
       for (let i = 0; i < N; i++) {
         if (!n) { TX[i] = R() * W; TY[i] = R() * H; continue; }
@@ -507,11 +511,11 @@
       hit.style.pointerEvents = on ? "auto" : "none";
     }
     // one short mark per particle along the flow field, every ninth a bright grain
-    function marks(tx, ty, alpha) {
+    function marks(tx, ty, alpha, n = N) {
       mctx.globalCompositeOperation = "lighter"; mctx.lineWidth = 1;
       for (let pass = 0; pass < 2; pass++) {
         mctx.strokeStyle = pass ? `rgba(255,255,255,${0.9 * alpha})` : `rgba(242,242,238,${0.4 * alpha})`; mctx.beginPath();
-        for (let j = 0; j < N; j++) {
+        for (let j = 0; j < n; j++) {
           if ((j % 9 === 0) !== (pass === 1)) continue;
           const a = Math.sin(tx[j] * 0.0021 + S[j] * 0.3) * 2.4 + Math.cos(ty[j] * 0.0027) * 2.4, l = 2.2;
           mctx.moveTo(tx[j] - Math.cos(a) * l, ty[j] - Math.sin(a) * l); mctx.lineTo(tx[j] + Math.cos(a) * l, ty[j] + Math.sin(a) * l);
@@ -537,8 +541,9 @@
           HI[i] = j; TX[i] = pl.x + pts[j] * pl.fs + (R() - 0.5) * 1.6; TY[i] = pl.y + pts[j + 1] * pl.fs + (R() - 0.5) * 1.6;
         }
       }
-      const mu = mig ? mig.t / MIG : -1, amp = fs * 0.27;
+      const mu = mig ? mig.t / MIG : -1, amp = fs * 0.27, nUse = mig ? Math.max(nOn, nWas) : nOn;
       for (let i = 0; i < N; i++) {
+        if (i >= nUse) { X[i] = mig ? OX[i] : TX[i]; Y[i] = mig ? OY[i] : TY[i]; VX[i] = VY[i] = 0; continue; }
         const x = X[i], y = Y[i];
         let gx = TX[i], gy = TY[i];
         if (mig) {
@@ -570,9 +575,10 @@
       for (let pass = 0; pass < 2; pass++) {
         // the faint ink brightens a little as the word settles, so a held word reads over hair and skin
         mctx.strokeStyle = pass ? "rgba(255,255,255,.85)" : `rgba(242,242,238,${(0.22 + 0.16 * c).toFixed(3)})`; mctx.beginPath();
-        const mu = mig ? mig.t / MIG : -1;
-        for (let j = 0; j < N; j++) {
+        const mu = mig ? mig.t / MIG : -1, nMax = mig ? Math.max(nOn, nWas) : nOn;
+        for (let j = 0; j < nMax; j++) {
           if ((j % 9 === 0) !== (pass === 1)) continue;
+          if (mig) { const e = (mu - MD[j]) / 0.5; if (j >= (e < 0.5 ? nWas : nOn)) continue; }   // the old word's grains, then the new word's
           let lx = VX[j] * 3, ly = VY[j] * 3;
           if (mig) { const e = (mu - MD[j]) / 0.5; if (e > 0 && e < 1) { if (S[j] * 13.7 % 1 < 0.45 * Math.sin(Math.PI * e) * (pass ? 0.4 : 1)) continue; lx = VX[j] * 0.8; ly = VY[j] * 0.8; const q = Math.abs(lx) + Math.abs(ly); if (q > 5) { lx *= 5 / q; ly *= 5 / q; } } } const ln = Math.abs(lx) + Math.abs(ly);
           if (ln > 14) { lx *= 14 / ln; ly *= 14 / ln; }
@@ -631,8 +637,8 @@
         if (key === drawn) return;
         drawn = key;
         mctx.clearRect(0, 0, W, H);
-        if (xf < 1) marks(OX, OY, 1 - xf);
-        marks(TX, TY, xf);
+        if (xf < 1) marks(OX, OY, 1 - xf, nWas);
+        marks(TX, TY, xf, nOn);
         placeHit(xf > 0.5); focusRing();
         return;
       }

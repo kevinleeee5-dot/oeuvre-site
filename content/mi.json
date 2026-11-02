@@ -1,0 +1,435 @@
+{
+  "lang": "mi",
+  "htmlLang": "mi",
+  "ogLocale": "mi_NZ",
+  "site": {
+    "statement": "Whakaaro auaha. Hanga matihiko.",
+    "support": "Ka waihanga mātou i ngā waitohu, i ngā paetukutuku me ngā wheako matihiko hei āwhina i ngā pakihi kia tū motuhake.",
+    "description": "Whakaaro auaha. Hanga matihiko. Ka waihanga a Oeuvre i ngā waitohu, i ngā paetukutuku me ngā wheako matihiko hei āwhina i ngā pakihi kia tū motuhake. He taiwhanga iti i Tāmaki Makaurau.",
+    "place": "Tāmaki Makaurau, Aotearoa",
+    "legal": "Ko Oeuvre te ingoa hokohoko o BNB Management Consulting Ltd.",
+    "back": "Hoki",
+    "skip": "Peke ki te ihirangi",
+    "index": "Rārangi",
+    "float": "Tere",
+    "sound_on": "Whakakāngia te oro",
+    "sound_off": "Whakawetohia te oro",
+    "soon": "Ā tōna wā",
+    "languages": "Reo",
+    "sections": "Ngā wāhanga",
+    "home": "Kāinga",
+    "seeYou": "Kia kite mai ia i a koe",
+    "seeYouOff": "Whakawetohia te kāmera",
+    "beingTitle": "He whakaahua tangata ka taea e koe te kōrero ki a ia",
+    "ctaLead": "He whakaaro tōu?",
+    "ctaLink": "Tīmatahia he kōrero",
+    "homeTitle": "Oeuvre — Taiwhanga waitohu, matihiko hoki i Tāmaki Makaurau",
+    "homeH1": "Oeuvre — Taiwhanga waitohu, matihiko hoki i Tāmaki Makaurau. Whakaaro auaha. Hanga matihiko.",
+    "metaDescription": "He taiwhanga waitohu, matihiko hoki a Oeuvre i Tāmaki Makaurau. Tuakiri waitohu, paetukutuku, hua matihiko me te nekehanga — kotahi te kapa, mai i te whakaaro tuatahi ki te whakarewatanga me te tiaki.",
+    "ogAlt": "Oeuvre — Taiwhanga waitohu, matihiko hoki, Tāmaki Makaurau"
+  },
+  "menu": [
+    {
+      "id": "work",
+      "label": "Mahi",
+      "href": "/work/",
+      "float": "Work"
+    },
+    {
+      "id": "services",
+      "label": "Ratonga",
+      "href": "/services/",
+      "float": "Services"
+    },
+    {
+      "id": "studio",
+      "label": "Taiwhanga",
+      "href": "/studio/",
+      "float": "Studio"
+    },
+    {
+      "id": "contact",
+      "label": "Whakapā mai",
+      "href": "/contact/",
+      "float": "Contact"
+    }
+  ],
+  "work": {
+    "title": "Mahi",
+    "metaTitle": "Mahi — Ngā kaupapa waitohu, paetukutuku, hua matihiko | Oeuvre",
+    "metaDescription": "Ētahi mahi waitohu, paetukutuku, hua matihiko hoki nā Oeuvre, he taiwhanga i Tāmaki Makaurau: BeiCare, MUZI, Folio me ACE.",
+    "intro": "Ētahi kaupapa kua tīpakohia. Mai i te whakaaro tuatahi, tae noa ki te mea e whakamahia ana e te tangata.",
+    "next": "Kaupapa e whai ake nei",
+    "all": "Ngā mahi katoa",
+    "labels": {
+      "brief": "Te tono",
+      "did": "Ā mātou mahi",
+      "result": "Kei hea ināianei",
+      "role": "Tūranga",
+      "year": "Tau",
+      "sector": "Rāngai",
+      "visit": "Toro"
+    },
+    "projects": [
+      {
+        "slug": "beicare",
+        "name": "BeiCare",
+        "outcome": "He tiaki kiri māori, he mea hanga hōu i Aotearoa — te toa e kitea ana e te tangata, me te taupānga iPad e whakahaere ana i te awheawhe i muri.",
+        "sector": "Tiaki kiri / nō Aotearoa",
+        "year": "2026",
+        "tags": [
+          "Paetukutuku",
+          "Taupānga",
+          "Whakahaere"
+        ],
+        "link": {
+          "label": "beicare.co.nz",
+          "href": "https://beicare.co.nz"
+        },
+        "hero": {
+          "src": "/assets/img/beicare-site.jpg",
+          "alt": "Te paetukutuku o BeiCare: he ipu karaehe hinu i runga i ngā putiputi maroke.",
+          "w": 1440,
+          "h": 900
+        },
+        "brief": "A small maker blends hydrosols, oils and balms by hand in small batches. The shop had to feel as fresh as the product. The workshop needed one calm screen that says what to make today.",
+        "did": [
+          "Shaped the shop around the product: botanical, warm, made in small batches.",
+          "Designed an iPad instrument panel for the workshop: today's batches, stock and work, on one screen.",
+          "Made every action direct — drag a batch, tap a line, done.",
+          "Built it bilingual: English first, Chinese one tap away."
+        ],
+        "result": "The shop is live at beicare.co.nz. The workshop app is in daily use on iPad.",
+        "gallery": [
+          {
+            "src": "/assets/img/beicare-site-mobile.jpg",
+            "alt": "The BeiCare website on a phone.",
+            "w": 780,
+            "h": 1688,
+            "fit": "contain",
+            "span": "half"
+          },
+          {
+            "kind": "dashboard",
+            "alt": "Workshop app — screens with demo data to come.",
+            "caption": "Workshop app. Screens with demo data to come.",
+            "span": "half"
+          }
+        ]
+      },
+      {
+        "slug": "muzi",
+        "name": "MUZI",
+        "outcome": "He waitohu kāinga, māra hoki nō Aotearoa, mai i te pēke oneone ki te toa ipurangi.",
+        "sector": "Kāinga me te māra / hokohoko",
+        "year": "2026",
+        "tags": [
+          "Waitohu",
+          "Whakaahua",
+          "Toa ipurangi"
+        ],
+        "link": {
+          "label": "muzi.co.nz",
+          "href": "https://muzi.co.nz"
+        },
+        "hero": {
+          "src": "/assets/img/muzi-site.jpg",
+          "alt": "Te paetukutuku o MUZI: e whā ngā kōhua whakakarapa, he mea hanga ā-ringa, i runga i te papamuri mā.",
+          "w": 1440,
+          "h": 900
+        },
+        "brief": "A specialist range of succulent soils, stones and pots needed to look as considered as the plants they hold — on the shelf, in store and online.",
+        "did": [
+          "Shaped the identity and the voice: Home & Garden, quiet and earthy.",
+          "Photographed the range in one consistent light.",
+          "Organised a catalogue of around three hundred products.",
+          "Built the shop at muzi.co.nz and the retail material around it."
+        ],
+        "result": "The shop is live at muzi.co.nz, with stock in Auckland retail.",
+        "gallery": [
+          {
+            "src": "/assets/img/muzi-site-new-in.jpg",
+            "alt": "The ‘New in’ row of the MUZI shop: soil bags and granules.",
+            "w": 1440,
+            "h": 700,
+            "span": "full"
+          },
+          {
+            "src": "/assets/img/muzi-maifan.jpg",
+            "alt": "An echeveria top-dressed with 2–4 mm Maifan stone.",
+            "w": 1800,
+            "h": 1800,
+            "span": "half"
+          },
+          {
+            "src": "/assets/img/muzi-diatomite.jpg",
+            "alt": "Succulents top-dressed with 2–4 mm diatomite.",
+            "w": 1800,
+            "h": 1800,
+            "span": "half"
+          },
+          {
+            "src": "/assets/img/muzi-site-mobile.jpg",
+            "alt": "The MUZI shop on a phone.",
+            "w": 780,
+            "h": 1688,
+            "fit": "contain",
+            "span": "half"
+          },
+          {
+            "src": "/assets/img/muzi-logo.png",
+            "alt": "The MUZI Home & Garden wordmark.",
+            "w": 520,
+            "h": 241,
+            "fit": "contain",
+            "graphic": true,
+            "span": "half"
+          }
+        ]
+      },
+      {
+        "slug": "folio",
+        "name": "Folio",
+        "outcome": "He taupānga pānui mārie, he putanga ia rā ka taea te pānui, te whakarongo rānei.",
+        "sector": "Pāpāho / pānui",
+        "year": "2026",
+        "tags": [
+          "Taupānga",
+          "Ētita",
+          "Ororongo"
+        ],
+        "hero": {
+          "src": "/assets/img/folio-five-topics.jpg",
+          "alt": "E rima ngā tuhinga Folio i runga iPhone: taiao, ātea, hangarau, pakihi me te ao.",
+          "w": 2400,
+          "h": 1040
+        },
+        "brief": "Reading apps shout. Folio had to feel like a well-made paper: a daily edition with a beginning and an end, read or narrated, then put down.",
+        "did": [
+          "Designed a daily edition with a clear start and finish.",
+          "Set the type for long reading, in light and dark.",
+          "Chose a calm, natural narration voice and built background listening with lock-screen controls.",
+          "Kept the whole pipeline small enough to run every day."
+        ],
+        "result": "In private testing on iPhone.",
+        "gallery": [
+          {
+            "src": "/assets/img/folio-concept.jpg",
+            "alt": "Folio concept board: onboarding, interests, the daily edition, an article and membership.",
+            "w": 2400,
+            "h": 1600,
+            "span": "full"
+          },
+          {
+            "src": "/assets/img/folio-article.jpg",
+            "alt": "A Folio article: “XRISM sees a pulsar catch stellar wind”.",
+            "w": 740,
+            "h": 1600,
+            "fit": "contain",
+            "span": "full"
+          }
+        ]
+      },
+      {
+        "slug": "ace",
+        "name": "ACE",
+        "outcome": "He pūrei waiata kua hangaia ki te taha o tētahi pōkai rīpene.",
+        "sector": "Puoro / pāhekoheko",
+        "year": "2026",
+        "tags": [
+          "Pāhekoheko",
+          "Nekehanga",
+          "Taupānga"
+        ],
+        "hero": {
+          "src": "/assets/img/ace-reel.png",
+          "alt": "Te pōkai rīpene o ACE.",
+          "w": 2000,
+          "h": 2000,
+          "fit": "contain",
+          "graphic": true
+        },
+        "brief": "Music apps reduce a track to a progress bar. ACE gives it a body again: a tape reel that turns while the music plays, and that you turn to move through it.",
+        "did": [
+          "Made a tape reel the centre of the player, labelled like a tape box: title, date, master format.",
+          "The reel turns with the music: one full turn every twenty seconds.",
+          "Grab the reel and turn it to scrub, forwards or back.",
+          "Kept everything else quiet: one play button, a countdown, a plain track list."
+        ],
+        "result": "A private tool, used every day on one Mac.",
+        "gallery": [
+          {
+            "src": "/assets/img/ace-player.jpg",
+            "alt": "The ACE player: the reel, a play button, the countdown and the tape label.",
+            "w": 1101,
+            "h": 1400,
+            "fit": "contain",
+            "span": "full"
+          }
+        ]
+      }
+    ]
+  },
+  "services": {
+    "title": "Ratonga",
+    "metaTitle": "Ratonga — Hoahoa waitohu, paetukutuku, hua matihiko | Oeuvre",
+    "metaDescription": "Tuakiri waitohu, paetukutuku, hua matihiko, nekehanga me te ihirangi, nā te taiwhanga kotahi i Tāmaki Makaurau. Kōwhiria kotahi, kōwhiria katoa rānei.",
+    "intro": "E rima ngā pūkenga, kotahi te kapa. Kōwhiria kotahi, kōwhiria katoa rānei.",
+    "closing": "Kotahi te kapa, mai i te tīmatanga ki te mutunga — ā, i muri mai hoki.",
+    "cta": "Tīmatahia he kaupapa",
+    "labels": {
+      "what": "He aha",
+      "get": "Ka whiwhi koe",
+      "time": "Te roa"
+    },
+    "items": [
+      {
+        "id": "brand",
+        "name": "Waitohu",
+        "what": "Te tapa ingoa, te tuakiri me te reo.",
+        "get": "Pūnaha moko, momotuhi, tae, reo kōrero me ngā aratohu.",
+        "time": "4–8 wiki"
+      },
+      {
+        "id": "product",
+        "name": "Hua matihiko",
+        "what": "Ngā taupānga me ngā utauta e whakamahia ana ia rā.",
+        "get": "Rangahau, UX, UI, hanga, whakarewa me te tiaki.",
+        "time": "8–20 wiki"
+      },
+      {
+        "id": "web",
+        "name": "Paetukutuku",
+        "what": "Ngā pae me ngā toa ipurangi he māmā te whakahaere.",
+        "get": "Hoahoa ihirangi, hanga, manaaki, ngā tūāpapa rapu me tētahi mahere tiaki.",
+        "time": "4–10 wiki"
+      },
+      {
+        "id": "motion",
+        "name": "Nekehanga me te ihirangi",
+        "what": "He ataata neke mō ngā mata me te pāpāho pāpori.",
+        "get": "Hoahoa nekehanga, ataata me ngā tauira pāpori.",
+        "time": "2–6 wiki"
+      },
+      {
+        "id": "photography",
+        "name": "Whakaahua",
+        "soon": "2027",
+        "what": "Hua, wāhi, tangata — kotahi te titiro.",
+        "get": "Ka tuwhera ā te tau 2027. Pātai wawe mai kia rāhuitia tō whakaahua tuatahi.",
+        "time": "—"
+      }
+    ],
+    "workshop": {
+      "kicker": "Hōu",
+      "name": "Awheawhe Waitohu",
+      "text": "Tō ake waitohu tiaki kiri, mai i te whakaaro ki te pae hoko.",
+      "href": "/services/brand-workshop/"
+    }
+  },
+  "studio": {
+    "title": "Taiwhanga",
+    "metaTitle": "Taiwhanga — He taiwhanga waitohu, matihiko hoki i Tāmaki Makaurau | Oeuvre",
+    "metaDescription": "He taiwhanga waitohu, matihiko iti a Oeuvre i Tāmaki Makaurau. Ko ngā kaihoahoa me ngā kaipūkaha e mahi tahi ana i te kaupapa kotahi, mai i te whakaaro tuatahi ki te whakarewatanga me te tiaki.",
+    "statement": "Ka waihanga mātou i ngā waitohu, i ngā paetukutuku me ngā wheako matihiko hei āwhina i ngā pakihi kia tū motuhake.",
+    "body": [
+      "He taiwhanga iti i Tāmaki Makaurau. Ko ngā kaihoahoa me ngā kaipūkaha i te rūma kotahi, i te kaupapa kotahi.",
+      "Kāore he tuku i waenga i ngā umanga. Ko te hunga ka tīmata i tō kaupapa, ko rātou anō hei tiaki.",
+      "Ka mahi mātou i te reo Pākehā, i te reo Hainamana, i te reo Māori hoki."
+    ],
+    "principlesTitle": "Ngā mātāpono",
+    "principles": [
+      {
+        "name": "He katoa, ehara i te wāhanga.",
+        "text": "Kotahi te wheako o te waitohu, o te hua me te pae. Ka pēnā anō tā mātou titiro."
+      },
+      {
+        "name": "Ko te mārie te tikanga.",
+        "text": "Ka toa te mārama i te turituri. Ka tangohia e mātou kia mahi rā anō."
+      },
+      {
+        "name": "Hangaia kia tiakina.",
+        "text": "Ko te whakarewatanga te waenganui, ehara i te mutunga."
+      }
+    ]
+  },
+  "contact": {
+    "title": "Whakapā mai",
+    "metaTitle": "Whakapā mai ki a Oeuvre — Tīmatahia he kaupapa i Tāmaki Makaurau",
+    "metaDescription": "Tīmatahia he kaupapa waitohu, paetukutuku, hua matihiko rānei me Oeuvre i Tāmaki Makaurau. Tuhia mai ki info@bnbmanagement.co.nz.",
+    "lead": "Kōrerotia mai ngā mea e toru: he aha tāu e hanga ana, he aha kāore e pai ana, ā, āhea koe hiahia ai kia whakatikaina.",
+    "copy": "Tāruatia te īmēra",
+    "copied": "Kua tāruatia",
+    "write": "Tuhia mai",
+    "reply": "Ka whakautu mātou i roto i ngā rā mahi e rua."
+  },
+  "notFound": {
+    "title": "Kāore he mea i konei. Kāore anō.",
+    "text": "Kāore tēnei whārangi i te tīari — kāore rānei anō kia hangaia.",
+    "home": "Hoki ki te kāinga"
+  },
+  "privacy": {
+    "title": "Tūmataiti",
+    "metaTitle": "Tūmataiti — Oeuvre",
+    "metaDescription": "Me pēhea e tiakina ai ō mōhiohio e oeuvre.co.nz: te tātari manuhiri, te whakaahua kōrero i te whārangi matua, me ō motika i raro i te Ture Tūmataiti 2020.",
+    "lead": "He aha ngā mea e kohia ana e tēnei pae, he aha ai, ā, ko wai e āwhina ana i a mātou. Ki te reo māmā.",
+    "updated": "I whakahōuhia i te 3 o Whiringa-ā-rangi 2026",
+    "sections": [
+      {
+        "h": "Ko wai mātou",
+        "p": [
+          "Ko Oeuvre te ingoa hokohoko o BNB Management Consulting Ltd, kei Tāmaki Makaurau, Aotearoa. Kei a mātou te haepapa mō tēnei paetukutuku me ngā mōhiohio e kohia ana e ia.",
+          "Ngā pātai me ngā tono: info@bnbmanagement.co.nz."
+        ]
+      },
+      {
+        "h": "Te tātari manuhiri",
+        "p": [
+          "Ka whakamahi mātou i a Microsoft Clarity kia mōhio ai me pēhea te whakamahi i te pae: ngā whārangi i torohia, te roa i runga i te whārangi, te panuku me ngā pāwhiri, te momo pūrere me te pūtirotiro, me tētahi wāhi tata. Ka hopukina hoki e Clarity he rīkoata kore-ingoa o te whakamahinga o tētahi whārangi, ā, ka mātakitakina e mātou kia kitea ai ngā wāhi pōhēhē, pakaru rānei.",
+          "Ka whakatakoto a Clarity i ngā pihikete kia mōhio ai ki tētahi pūtirotiro ka hoki mai. Ko ngā mea katoa ka patohia ki te pouaka kōrero, me te kōrero anō hoki, ka hunaia i ēnei rīkoata. Ka tukatukahia ēnei raraunga e Microsoft i raro i tāna ake tauākī tūmataiti, ā, ka puritia mō tētahi wā poto."
+        ]
+      },
+      {
+        "h": "Te whakaahua i te whārangi matua",
+        "p": [
+          "Kāore te whakaahua e whakamahi i tō kāmera. Ko ōna nekehanga i ahu mai i te ataata i hopukina i mua.",
+          "Ka patohia, ka kōrero rānei koe ki a ia, ka tukuna tō karere ki a Anthropic, mā tōna tauira Claude e tuhi te whakautu, ā, ka tukuna te whakautu ki a ElevenLabs hei huri ki te reo kōrero. Kāore mātou e pupuri i te kupu o ngā kōrero ki tō mātou tūmau. Hei ārai i te tūkino, ka puritia e mātou te maha o ngā karere me ngā utu, me tētahi momo kua whakapōrorohia (hash) o tō wāhitau IP mō te kotahi hāora pea.",
+          "Ka whakamahi te tāuru reo i te pūmōhio reo o tō ake pūtirotiro, ā, i te wā anake e pēhi ana koe i te pae mokowā, e pā ana rānei ki te hopuoro. Ko ētahi pūtirotiro, pērā i a Chrome, ka tuku i taua oro ki tō rātou kaiwhakarato hei huri ki te kupu."
+        ]
+      },
+      {
+        "h": "Ētahi atu ratonga",
+        "p": [
+          "Ka manaakitia te pae e Hostinger, ā, ka puritia e ōna tūmau ngā rēhita uru noa (pērā i te wāhitau IP, te wā me te whārangi i tonoa). Ka utaina ngā momotuhi mai i Google Fonts, ā, ka whiwhi a Google i tō wāhitau IP ina tīkina he momotuhi.",
+          "Ka maumahara tō pūtirotiro ki ētahi tautuhinga torutoru mō tēnei pae anake, pērā i te oro, kua kite rānei koe i te hākoritanga tīmatanga. Ka noho ēnei ki tō pūrere."
+        ]
+      },
+      {
+        "h": "Ka haere ō mōhiohio ki hea",
+        "p": [
+          "Tērā pea ka tukatukahia ngā mōhiohio e Microsoft, Anthropic, ElevenLabs, Google me Hostinger ki waho o Aotearoa, tae atu ki Amerika. Ka whakamahia rātou e mātou nā te mea ki tā mātou titiro he ōrite ō rātou haumarutanga me ō rātou tiakanga tūmataiti ki ō Aotearoa."
+        ]
+      },
+      {
+        "h": "Īmēra",
+        "p": [
+          "Ki te tuhi mai koe, ka whakamahia e mātou ō kōrero hei whakautu, hei mahi tahi hoki ki a koe anake, ā, ka puritia mō te roa e hiahiatia ana mō taua take me ā mātou pūkete."
+        ]
+      },
+      {
+        "h": "Ō motika",
+        "p": [
+          "I raro i te Ture Tūmataiti 2020 ka taea e koe te tono kia kite i ngā mōhiohio whaiaro e puritia ana e mātou mōu, ā, kia whakatikahia. Tuhia mai ki info@bnbmanagement.co.nz.",
+          "Ki te kore koe e pai ki tā mātou whakautu, ka taea e koe te whakapā atu ki te Tari o te Toihau Tūmataiti i privacy.org.nz."
+        ]
+      },
+      {
+        "h": "Ngā panonitanga",
+        "p": [
+          "Ka whakahōuhia e mātou tēnei whārangi ina rerekē ngā mea e kohia ana. Ko te rā i runga ake e whakaatu ana i te putanga hōu rawa."
+        ]
+      }
+    ],
+    "link": "Tūmataiti"
+  }
+}

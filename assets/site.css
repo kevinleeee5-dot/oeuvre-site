@@ -386,3 +386,11 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 :lang(zh) .pv-sec h2 { font-weight: 900; }
 .foot-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; margin-left: 10px; }
 .foot-link:hover { color: var(--fg); }
+
+/* the language switch stays in reach on every page (the home page keeps its own corner) */
+body:not(.p-home) .langs { position: fixed; z-index: 30; right: max(var(--gutter), env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  gap: 12px; padding: 7px 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
+  background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+body:not(.p-home) .langs a { color: rgba(255, 255, 255, .7); }
+body:not(.p-home) .langs a[aria-current] { color: #fff; }
+body:not(.p-home) .foot { padding-bottom: max(72px, env(safe-area-inset-bottom)); }
