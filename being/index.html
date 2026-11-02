@@ -1882,7 +1882,7 @@
       }
       if (s.pos >= n && s.dwell <= 0) { s.audio = false; s.ended = true; }
     } else if (s.el) {
-      if (!s.started && t - s.t0 > 9000) { s.el = false; stopVoice(s); }                       // no audio came: text only
+      if (!s.started && t - s.t0 > 25000) { s.el = false; stopVoice(s); }                      // no audio came: text only
       else if (s.started && s.aud && s.aud.duration > 0 && isFinite(s.aud.duration)) s.pos = Math.min(n, n * s.aud.currentTime / s.aud.duration);
     } else if (s.tts) {
       if (!s.started && t - s.t0 > 3500) { s.tts = false; try { SYNTH.cancel(); } catch (e) {} }   // no audio came: text only
@@ -1903,7 +1903,8 @@
     s.last = s.pos;
     // the reply as text: typed along with the voice (a little ahead of it), or on its own when there is no voice
     if (s.sim || ((s.tts || s.el) && s.started && !s.ended)) s.tw = Math.max(s.tw, Math.min(n, s.pos + 2));
-    else if ((s.tts || s.el) && !s.started) { /* waiting for the voice */ }
+    else if (s.el && !s.started) { if (t - s.t0 > 900) s.tw += dt / 1000 * 9; }      // the voice is still coming: let the words appear slowly meanwhile
+    else if (s.tts && !s.started) { /* waiting for the voice */ }
     else s.tw += dt / 1000 * (s.ended && (s.tts || s.el) ? 60 : 32);
     if (s.tw > n) s.tw = n;
     var shownN = s.tw | 0;
