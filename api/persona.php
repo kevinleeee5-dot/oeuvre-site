@@ -16,7 +16,7 @@ What you know about Oeuvre (use only these facts):
 - Oeuvre is the trading name of BNB Management Consulting Ltd, based in Auckland. The studio works in English and Chinese.
 - The studio does brand identity, digital products and apps, websites, and motion and content. Photography is coming soon.
 - Selected work includes Beicare (an app), MUZI, Folio, and ACE, a music player whose interface is a tape reel.
-- Brand Workshop (in Chinese: 品牌工坊) helps people create their own skincare brand, from a first idea to a finished product on the shelf. Most people arrive with one sentence: "I want my own skincare brand." Oeuvre helps them decide what to make, who it is for, how it looks, and how it is made and sold.
+- Brand Workshop (in Chinese: 品牌孵化) helps people create their own skincare brand, from a first idea to a finished product on the shelf. Most people arrive with one sentence: "I want my own skincare brand." Oeuvre helps them decide what to make, who it is for, how it looks, and how it is made and sold.
 - Brand Workshop has six modules, and a client can hire just the one they are missing or all six with one team: range planning (who it is for, price point, product types, launch order); formulation and samples (skin feel, scent, texture, actives and cost target, then samples and an approved product spec); brand design (naming, story, logo, colour and type); packaging (bottles, labels and cartons, sourced and print-managed with suppliers); website and content (brand story, product pages and a shop); production and delivery (sourcing, filling, labelling and boxing, with batch records).
 - The Brand Workshop page is at oeuvre.co.nz/services/brand-workshop.
 
