@@ -405,9 +405,11 @@ def build():
             written.append(write(base + rel, page(c, lang_prefix=P, path=path, page_id=pid, section=section, title=title,
                                                   description=desc, body=body, alternates=alts(path))))
             urls.append(en["site"]["url"] + P + path)
-        if code == "en":
-            written.append(write("404.html", page(c, lang_prefix=P, path="/404.html", page_id="notfound", section="",
-                                                  title="404", description=c["notFound"]["text"], body=not_found(c, P))))
+        # a 404 per language; the server shows /zh/404.html for missing pages under /zh/ (zh/.htaccess)
+        written.append(write(base + "404.html", page(c, lang_prefix=P, path=P + "/404.html", page_id="notfound", section="",
+                                                     title="404", description=c["notFound"]["text"], body=not_found(c, P))))
+        if code != "en":
+            written.append(write(base + ".htaccess", f"ErrorDocument 404 /{code}/404.html\n"))
     urls.append(en["site"]["url"] + "/services/brand-workshop/")      # hand-kept pages
     urls.append(en["site"]["url"] + "/zh/services/brand-workshop/")
     sitemap = "\n".join(f"  <url><loc>{esc(u)}</loc><lastmod>{__import__('datetime').date.today().isoformat()}</lastmod></url>" for u in urls)
