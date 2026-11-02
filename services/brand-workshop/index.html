@@ -14,21 +14,21 @@
 <meta property="og:url" content="https://oeuvre.co.nz/services/brand-workshop/">
 <meta property="og:image" content="https://oeuvre.co.nz/assets/img/brand-workshop/drawing.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#000000">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://oeuvre.co.nz/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://oeuvre.co.nz/services/"},{"@type":"ListItem","position":3,"name":"Brand Workshop","item":"https://oeuvre.co.nz/services/brand-workshop/"}]},{"@type":"Service","name":"Brand Workshop","serviceType":"Skincare brand development","description":"Range planning, formulation and samples, brand design, packaging, website and production for new skincare brands.","provider":{"@id":"https://oeuvre.co.nz/#org"},"areaServed":"NZ"}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap">
 <style>
-/* Brand Workshop — light, soft, card-based (its own look, apart from the dark site) */
+/* Brand Workshop — black ground like the rest of the site, soft light cards */
 :root {
-  --bg: #fff; --fg: #171717; --dim: #8b8b8b; --card: #efefef; --blue: #d6e2ec; --line: #e6e6e6;
+  --bg: #000; --fg: #fff; --dim: rgba(255,255,255,.58); --card: #efefef; --blue: #d6e2ec; --line: rgba(255,255,255,.16);
   --ink: #171717; --ink-dim: #8b8b8b;
   --r: 8px; --max: 1080px; --gutter: clamp(16px, 4vw, 56px);
   --font: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: "Geist Mono", ui-monospace, Menlo, monospace;
-  color-scheme: light;
+  color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--fg); }
@@ -273,7 +273,7 @@ main { padding-top: 76px; }
     ctx.lineWidth = 1;
     for (var lv = 0; lv < LEVELS; lv++) {
       var q = paths[lv]; if (!q) continue;
-      ctx.strokeStyle = 'rgba(23,23,23,' + ((lv + .5) / LEVELS * .45).toFixed(3) + ')';
+      ctx.strokeStyle = 'rgba(255,255,255,' + ((lv + .5) / LEVELS * .45).toFixed(3) + ')';
       ctx.beginPath();
       for (var j = 0; j < q.length; j += 4) { ctx.moveTo(q[j], q[j + 1]); ctx.lineTo(q[j + 2], q[j + 3]); }
       ctx.stroke();
@@ -283,7 +283,7 @@ main { padding-top: 76px; }
   function drawStill() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = 'rgba(23,23,23,.05)'; ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.beginPath();
     for (var i = 0; i < cols.length; i++) { var c = Math.round(cols[i]) + .5; ctx.moveTo(c, 0); ctx.lineTo(c, H); }
     for (var y = -(scrollY % ROW); y < H; y += ROW) { ctx.moveTo(0, Math.round(y) + .5); ctx.lineTo(W, Math.round(y) + .5); }
     ctx.stroke();
