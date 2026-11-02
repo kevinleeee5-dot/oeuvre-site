@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brand Workshop — Skincare brands from idea to shelf | Oeuvre</title>
+<meta name="description" content="Your own skincare brand, from idea to shelf: range planning, formulation and samples, brand design, packaging, website and production — one Auckland studio.">
+<meta name="google-site-verification" content="HdM9d1ZrdcDQDWXiHn4fNgn0pB8N0wssrnslsydQ_Ps">
+<link rel="canonical" href="https://oeuvre.co.nz/services/brand-workshop/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Oeuvre">
+<meta property="og:title" content="Brand Workshop — Skincare brands from idea to shelf | Oeuvre">
+<meta property="og:description" content="Your own skincare brand, from idea to shelf — one Auckland studio.">
+<meta property="og:url" content="https://oeuvre.co.nz/services/brand-workshop/">
+<meta property="og:image" content="https://oeuvre.co.nz/assets/img/brand-workshop/drawing.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://oeuvre.co.nz/"},{"@type":"ListItem","position":2,"name":"Services","item":"https://oeuvre.co.nz/services/"},{"@type":"ListItem","position":3,"name":"Brand Workshop","item":"https://oeuvre.co.nz/services/brand-workshop/"}]},{"@type":"Service","name":"Brand Workshop","serviceType":"Skincare brand development","description":"Range planning, formulation and samples, brand design, packaging, website and production for new skincare brands.","provider":{"@id":"https://oeuvre.co.nz/#org"},"areaServed":"NZ"}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&amp;family=Geist+Mono:wght@300;400&amp;display=swap">
+<style>
+/* Brand Workshop — light, soft, card-based (its own look, apart from the dark site) */
+:root {
+  --bg: #fff; --fg: #171717; --dim: #8b8b8b; --card: #efefef; --blue: #d6e2ec; --line: #e6e6e6;
+  --r: 8px; --max: 1080px;
+  --font: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+body { font-family: var(--font); font-weight: 300; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; border-radius: 2px; }
+img { display: block; width: 100%; height: 100%; object-fit: cover; }
+figure { margin: 0; }
+.page { max-width: calc(var(--max) + 40px); margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.h { font-size: 15px; font-weight: 300; letter-spacing: .01em; text-transform: uppercase; margin: 0 0 14px; }
+.small { font-size: 11px; line-height: 1.35; }
+.mono { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; }
+.dim { color: var(--dim); }
+section { margin-top: 88px; }
+
+/* top bar */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 26px 0 22px; }
+.top .mark { font-weight: 500; font-size: 18px; letter-spacing: -.03em; }
+.top ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.top li a { color: var(--dim); }
+.top li a:hover, .top li a[aria-current] { color: var(--fg); }
+
+/* hero: one rounded picture with small type laid over it */
+.hero { position: relative; border-radius: var(--r); overflow: hidden; aspect-ratio: 2 / 1; background: var(--card); }
+.hero img { position: absolute; inset: 0; }
+.hero .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 42%, rgba(255,255,255,0) 70%); }
+.hero > div:not(.veil) { position: absolute; z-index: 1; }
+.hero .tr { right: 22px; top: 20px; text-align: right; }
+.hero .mid { left: 22px; top: 50%; transform: translateY(-50%); }
+.hero h1 { margin: 0; font-weight: 300; font-size: 46px; line-height: 1.02; letter-spacing: -.03em; }
+.hero .bl { left: 22px; bottom: 20px; max-width: 30ch; }
+
+/* where it starts — narrow column set off-centre */
+.intro { margin-left: 26%; max-width: 380px; }
+.intro p { margin: 0; font-size: 13px; line-height: 1.55; }
+.intro q { quotes: "“" "”"; }
+
+/* the path: six soft cards */
+.path { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
+.path li { background: var(--card); border-radius: var(--r); aspect-ratio: 3 / 4; padding: 12px; display: flex; flex-direction: column; }
+.path .nm { align-self: flex-end; font-size: 12px; }
+.path .n { margin: auto 0; text-align: center; font-size: 38px; font-weight: 300; letter-spacing: -.04em; color: #b9b9b9; }
+.path li:last-child { background: var(--blue); }
+.path li:last-child .n { color: var(--fg); }
+
+/* two pictures side by side */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pair > * { border-radius: var(--r); overflow: hidden; aspect-ratio: 1 / 1; }
+
+/* six modules */
+.mods { border-top: 1px solid var(--line); }
+.mods-hd, .mod { display: grid; grid-template-columns: 40px minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 1.4fr); gap: 8px 28px; }
+.mods-hd { padding-bottom: 10px; color: var(--dim); }
+.mods-hd span:first-child { grid-column: 3; }
+.mod { padding: 20px 0; border-bottom: 1px solid var(--line); }
+.mod .n { color: var(--dim); font-size: 11px; padding-top: 3px; }
+.mod h3 { margin: 0; font-weight: 400; font-size: 17px; letter-spacing: -.02em; line-height: 1.2; }
+.mod p { margin: 0; font-size: 12.5px; line-height: 1.5; }
+.mod .do { color: var(--dim); }
+.mod .lbl { display: none; }
+
+/* spec sheet beside its picture */
+.spec .sheet { background: var(--card); padding: 22px; display: flex; flex-direction: column; gap: 18px; aspect-ratio: auto; }
+.spec dl { display: grid; grid-template-columns: 90px minmax(0, 1fr); margin: 0; font-size: 12.5px; border-top: 1px solid #dcdcdc; }
+.spec dt, .spec dd { margin: 0; padding: 9px 0; border-bottom: 1px solid #dcdcdc; }
+.spec dt { color: var(--dim); }
+.spec > figure { aspect-ratio: 4 / 5; }
+
+/* finished work */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.card { background: var(--card); border-radius: var(--r); padding: 8px; }
+.card figure { border-radius: 6px; overflow: hidden; aspect-ratio: 4 / 5; }
+
+/* two ways to work */
+.ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.way { background: var(--card); border-radius: var(--r); padding: 20px 22px 24px; display: grid; gap: 10px; align-content: start; min-height: 200px; }
+.way h3 { margin: 0; font-weight: 300; font-size: 26px; letter-spacing: -.03em; line-height: 1.05; }
+.way p { margin: 0; font-size: 12.5px; max-width: 34ch; }
+.way.all { background: var(--blue); }
+
+/* closing panel */
+.end { margin: 88px 0 16px; background: var(--card); border-radius: var(--r); padding: 56px 24px 26px; text-align: center; display: grid; gap: 22px; justify-items: center; }
+.end p { margin: 0; font-size: 12px; }
+.end .go { font-size: 30px; font-weight: 300; letter-spacing: -.03em; border-bottom: 1px solid var(--fg); padding-bottom: 2px; }
+.end ul { list-style: none; margin: 18px 0 0; padding: 0; display: flex; gap: 18px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+.legal { text-align: center; color: var(--dim); font-size: 10.5px; margin: 0; padding-bottom: max(32px, env(safe-area-inset-bottom, 0px)); }
+
+@media (max-width: 760px) {
+  section { margin-top: 64px; }
+  .top ul { gap: 14px; }
+  .hero { aspect-ratio: 4 / 5; }
+  .hero .veil { background: linear-gradient(180deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.75) 62%, rgba(255,255,255,.9) 100%); }
+  .hero h1 { font-size: 38px; }
+  .hero .mid { top: auto; bottom: 74px; transform: none; }
+  .intro { margin-left: 0; }
+  .path { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .path .n { font-size: 30px; }
+  .pair, .cards, .ways { grid-template-columns: 1fr; }
+  .mods-hd { display: none; }
+  .mod { grid-template-columns: 32px minmax(0, 1fr); }
+  .mod p { grid-column: 2; }
+  .mod .lbl { display: block; color: var(--dim); margin-bottom: 3px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <a class="mark" href="/" aria-label="Oeuvre — Home">Oeuvre</a>
+    <nav aria-label="Sections"><ul><li><a href="/work/">Work</a></li><li><a href="/services/" aria-current="page">Services</a></li><li><a href="/studio/">Studio</a></li><li><a href="/contact/">Contact</a></li></ul></nav>
+  </header>
+
+  <main id="main">
+    <figure class="hero">
+      <img src="/assets/img/brand-workshop/drawing.jpg" width="2400" height="1358" alt="Technical drawings of a dropper bottle and pump bottles taped to a studio wall" fetchpriority="high">
+      <div class="veil"></div>
+      <div class="tr small">Auckland, NZ</div>
+      <div class="mid"><h1>Brand<br>Workshop</h1></div>
+      <div class="bl small">Your own skincare brand, from first idea to the shelf.</div>
+    </figure>
+
+    <section class="intro">
+      <h2 class="h">Where it starts</h2>
+      <p>Most people arrive with one sentence: <q>I want my own skincare brand.</q> We help you decide what to make, who it’s for, how it looks, and how it’s made and sold.</p>
+    </section>
+
+    <section>
+      <h2 class="h">The path</h2>
+      <ol class="path">
+        <li><span class="nm">Range</span><span class="n">01</span></li>
+        <li><span class="nm">Formula</span><span class="n">02</span></li>
+        <li><span class="nm">Brand</span><span class="n">03</span></li>
+        <li><span class="nm">Packaging</span><span class="n">04</span></li>
+        <li><span class="nm">Website</span><span class="n">05</span></li>
+        <li><span class="nm">Production</span><span class="n">06</span></li>
+      </ol>
+    </section>
+
+    <section class="pair">
+      <figure><img src="/assets/img/brand-workshop/identity.jpg" width="1400" height="1750" loading="lazy" alt="An identity and packaging system laid flat: boxes, mailer, bag, tags, cards, care sheet and a poster of a plain serum bottle"></figure>
+      <figure><img src="/assets/img/brand-workshop/lens.jpg" width="1400" height="1400" loading="lazy" alt="Serum bottles labelled with their actives, magnified through a round lens over convex and concave lens diagrams"></figure>
+    </section>
+
+    <section>
+      <h2 class="h">Six modules</h2>
+      <div class="mods-hd mono" aria-hidden="true"><span>What we do</span><span>What you get</span></div>
+      <div class="mods">
+        <div class="mod"><span class="n">01</span><h3>Range planning</h3>
+          <p class="do"><span class="lbl mono">What we do</span>Who it’s for, price point, product types, hero benefits and launch order.</p>
+          <p><span class="lbl mono">What you get</span>A range plan: products, sizes, positioning and priority.</p></div>
+        <div class="mod"><span class="n">02</span><h3>Formulation &amp; samples</h3>
+          <p class="do"><span class="lbl mono">What we do</span>Skin feel, scent, texture, ingredients and cost target — then samples and feedback.</p>
+          <p><span class="lbl mono">What you get</span>Samples, an approved product spec and usage copy.</p></div>
+        <div class="mod"><span class="n">03</span><h3>Brand design</h3>
+          <p class="do"><span class="lbl mono">What we do</span>Naming, story, logo, colour and type.</p>
+          <p><span class="lbl mono">What you get</span>A brand identity and design files.</p></div>
+        <div class="mod"><span class="n">04</span><h3>Packaging</h3>
+          <p class="do"><span class="lbl mono">What we do</span>Bottles, labels and cartons — sourced and print-managed with suppliers.</p>
+          <p><span class="lbl mono">What you get</span>Print-ready files, pack samples and a cost quote.</p></div>
+        <div class="mod"><span class="n">05</span><h3>Website &amp; content</h3>
+          <p class="do"><span class="lbl mono">What we do</span>Brand story, product copy, product pages and a shop.</p>
+          <p><span class="lbl mono">What you get</span>A working website, handed over.</p></div>
+        <div class="mod"><span class="n">06</span><h3>Production &amp; delivery</h3>
+          <p class="do"><span class="lbl mono">What we do</span>Sourcing, scheduling, filling, labelling and boxing.</p>
+          <p><span class="lbl mono">What you get</span>Finished product to the approved spec, with batch records.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h">In the details</h2>
+      <div class="pair spec">
+        <figure><img src="/assets/img/brand-workshop/spec.jpg" width="1400" height="1750" loading="lazy" alt="A ring-bound packaging specification: a carton dieline with ink swatches and a squeeze tube drawn front and back with dimensions"></figure>
+        <div class="sheet">
+          <p class="mono dim">Sample spec</p>
+          <dl>
+            <dt>Carton</dt><dd>24.5 × 24.5 × 101 mm</dd>
+            <dt>Tube</dt><dd>W30 × D19 × H100 mm · 12 ml</dd>
+            <dt>Print area</dt><dd>60 × 90 mm</dd>
+            <dt>Finish</dt><dd>Matte, blind emboss</dd>
+            <dt>Inks</dt><dd>Warm Gray 1C · Warm Gray 11C</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h">On the shelf</h2>
+      <div class="cards">
+        <div class="card"><figure><img src="/assets/img/brand-workshop/tray.jpg" width="1400" height="1750" loading="lazy" alt="A woman carrying a steel tray of four unlabelled skincare products, seen from directly above"></figure></div>
+        <div class="card"><figure><img src="/assets/img/brand-workshop/range.jpg" width="1400" height="1750" loading="lazy" alt="A finished range laid flat: bottles, a carton, a jar of cream, a bar and a comb"></figure></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h">Two ways to work</h2>
+      <div class="ways">
+        <div class="way"><p class="mono dim">Single module</p><h3>The piece you’re missing</h3><p>Have a formula but no brand? A brand but no packaging? Start with one.</p></div>
+        <div class="way all"><p class="mono dim">Full build</p><h3>Idea to shelf</h3><p>All six modules, one team, one timeline.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="end">
+    <p>From one sentence to a shelf.</p>
+    <a class="go" href="/contact/">Start your brand →</a>
+    <ul><li><a href="/work/">Work</a></li><li><a href="/services/">Services</a></li><li><a href="/studio/">Studio</a></li><li><a href="/contact/">Contact</a></li></ul>
+  </footer>
+  <p class="legal">Oeuvre is a trading name of BNB Management Consulting Ltd.</p>
+</div>
+</body>
+</html>

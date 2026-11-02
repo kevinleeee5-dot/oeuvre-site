@@ -30,7 +30,9 @@
     "homeH1": "Oeuvre — Brand and digital studio in Auckland. Creative thinking. Digital making.",
     "metaDescription": "Oeuvre is a brand and digital studio in Auckland. Brand identity, websites, digital products and motion — one team, from first idea to launch and care.",
     "ogAlt": "Oeuvre — Brand and digital studio, Auckland",
-    "sameAs": ["https://www.instagram.com/oeuvre.akl/"]
+    "sameAs": [
+      "https://www.instagram.com/oeuvre.akl/"
+    ]
   },
   "languages": [
     {
@@ -341,7 +343,13 @@
         "time": "—"
       }
     ],
-    "metaTitle": "Services — Brand, web and digital product design | Oeuvre"
+    "metaTitle": "Services — Brand, web and digital product design | Oeuvre",
+    "workshop": {
+      "kicker": "New",
+      "name": "Brand Workshop",
+      "text": "Your own skincare brand, from idea to shelf.",
+      "href": "/services/brand-workshop/"
+    }
   },
   "studio": {
     "title": "Studio",

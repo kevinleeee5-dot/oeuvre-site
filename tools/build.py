@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102k"  # bump to bust caches of css/js
+VERSION = "20261102l"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -299,8 +299,18 @@ def services(c, P):
   <h1 class="page-title">{esc(V['title'])}</h1>
   <p class="lead">{esc(V['intro'])}</p>
   <ul class="svc-list">{''.join(rows)}</ul>
+  {workshop(V.get("workshop"), P)}
   <p class="closing">{esc(V['closing'])}</p>
 </main>"""
+
+
+def workshop(w, P):
+    """A link out to the Brand Workshop page (a separate, light-coloured page kept by hand)."""
+    if not w:
+        return ""
+    return (f'<a class="workshop" href="{P}{esc(w["href"])}"><span class="k">{esc(w["kicker"])}</span>'
+            f'<span class="wn">{esc(w["name"])}</span><span class="wt">{esc(w["text"])}</span>'
+            f'<span class="arr" aria-hidden="true">→</span></a>')
 
 
 def studio(c, P):
@@ -388,6 +398,7 @@ def build():
         if code == "en":
             written.append(write("404.html", page(c, lang_prefix=P, path="/404.html", page_id="notfound", section="",
                                                   title="404", description=c["notFound"]["text"], body=not_found(c, P))))
+    urls.append(en["site"]["url"] + "/services/brand-workshop/")   # hand-kept page, English only
     sitemap = "\n".join(f"  <url><loc>{esc(u)}</loc><lastmod>{__import__('datetime').date.today().isoformat()}</lastmod></url>" for u in urls)
     written.append(write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{sitemap}\n</urlset>\n'))
     written.append(write("robots.txt", f"User-agent: *\nAllow: /\nDisallow: /proto/\nDisallow: /tools/\nSitemap: {en['site']['url']}/sitemap.xml\n"))
