@@ -228,7 +228,7 @@ def home(c, P):
   <canvas id="menu" aria-hidden="true"></canvas>
   <a id="wordHit" class="word-hit" href="{P}{c["menu"][0]["href"]}" aria-hidden="true" tabindex="-1"></a>
   <div class="home-foot">
-    <div class="home-copy"><p class="home-statement">{esc(s['statement']).replace('. ', '.<br>').replace('。', '。<br>', 1)}</p>
+    <div class="home-copy"><p class="home-statement">{esc(s['statement']).replace(chr(10), '<br>').replace('. ', '.<br>').replace('。', '。<br>', 1)}</p>
     <p class="home-support">{esc(s.get('support',''))}</p></div>
   </div>
 </main>"""
