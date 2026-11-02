@@ -65,48 +65,27 @@ section { margin-top: 88px; }
 .intro p { margin: 0; font-size: 13px; line-height: 1.55; }
 .intro q { quotes: "“" "”"; }
 
-/* the path: six soft cards */
-.path { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
-.path li { background: var(--card); border-radius: var(--r); aspect-ratio: 3 / 4; padding: 12px; display: flex; flex-direction: column; }
-.path .nm { align-self: flex-end; font-size: 12px; }
-.path .n { margin: auto 0; text-align: center; font-size: 38px; font-weight: 300; letter-spacing: -.04em; color: #b9b9b9; }
-.path li:last-child { background: var(--blue); }
-.path li:last-child .n { color: var(--fg); }
+/* six modules, each beside the picture that shows it */
+.mods { display: grid; gap: 8px; }
+.mod { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mod figure { border-radius: var(--r); overflow: hidden; aspect-ratio: 4 / 5; background: var(--card); }
+.mod .txt { background: var(--card); border-radius: var(--r); padding: 26px 28px 30px; display: flex; flex-direction: column; }
+.mod:nth-child(even) figure { order: 2; }
+.mod .n { font-size: 38px; font-weight: 300; letter-spacing: -.04em; color: #b9b9b9; line-height: 1; }
+.mod h3 { margin: auto 0 22px; font-weight: 300; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; }
+.mod dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); margin: 0; font-size: 12.5px; line-height: 1.5; border-top: 1px solid #dcdcdc; }
+.mod dt, .mod dd { margin: 0; padding: 10px 0; border-bottom: 1px solid #dcdcdc; }
+.mod dt { color: var(--dim); }
+.mod .spec { margin-top: 18px; }
+.mod .spec dt, .mod .spec dd { padding: 7px 0; }
+.mod.last .txt { background: var(--blue); }
+.mod.last .n { color: var(--fg); }
 
-/* two pictures side by side */
-.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.pair > * { border-radius: var(--r); overflow: hidden; aspect-ratio: 1 / 1; }
-
-/* six modules */
-.mods { border-top: 1px solid var(--line); }
-.mods-hd, .mod { display: grid; grid-template-columns: 40px minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 1.4fr); gap: 8px 28px; }
-.mods-hd { padding-bottom: 10px; color: var(--dim); }
-.mods-hd span:first-child { grid-column: 3; }
-.mod { padding: 20px 0; border-bottom: 1px solid var(--line); }
-.mod .n { color: var(--dim); font-size: 11px; padding-top: 3px; }
-.mod h3 { margin: 0; font-weight: 400; font-size: 17px; letter-spacing: -.02em; line-height: 1.2; }
-.mod p { margin: 0; font-size: 12.5px; line-height: 1.5; }
-.mod .do { color: var(--dim); }
-.mod .lbl { display: none; }
-
-/* spec sheet beside its picture */
-.spec .sheet { background: var(--card); padding: 22px; display: flex; flex-direction: column; gap: 18px; aspect-ratio: auto; }
-.spec dl { display: grid; grid-template-columns: 90px minmax(0, 1fr); margin: 0; font-size: 12.5px; border-top: 1px solid #dcdcdc; }
-.spec dt, .spec dd { margin: 0; padding: 9px 0; border-bottom: 1px solid #dcdcdc; }
-.spec dt { color: var(--dim); }
-.spec > figure { aspect-ratio: 4 / 5; }
-
-/* finished work */
-.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.card { background: var(--card); border-radius: var(--r); padding: 8px; }
-.card figure { border-radius: 6px; overflow: hidden; aspect-ratio: 4 / 5; }
-
-/* two ways to work */
+/* how to hire us */
 .ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.way { background: var(--card); border-radius: var(--r); padding: 20px 22px 24px; display: grid; gap: 10px; align-content: start; min-height: 200px; }
-.way h3 { margin: 0; font-weight: 300; font-size: 26px; letter-spacing: -.03em; line-height: 1.05; }
-.way p { margin: 0; font-size: 12.5px; max-width: 34ch; }
-.way.all { background: var(--blue); }
+.way { background: var(--card); border-radius: var(--r); padding: 20px 22px 24px; display: grid; gap: 8px; align-content: start; }
+.way h3 { margin: 0; font-weight: 300; font-size: 22px; letter-spacing: -.02em; line-height: 1.1; }
+.way p { margin: 0; font-size: 12.5px; color: var(--dim); }
 
 /* closing panel */
 .end { margin: 88px 0 16px; background: var(--card); border-radius: var(--r); padding: 56px 24px 26px; text-align: center; display: grid; gap: 22px; justify-items: center; }
@@ -123,13 +102,11 @@ section { margin-top: 88px; }
   .hero h1 { font-size: 38px; }
   .hero .mid { top: auto; bottom: 74px; transform: none; }
   .intro { margin-left: 0; }
-  .path { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .path .n { font-size: 30px; }
-  .pair, .cards, .ways { grid-template-columns: 1fr; }
-  .mods-hd { display: none; }
-  .mod { grid-template-columns: 32px minmax(0, 1fr); }
-  .mod p { grid-column: 2; }
-  .mod .lbl { display: block; color: var(--dim); margin-bottom: 3px; }
+  .mod { grid-template-columns: 1fr; }
+  .mod:nth-child(even) figure { order: 0; }
+  .mod .txt { padding: 22px 20px 24px; }
+  .mod h3 { margin-top: 18px; font-size: 28px; }
+  .ways { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -155,77 +132,47 @@ section { margin-top: 88px; }
     </section>
 
     <section>
-      <h2 class="h">The path</h2>
-      <ol class="path">
-        <li><span class="nm">Range</span><span class="n">01</span></li>
-        <li><span class="nm">Formula</span><span class="n">02</span></li>
-        <li><span class="nm">Brand</span><span class="n">03</span></li>
-        <li><span class="nm">Packaging</span><span class="n">04</span></li>
-        <li><span class="nm">Website</span><span class="n">05</span></li>
-        <li><span class="nm">Production</span><span class="n">06</span></li>
-      </ol>
-    </section>
-
-    <section class="pair">
-      <figure><img src="/assets/img/brand-workshop/identity.jpg" width="1400" height="1750" loading="lazy" alt="An identity and packaging system laid flat: boxes, mailer, bag, tags, cards, care sheet and a poster of a plain serum bottle"></figure>
-      <figure><img src="/assets/img/brand-workshop/lens.jpg" width="1400" height="1400" loading="lazy" alt="Serum bottles labelled with their actives, magnified through a round lens over convex and concave lens diagrams"></figure>
-    </section>
-
-    <section>
       <h2 class="h">Six modules</h2>
-      <div class="mods-hd mono" aria-hidden="true"><span>What we do</span><span>What you get</span></div>
       <div class="mods">
-        <div class="mod"><span class="n">01</span><h3>Range planning</h3>
-          <p class="do"><span class="lbl mono">What we do</span>Who it’s for, price point, product types, hero benefits and launch order.</p>
-          <p><span class="lbl mono">What you get</span>A range plan: products, sizes, positioning and priority.</p></div>
-        <div class="mod"><span class="n">02</span><h3>Formulation &amp; samples</h3>
-          <p class="do"><span class="lbl mono">What we do</span>Skin feel, scent, texture, ingredients and cost target — then samples and feedback.</p>
-          <p><span class="lbl mono">What you get</span>Samples, an approved product spec and usage copy.</p></div>
-        <div class="mod"><span class="n">03</span><h3>Brand design</h3>
-          <p class="do"><span class="lbl mono">What we do</span>Naming, story, logo, colour and type.</p>
-          <p><span class="lbl mono">What you get</span>A brand identity and design files.</p></div>
-        <div class="mod"><span class="n">04</span><h3>Packaging</h3>
-          <p class="do"><span class="lbl mono">What we do</span>Bottles, labels and cartons — sourced and print-managed with suppliers.</p>
-          <p><span class="lbl mono">What you get</span>Print-ready files, pack samples and a cost quote.</p></div>
-        <div class="mod"><span class="n">05</span><h3>Website &amp; content</h3>
-          <p class="do"><span class="lbl mono">What we do</span>Brand story, product copy, product pages and a shop.</p>
-          <p><span class="lbl mono">What you get</span>A working website, handed over.</p></div>
-        <div class="mod"><span class="n">06</span><h3>Production &amp; delivery</h3>
-          <p class="do"><span class="lbl mono">What we do</span>Sourcing, scheduling, filling, labelling and boxing.</p>
-          <p><span class="lbl mono">What you get</span>Finished product to the approved spec, with batch records.</p></div>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/range.jpg" width="1400" height="1750" loading="lazy" alt="A planned range laid flat: bottles, a carton, a jar of cream, a bar and a comb"></figure>
+          <div class="txt"><span class="n">01</span><h3>Range planning</h3>
+            <dl><dt>What we do</dt><dd>Who it’s for, price point, product types and launch order.</dd><dt>What you get</dt><dd>A range plan: products, sizes and priority.</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/lens.jpg" width="1400" height="1400" loading="lazy" alt="Serum bottles labelled with their actives, magnified through a round lens over lens diagrams"></figure>
+          <div class="txt"><span class="n">02</span><h3>Formulation &amp; samples</h3>
+            <dl><dt>What we do</dt><dd>Skin feel, scent, texture, actives and cost target — then samples.</dd><dt>What you get</dt><dd>Approved samples and a product spec.</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/identity.jpg" width="1400" height="1750" loading="lazy" alt="An identity and packaging system laid flat: boxes, mailer, bag, tags, cards and a poster"></figure>
+          <div class="txt"><span class="n">03</span><h3>Brand design</h3>
+            <dl><dt>What we do</dt><dd>Naming, story, logo, colour and type.</dd><dt>What you get</dt><dd>A brand identity and design files.</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/spec.jpg" width="1400" height="1750" loading="lazy" alt="A ring-bound packaging spec: a carton dieline with ink swatches and a tube drawn with dimensions"></figure>
+          <div class="txt"><span class="n">04</span><h3>Packaging</h3>
+            <dl><dt>What we do</dt><dd>Bottles, labels and cartons, sourced and print-managed.</dd><dt>What you get</dt><dd>Print-ready files, pack samples and a quote.</dd></dl>
+            <dl class="spec mono"><dt>Carton</dt><dd>24.5 × 24.5 × 101 mm</dd><dt>Tube</dt><dd>30 × 19 × 100 mm · 12 ml</dd><dt>Finish</dt><dd>Matte, blind emboss</dd><dt>Inks</dt><dd>Warm Gray 1C · 11C</dd></dl></div>
+        </article>
+        <article class="mod">
+          <figure><img src="/assets/img/brand-workshop/website.jpg" width="1400" height="1750" loading="lazy" alt="A laptop and phone showing a light, minimal skincare shop"></figure>
+          <div class="txt"><span class="n">05</span><h3>Website &amp; content</h3>
+            <dl><dt>What we do</dt><dd>Brand story, product pages and a shop.</dd><dt>What you get</dt><dd>A working website, handed over.</dd></dl></div>
+        </article>
+        <article class="mod last">
+          <figure><img src="/assets/img/brand-workshop/tray.jpg" width="1400" height="1750" loading="lazy" alt="A woman carrying a steel tray of four finished, unlabelled products, seen from above"></figure>
+          <div class="txt"><span class="n">06</span><h3>Production &amp; delivery</h3>
+            <dl><dt>What we do</dt><dd>Sourcing, filling, labelling and boxing.</dd><dt>What you get</dt><dd>Finished product, with batch records.</dd></dl></div>
+        </article>
       </div>
     </section>
 
     <section>
-      <h2 class="h">In the details</h2>
-      <div class="pair spec">
-        <figure><img src="/assets/img/brand-workshop/spec.jpg" width="1400" height="1750" loading="lazy" alt="A ring-bound packaging specification: a carton dieline with ink swatches and a squeeze tube drawn front and back with dimensions"></figure>
-        <div class="sheet">
-          <p class="mono dim">Sample spec</p>
-          <dl>
-            <dt>Carton</dt><dd>24.5 × 24.5 × 101 mm</dd>
-            <dt>Tube</dt><dd>W30 × D19 × H100 mm · 12 ml</dd>
-            <dt>Print area</dt><dd>60 × 90 mm</dd>
-            <dt>Finish</dt><dd>Matte, blind emboss</dd>
-            <dt>Inks</dt><dd>Warm Gray 1C · Warm Gray 11C</dd>
-          </dl>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2 class="h">On the shelf</h2>
-      <div class="cards">
-        <div class="card"><figure><img src="/assets/img/brand-workshop/tray.jpg" width="1400" height="1750" loading="lazy" alt="A woman carrying a steel tray of four unlabelled skincare products, seen from directly above"></figure></div>
-        <div class="card"><figure><img src="/assets/img/brand-workshop/range.jpg" width="1400" height="1750" loading="lazy" alt="A finished range laid flat: bottles, a carton, a jar of cream, a bar and a comb"></figure></div>
-      </div>
-    </section>
-
-    <section>
-      <h2 class="h">Two ways to work</h2>
+      <h2 class="h">How to start</h2>
       <div class="ways">
-        <div class="way"><p class="mono dim">Single module</p><h3>The piece you’re missing</h3><p>Have a formula but no brand? A brand but no packaging? Start with one.</p></div>
-        <div class="way all"><p class="mono dim">Full build</p><h3>Idea to shelf</h3><p>All six modules, one team, one timeline.</p></div>
+        <div class="way"><h3>One module</h3><p>Hire the piece you’re missing.</p></div>
+        <div class="way"><h3>All six</h3><p>One team, idea to shelf.</p></div>
       </div>
     </section>
   </main>
