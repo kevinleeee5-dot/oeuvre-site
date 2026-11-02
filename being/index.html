@@ -987,12 +987,17 @@
     if (/[\s.,;:!?…—–\-"'()\[\]]/.test(ch)) return VIS_REST;
     return VIS_OTHER;
   }
-  function paceOf(ch) { return /[.!?…]/.test(ch || "") ? 0.18 : /[,;:—–]/.test(ch || "") ? 0.3 : 1; }
+  function paceOf(ch) { return /[.!?…。！？]/.test(ch || "") ? 0.18 : /[,;:—–，；：、]/.test(ch || "") ? 0.3 : 1; }
   // sentence-sized utterances (long ones stall in some browsers); the pieces join back to exactly the input
   function splitSentences(text, max) {
     max = max || 220; var out = [], start = 0, i = 0, n = text.length;
     while (i < n) {
       var ch = text[i];
+      if (/[。！？]/.test(ch)) {                       // Chinese full stops end a sentence with no space after
+        var jz = i + 1; while (jz < n && /[。！？”’」』)]/.test(text[jz])) jz++;
+        while (jz < n && /\s/.test(text[jz])) jz++;
+        out.push(text.slice(start, jz)); start = i = jz; continue;
+      }
       if (/[.!?…]/.test(ch)) {
         var j = i + 1; while (j < n && /[.!?…"'”’)\]]/.test(text[j])) j++;
         if (j >= n || /\s/.test(text[j])) { while (j < n && /\s/.test(text[j])) j++; out.push(text.slice(start, j)); start = i = j; continue; }
@@ -1021,6 +1026,24 @@
     if (v.localService) s += 1;
     return s;
   }
+  // a Chinese voice for replies in Chinese (zh-CN first, then any zh)
+  function zhVoiceScore(v) {
+    if (!v) return -1;
+    var lang = String(v.lang || "").replace("_", "-").toLowerCase(), name = String(v.name || "");
+    if (!/^(zh|cmn)(-|$)/.test(lang)) return -1;
+    var s = 10;
+    if (/premium/i.test(name)) s += 60; if (/natural/i.test(name)) s += 55; if (/enhanced/i.test(name)) s += 50;
+    if (/neural/i.test(name)) s += 45; if (/siri/i.test(name)) s += 40; if (/google/i.test(name)) s += 12;
+    s += /zh-cn|cmn-hans/.test(lang) ? 12 : /zh-tw/.test(lang) ? 6 : 4;
+    if (v.localService) s += 1;
+    return s;
+  }
+  function pickZhVoice(list) {
+    var best = null, bs = -1;
+    for (var i = 0; list && i < list.length; i++) { var s = zhVoiceScore(list[i]); if (s > bs) { bs = s; best = list[i]; } }
+    return bs > 0 ? best : null;
+  }
+  var CJK = /[\u3400-\u9fff]/;
   function pickVoice(list) {
     var best = null, bs = -1;
     for (var i = 0; list && i < list.length; i++) { var s = voiceScore(list[i]); if (s > bs) { bs = s; best = list[i]; } }
@@ -1728,7 +1751,8 @@
   var SP = null, speakIdx = 0, speakNext = 0, MT = [0, 0, 0];
   var SPEAK_LINES = ["i am made of borrowed movements and weather of my own.", "every few seconds i become someone slightly different. it doesn't hurt.",
     "oeuvre is a small studio in auckland. we make things that pay attention.", "none of these faces belongs to anyone. i only borrow them for a while."];
-  function loadVoices() { try { VOICE = pickVoice(SYNTH.getVoices()); } catch (e) {} }
+  var VOICE_ZH = null;
+  function loadVoices() { try { var l = SYNTH.getVoices(); VOICE = pickVoice(l); VOICE_ZH = pickZhVoice(l); } catch (e) {} }
   if (SYNTH) { loadVoices(); try { SYNTH.addEventListener("voiceschanged", loadVoices); } catch (e) { try { SYNTH.onvoiceschanged = loadVoices; } catch (e2) {} } }
   function primeTTS() {                    // some browsers only let a page speak after a gesture: say nothing, once, inside one
     if (primed || !SYNTH || !UTTER) return; primed = true;
@@ -1748,11 +1772,12 @@
     if (s.sim) { s.audio = true; s.started = true; return; }
     if (!SYNTH || !UTTER || opt.silent) return;
     try { SYNTH.cancel(); } catch (e) {}
-    var parts = splitSentences(s.text), off = 0;
+    var parts = splitSentences(s.text), off = 0, zh = CJK.test(s.text);
     parts.forEach(function (p, idx) {
       var u, base = off; off += p.length;
       try { u = new UTTER(p); } catch (e) { return; }
-      if (VOICE) { u.voice = VOICE; u.lang = VOICE.lang; } else u.lang = "en-GB";
+      if (zh) { if (VOICE_ZH) { u.voice = VOICE_ZH; u.lang = VOICE_ZH.lang; } else u.lang = "zh-CN"; }
+      else if (VOICE) { u.voice = VOICE; u.lang = VOICE.lang; } else u.lang = "en-GB";
       u.rate = 1; u.pitch = 1; u.volume = 1;
       u.onstart = function () { if (SP !== s) return; s.started = true; s.audio = true; s.segBase = base; s.segEnd = base + p.length; s.segT = NOW; if (s.pos < base) s.pos = base; };
       u.onboundary = function (e) {
@@ -1851,6 +1876,7 @@
     cancelSpeech(); sending = true;
     youLine(text);
     talkLog.push({ role: "user", content: text });
+    if (CJK.test(text)) recLang = "zh-CN";            // they wrote in Chinese: listen for Chinese next time too
     setConvo("thinking");
     var msgs = talkLog.slice(-20); if (msgs[0].role !== "user") msgs = msgs.slice(1);
     var res = null, data = null, ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
