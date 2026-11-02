@@ -108,6 +108,9 @@ section { margin-top: 88px; }
   .mod h3 { margin-top: 18px; font-size: 28px; }
   .ways { grid-template-columns: 1fr; }
 }
+
+/* the design grid laid over the page (drawn by the script below) */
+#grid { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
 </style>
 </head>
 <body>
@@ -184,5 +187,98 @@ section { margin-top: 88px; }
   </footer>
   <p class="legal">Oeuvre is a trading name of BNB Management Consulting Ltd.</p>
 </div>
+<canvas id="grid" aria-hidden="true"></canvas>
+<script>
+/* A light layout grid over the page: twelve columns that line up with the content, rows every 96px.
+   Lines near the focus point sharpen; a crosshair, a ring and a coordinate readout follow it.
+   The focus is the pointer; with no pointer (touch, or idle for a few seconds) it drifts on its own. */
+(function () {
+  var cv = document.getElementById('grid'), ctx = cv.getContext('2d');
+  var page = document.querySelector('.page');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W, H, dpr, cols = [], ROW = 96;
+  var fx = -999, fy = -999, tx = 0, ty = 0, lastMove = -1e9, t0 = performance.now(), raf = 0;
+
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    var r = page.getBoundingClientRect(), cs = getComputedStyle(page);
+    var l = r.left + parseFloat(cs.paddingLeft), w = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var n = W < 760 ? 4 : 12, g = 8, cw = (w - g * (n - 1)) / n;
+    cols = [];
+    for (var i = 0; i < n; i++) { var x = l + i * (cw + g); cols.push(x, x + cw); }
+    if (still) draw(-999, -999, 0);
+  }
+
+  function draw(x, y, t) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    var off = -(scrollY % ROW);
+    // all lines: faint everywhere, stronger near the focus
+    var g = ctx.createRadialGradient(x, y, 0, x, y, 260);
+    g.addColorStop(0, 'rgba(23,23,23,.30)'); g.addColorStop(1, 'rgba(23,23,23,.05)');
+    ctx.strokeStyle = still ? 'rgba(23,23,23,.05)' : g; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var i = 0; i < cols.length; i++) { var cx = Math.round(cols[i]) + .5; ctx.moveTo(cx, 0); ctx.lineTo(cx, H); }
+    for (var ry = off; ry < H; ry += ROW) { var yy = Math.round(ry) + .5; ctx.moveTo(0, yy); ctx.lineTo(W, yy); }
+    ctx.stroke();
+    if (still || x < -500) return;
+
+    // crosshair
+    ctx.strokeStyle = 'rgba(23,23,23,.14)';
+    ctx.beginPath(); ctx.moveTo(Math.round(x) + .5, 0); ctx.lineTo(Math.round(x) + .5, H);
+    ctx.moveTo(0, Math.round(y) + .5); ctx.lineTo(W, Math.round(y) + .5); ctx.stroke();
+
+    // snap marks on intersections near the focus
+    ctx.strokeStyle = 'rgba(23,23,23,.45)';
+    ctx.beginPath();
+    for (var c = 0; c < cols.length; c++) for (var r2 = off; r2 < H; r2 += ROW) {
+      var dx = cols[c] - x, dy = r2 - y;
+      if (dx * dx + dy * dy < 170 * 170) { var px = Math.round(cols[c]) + .5, py = Math.round(r2) + .5;
+        ctx.moveTo(px - 4, py); ctx.lineTo(px + 4, py); ctx.moveTo(px, py - 4); ctx.lineTo(px, py + 4); }
+    }
+    ctx.stroke();
+
+    // ring, plus a slow dashed orbit
+    ctx.strokeStyle = 'rgba(23,23,23,.55)';
+    ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
+    ctx.save(); ctx.setLineDash([2, 6]); ctx.lineDashOffset = -t * .01; ctx.strokeStyle = 'rgba(23,23,23,.25)';
+    ctx.beginPath(); ctx.arc(x, y, 64, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+
+    // coordinate readout
+    ctx.fillStyle = 'rgba(23,23,23,.55)';
+    ctx.font = '10px "Geist Mono", ui-monospace, Menlo, monospace';
+    var label = 'X ' + String(Math.round(x)).padStart(4, '0') + '  Y ' + String(Math.round(y + scrollY)).padStart(4, '0');
+    ctx.fillText(label, x + 16, y - 14);
+  }
+
+  function frame(now) {
+    var idle = now - lastMove > 2600;
+    if (idle) {                               // drift on a slow Lissajous path
+      var s = (now - t0) / 1000;
+      tx = W * (.5 + .36 * Math.sin(s * .21)); ty = H * (.5 + .32 * Math.sin(s * .29 + 1.3));
+    }
+    if (fx < -500) { fx = tx; fy = ty; }
+    var k = idle ? .04 : .2;
+    fx += (tx - fx) * k; fy += (ty - fy) * k;
+    draw(fx, fy, now);
+    raf = requestAnimationFrame(frame);
+  }
+
+  addEventListener('pointermove', function (e) {
+    if (e.pointerType !== 'mouse') return;   // touch and pen keep the drifting focus
+    tx = e.clientX; ty = e.clientY; lastMove = performance.now();
+  }, { passive: true });
+  addEventListener('resize', size);
+  if (still) addEventListener('scroll', function () { draw(-999, -999, 0); }, { passive: true });
+  document.addEventListener('visibilitychange', function () {
+    if (still) return;
+    if (document.hidden) cancelAnimationFrame(raf); else raf = requestAnimationFrame(frame);
+  });
+  size();
+  if (!still) raf = requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
