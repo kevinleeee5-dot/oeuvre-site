@@ -464,11 +464,11 @@
       }
       mctx.globalCompositeOperation = "source-over";
     }
-    function step(c) {
+    function step(c, calm) {
       const ts = performance.now() * 0.001;
       // a soft pull (no spring snap) against a flow that never stops, so a legible word is still streaming
       const nf = (0.28 - 0.19 * c) * (1 - 0.35 * sharp * c), k = 0.002 + 0.034 * c, damp = 0.9 - 0.22 * c;   // damping rises with the pull: it settles, never bounces
-      const stir = ptr.has, px = ptr.x, py = ptr.y;
+      const stir = ptr.has && !calm, px = ptr.x, py = ptr.y;   // in the list the pointer leaves the letters alone
       // while a word is up, a trickle of particles keeps leaving for another part of the letters
       const w = words[cur], pts = w && w.pts, n = pts ? pts.length / 2 : 0;
       if (n && pl && c > 0.25) {
@@ -539,7 +539,7 @@
         listC += ((listHover >= 0 && !reduced ? 1 : 0) - listC) * (listHover >= 0 ? 0.06 : 0.09);
         if (listC < 0.01 && listHover < 0) { if (listC > 0) { listC = 0; mctx.clearRect(0, 0, W, H); } return; }
         acc = Math.min(acc + dt, 50);
-        let st = 0; while (acc >= 16.6) { acc -= 16.6; step(listC); st++; }
+        let st = 0; while (acc >= 16.6) { acc -= 16.6; step(listC, true); st++; }
         if (st) streaks(listC);
         return;
       }
