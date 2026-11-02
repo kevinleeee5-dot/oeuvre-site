@@ -109,8 +109,9 @@ section { margin-top: 88px; }
   .ways { grid-template-columns: 1fr; }
 }
 
-/* the design grid laid over the page (drawn by the script below) */
-#grid { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+/* the design grid behind the page (drawn by the script below) */
+#grid { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.page { position: relative; z-index: 1; }
 </style>
 </head>
 <body>
@@ -189,7 +190,7 @@ section { margin-top: 88px; }
 </div>
 <canvas id="grid" aria-hidden="true"></canvas>
 <script>
-/* A light layout grid over the page: twelve columns that line up with the content, rows every 96px.
+/* A light layout grid behind the page: twelve columns that line up with the content, rows every 96px.
    Lines near the focus point sharpen; a crosshair, a ring and a coordinate readout follow it.
    The focus is the pointer; with no pointer (touch, or idle for a few seconds) it drifts on its own. */
 (function () {
