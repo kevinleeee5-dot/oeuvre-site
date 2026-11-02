@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261103c"  # bump to bust caches of css/js
+VERSION = "20261103d"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -183,7 +183,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 {body}
 {cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
 <footer class="foot">
-  <p class="foot-legal">{esc(s['legal'])}</p>
+  <p class="foot-legal">{esc(s['legal'])} <a class="foot-link" href="{lang_prefix}/privacy/">{esc(c['privacy']['link'])}</a></p>
   <div class="langs" role="group" aria-label="{esc(s['languages'])}">{''.join(langs)}</div>
 </footer>
 <canvas id="iris" aria-hidden="true"></canvas>
@@ -357,6 +357,20 @@ def manifesto(m):
     return f'<section class="manifesto"><p class="mf-lines">{lines}</p><p class="mf-text">{esc(m["text"])}</p></section>'
 
 
+def privacy(c, P):
+    V = c["privacy"]
+    secs = "".join(
+        f'<section class="pv-sec"><h2>{esc(s["h"])}</h2>{"".join(f"<p>{esc(t)}</p>" for t in s["p"])}</section>'
+        for s in V["sections"])
+    return f"""<main id="main" class="wrap privacy">
+  {back(c, P + '/')}
+  <h1 class="page-title">{esc(V['title'])}</h1>
+  <p class="lead">{esc(V['lead'])}</p>
+  <p class="pv-updated">{esc(V['updated'])}</p>
+  <div class="pv-body">{secs}</div>
+</main>"""
+
+
 def contact(c, P):
     V, s = c["contact"], c["site"]
     m = s["email"]
@@ -420,6 +434,7 @@ def build():
             ("services/index.html", "/services/", "services", "services", c["services"].get("metaTitle", c["services"]["title"]), c["services"]["metaDescription"], services(c, P)),
             ("studio/index.html", "/studio/", "studio", "studio", c["studio"].get("metaTitle", c["studio"]["title"]), c["studio"]["metaDescription"], studio(c, P)),
             ("contact/index.html", "/contact/", "contact", "contact", c["contact"].get("metaTitle", c["contact"]["title"]), c["contact"]["metaDescription"], contact(c, P)),
+            ("privacy/index.html", "/privacy/", "privacy", "", c["privacy"].get("metaTitle", c["privacy"]["title"]), c["privacy"]["metaDescription"], privacy(c, P)),
         ]
         for rel, path, pid, section, title, desc, body in pages:
             written.append(write(base + rel, page(c, lang_prefix=P, path=path, page_id=pid, section=section, title=title,

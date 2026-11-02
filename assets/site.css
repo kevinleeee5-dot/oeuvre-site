@@ -377,3 +377,12 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 .snd-btn[aria-pressed="false"] { opacity: .45; }
 .snd-btn[aria-pressed="false"]:hover { opacity: .8; }
 .snd-btn[aria-pressed="true"] { opacity: 1; }
+
+/* privacy */
+.pv-updated { color: var(--dim); font-size: 13px; letter-spacing: .04em; margin: -24px 0 clamp(40px, 7vh, 72px); }
+.pv-body { display: grid; gap: clamp(36px, 6vh, 56px); max-width: 44rem; }
+.pv-sec h2 { font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-weight: 500; letter-spacing: -.02em; margin: 0 0 14px; }
+.pv-sec p { margin: 0 0 12px; color: rgba(255, 255, 255, .78); line-height: 1.65; }
+:lang(zh) .pv-sec h2 { font-weight: 900; }
+.foot-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; margin-left: 10px; }
+.foot-link:hover { color: var(--fg); }
