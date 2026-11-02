@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261103b"  # bump to bust caches of css/js
+VERSION = "20261103c"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -29,6 +29,16 @@ SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-
 FONTS = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap"
 FONTS_ZH = ("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;800;900&amp;family=Geist+Mono:wght@300;400"
             "&amp;family=Noto+Sans+SC:wght@300;900&amp;display=swap")
+
+
+def clarity(s):
+    """Microsoft Clarity (traffic, heatmaps, session replays). Chat text is masked in the figure's frame."""
+    i = s.get("clarityId")
+    if not i:
+        return ""
+    return ('<script>(function(c,l,a,r,i,t,y){if(c.location.hostname!=="oeuvre.co.nz")return;c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};'
+            't=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];'
+            'y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","' + esc(i) + '");</script>')
 
 
 def esc(s):
@@ -153,6 +163,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <meta name="apple-mobile-web-app-title" content="Oeuvre">
 <link rel="manifest" href="/assets/site.webmanifest">
 {jsonld(c, page_id, canonical, full_title, description)}
+{clarity(s)}
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
