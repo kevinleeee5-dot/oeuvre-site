@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102w"  # bump to bust caches of css/js
+VERSION = "20261102x"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -213,7 +213,7 @@ def figure(img, cls="", eager=False):
 def home(c, P):
     s = c["site"]
     words = "".join(
-        f'<li><a class="word" data-i="{i}" data-id="{m["id"]}" href="{P}{m["href"]}">{esc(m.get("home", m["label"]))}<sup aria-hidden="true">0{i + 1}</sup></a></li>'
+        f'<li><a class="word" data-i="{i}" data-id="{m["id"]}"{(' data-float="' + esc(m["float"]) + '"') if m.get("float") else ""} href="{P}{m["href"]}">{esc(m.get("home", m["label"]))}<sup aria-hidden="true">0{i + 1}</sup></a></li>'
         for i, m in enumerate(c["menu"]))
     nm = "".join(f'<span style="animation-delay:{0.12 * i:.2f}s">{esc(ch)}</span>' for i, ch in enumerate(s["name"]))
     ln = "".join(f"<span>{esc(t.strip().rstrip('.'))}.</span>" for t in s["statement"].split(". ") if t.strip().strip("."))

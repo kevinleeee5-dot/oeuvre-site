@@ -292,43 +292,52 @@
       if (on) {
         body.classList.remove("list-out"); body.classList.add("list", "list-in");
         listTimer = setTimeout(() => body.classList.remove("list-in"), 1200);
-        attachToList(cur);
+        useList(true); attachToList(cur);
       } else {
         setListHover(-1); attachUntil = 0;
         body.classList.remove("list-in"); body.classList.add("list-out");
-        listTimer = setTimeout(() => { body.classList.remove("list", "list-out"); listVis = 0; listC = 0; menuC.style.opacity = ""; layout(true); }, reduced ? 0 : 620);
+        listTimer = setTimeout(() => { body.classList.remove("list", "list-out"); listVis = 0; listC = 0; menuC.style.opacity = ""; useList(false); layout(true); }, reduced ? 0 : 620);
       }
     });
 
     /* ---- glyph sampling: each word becomes a cloud of points where the ink is (unit = font size) ---- */
     const N = W < 860 ? 1400 : W < 1800 ? 2600 : 3400, SAMPLE = 200, NS = 3600;
     let R = isStatic ? rng(7) : Math.random;
-    function sampleWord(w) {
+    // one glyph cloud for a text in a given font: points (unit = font size), ink size, and where the ink starts in the text box
+    function sampleText(text, font, track) {
       const c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
-      // the word's own weight and tracking (Chinese pages set the menu in 思源黑体 900 with looser tracking)
-      const cs = getComputedStyle(w.el), fsz = parseFloat(cs.fontSize) || 100, lsp = parseFloat(cs.letterSpacing);
-      const font = `${cs.fontWeight || 500} ${SAMPLE}px ${cs.fontFamily || getComputedStyle(nav).fontFamily}`;
-      const track = Number.isFinite(lsp) ? lsp / fsz : -0.05;
-      g.font = font; const tw = Math.ceil(g.measureText(w.label).width) + 40;
+      g.font = font; const tw = Math.ceil(g.measureText(text).width) + 40;
       c.width = tw; c.height = Math.ceil(SAMPLE * 1.3);
       g.font = font; if ("letterSpacing" in g) g.letterSpacing = (track * SAMPLE) + "px";
-      g.fillStyle = "#fff"; g.textBaseline = "top"; g.fillText(w.label, 20, SAMPLE * 0.1);
+      g.fillStyle = "#fff"; g.textBaseline = "top"; g.fillText(text, 20, SAMPLE * 0.1);
       const d = g.getImageData(0, 0, c.width, c.height).data;
       let minx = c.width, maxx = 0, miny = c.height, maxy = 0, area = 0;
       for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 128) {
         area++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
       }
-      if (!area) { w.pts = new Float32Array(0); w.gw = w.gh = 0.5; return; }
+      const none = { pts: new Float32Array(0), gw: 0.5, gh: 0.5, ix: 0, iy: 0 };
+      if (!area) return none;
       const step = Math.max(1.2, Math.sqrt(area / NS)), out = [];
       for (let y = miny; y <= maxy; y += step) for (let x = minx; x <= maxx; x += step) {
         const xi = Math.round(x), yi = Math.round(y);
         if (d[(yi * c.width + xi) * 4 + 3] > 128) out.push((x - minx) / SAMPLE, (y - miny) / SAMPLE);
       }
-      w.pts = Float32Array.from(out); w.gw = (maxx - minx + 1) / SAMPLE; w.gh = (maxy - miny + 1) / SAMPLE;
-      if (!(w.gw > 0 && w.gh > 0)) { w.pts = new Float32Array(0); w.gw = w.gh = 0.5; }
-      // where the ink starts inside the text box (for laying the points over the list's DOM words)
-      w.ix = (minx - 20) / SAMPLE; w.iy = (miny - SAMPLE * 0.1) / SAMPLE;
+      const gw = (maxx - minx + 1) / SAMPLE, gh = (maxy - miny + 1) / SAMPLE;
+      if (!(gw > 0 && gh > 0)) return none;
+      return { pts: Float32Array.from(out), gw, gh, ix: (minx - 20) / SAMPLE, iy: (miny - SAMPLE * 0.1) / SAMPLE };
     }
+    // each word has a list shape (its own text, in the list's font) and a floating shape: on the Chinese home the
+    // floating words stay English (data-float), set like the English site; opening the list morphs one into the other
+    function sampleWord(w) {
+      const cs = getComputedStyle(w.el), fsz = parseFloat(cs.fontSize) || 100, lsp = parseFloat(cs.letterSpacing);
+      const fam = cs.fontFamily || getComputedStyle(nav).fontFamily;
+      const track = Number.isFinite(lsp) ? lsp / fsz : -0.05;
+      w.L = sampleText(w.label, `${cs.fontWeight || 500} ${SAMPLE}px ${fam}`, track);
+      w.F = w.el.dataset.float ? sampleText(w.el.dataset.float, `500 ${SAMPLE}px "Inter Tight", ${fam}`, -0.05) : w.L;
+      useShape(w, body.classList.contains("list") ? w.L : w.F);
+    }
+    function useShape(w, v) { w.pts = v.pts; w.gw = v.gw; w.gh = v.gh; w.ix = v.ix; w.iy = v.iy; }
+    const useList = on => words.forEach(w => { if (w.L) useShape(w, on ? w.L : w.F); });
     const sampleAll = () => words.forEach(sampleWord);
 
     /* ---- the particles: positions, velocities, targets (and the previous targets, for the reduced crossfade) ---- */
