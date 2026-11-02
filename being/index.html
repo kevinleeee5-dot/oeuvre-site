@@ -255,7 +255,7 @@
           var cur = document.createElement("span"); cur.className = "cl on"; cur.textContent = chips[i]; t.appendChild(cur); b.appendChild(t);
         });
         var st = document.createElement("style");
-        st.textContent = ".ct{display:inline-grid}.ct .cl{grid-area:1/1;transition:opacity 2.2s cubic-bezier(.4,0,.2,1),filter 2.2s cubic-bezier(.4,0,.2,1);opacity:0;filter:blur(3px)}.ct .cl.on{opacity:1;filter:blur(0)}";
+        st.textContent = ".chip{text-align:left}.ct{display:inline-grid;justify-items:start;text-align:left}.ct .cl{grid-area:1/1;justify-self:start;text-align:left;white-space:nowrap;transition:opacity 2.2s cubic-bezier(.4,0,.2,1),filter 2.2s cubic-bezier(.4,0,.2,1);opacity:0;filter:blur(3px)}.ct .cl.on{opacity:1;filter:blur(0)}";
         document.head.appendChild(st);
         var say = document.getElementById("say");
         if (say) { say.placeholder = window.ZH_SETS[0].say; say.setAttribute("aria-label", "输入后按回车发送"); }
