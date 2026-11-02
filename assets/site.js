@@ -314,6 +314,7 @@
         if (d[(yi * c.width + xi) * 4 + 3] > 128) out.push((x - minx) / SAMPLE, (y - miny) / SAMPLE);
       }
       w.pts = Float32Array.from(out); w.gw = (maxx - minx + 1) / SAMPLE; w.gh = (maxy - miny + 1) / SAMPLE;
+      if (!(w.gw > 0 && w.gh > 0)) { w.pts = new Float32Array(0); w.gw = w.gh = 0.5; }
       // where the ink starts inside the text box (for laying the points over the list's DOM words)
       w.ix = (minx - 20) / SAMPLE; w.iy = (miny - SAMPLE * 0.1) / SAMPLE;
     }
@@ -426,7 +427,9 @@
     function show(k, keepTime) {
       if (!words[k].pts) return;
       const prev = pl;
-      cur = k; pl = place(words[k], prev); assign(words[k], pl);
+      const np = place(words[k], prev);
+      if (!np || !Number.isFinite(np.x + np.y + np.fs)) return;      // fonts not measured yet: wait for the next boot
+      cur = k; pl = np; assign(words[k], pl);
       if (!keepTime) { tw = 0; xf = prev ? 0 : 1; }
       fs = pl.fs; nav.style.setProperty("--fs", fs + "px");
       hit.href = words[k].href; hit.setAttribute("aria-label", words[k].label);
@@ -847,26 +850,61 @@
   // a thin white ring replaces the pointer on mouse devices (touch is unchanged). Over the figure's iframe the page gets no
   // pointer events, so the figure posts {type:'oeuvre-cursor', x, y, inside, hover, down} and the ring follows from there
   if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
+    // two layers: a small dot that sits exactly on the pointer (set in the event, no frame of lag) and a ring that follows
+    // with a short elastic lag, stretches along fast moves, is drawn towards what you hover, and sends a ripple on click
     const d = document.createElement("div"); d.className = "dot-cursor"; d.setAttribute("aria-hidden", "true"); body.appendChild(d);
+    const dot = document.createElement("div"); dot.className = "cursor-dot"; dot.setAttribute("aria-hidden", "true"); body.appendChild(dot);
     root.classList.add("has-o");
-    let cx = -80, cy = -80, tx = -80, ty = -80, seen = false;
-    const aim = (x, y) => { tx = x; ty = y; if (!seen) { cx = x; cy = y; seen = true; } d.classList.add("on"); };
-    const isBig = el => !!(el && el.closest && el.closest("a,button,summary,#wordHit,[role=button]"));
-    addEventListener("pointermove", e => { aim(e.clientX, e.clientY); d.classList.toggle("big", isBig(e.target)); if (window.__oeuvreSound) window.__oeuvreSound.move(e.clientX, e.clientY); }, { passive: true });
-    document.addEventListener("pointerleave", () => d.classList.remove("on"));
-    document.addEventListener("pointerover", e => d.classList.toggle("big", isBig(e.target)));
-    addEventListener("pointerdown", e => { d.classList.add("down"); if (window.__oeuvreSound) window.__oeuvreSound.click(e.clientX, e.clientY); }); addEventListener("pointerup", () => d.classList.remove("down"));
+    let cx = -80, cy = -80, tx = -80, ty = -80, px = -80, py = -80, seen = false, raf = 0, last = 0, hoverEl = null;
+    const kick = () => { if (!raf) { last = 0; raf = requestAnimationFrame(step); } };
+    const aim = (x, y) => {
+      px = x; py = y;
+      dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;              // the dot: exactly where the pointer is, now
+      if (!seen) { cx = x; cy = y; seen = true; }
+      d.classList.add("on"); dot.classList.add("on"); kick();
+    };
+    const hit = el => el && el.closest && el.closest("a,button,summary,#wordHit,[role=button]");
+    const setHover = el => { hoverEl = hit(el) || null; d.classList.toggle("big", !!hoverEl); dot.classList.toggle("big", !!hoverEl); };
+    const ripple = (x, y) => {
+      const r = document.createElement("div"); r.className = "cursor-ripple"; r.setAttribute("aria-hidden", "true");
+      r.style.left = x + "px"; r.style.top = y + "px"; body.appendChild(r);
+      r.addEventListener("animationend", () => r.remove());
+    };
+    addEventListener("pointermove", e => { aim(e.clientX, e.clientY); setHover(e.target); if (window.__oeuvreSound) window.__oeuvreSound.move(e.clientX, e.clientY); }, { passive: true });
+    document.addEventListener("pointerleave", () => { d.classList.remove("on"); dot.classList.remove("on"); });
+    document.addEventListener("pointerover", e => setHover(e.target));
+    addEventListener("pointerdown", e => { d.classList.add("down"); ripple(e.clientX, e.clientY); kick(); if (window.__oeuvreSound) window.__oeuvreSound.click(e.clientX, e.clientY); });
+    addEventListener("pointerup", () => { d.classList.remove("down"); kick(); });
     addEventListener("message", e => {
       const fr = $("#being"); let ok = false; try { ok = !!fr && e.source === fr.contentWindow; } catch (_) { }
       if (e.origin !== location.origin || !ok || !e.data || e.data.type !== "oeuvre-cursor") return;
       const m = e.data;
-      if (m.inside === false) { d.classList.remove("on"); return; }
+      if (m.inside === false) { d.classList.remove("on"); dot.classList.remove("on"); return; }
       if (Number.isFinite(m.x) && Number.isFinite(m.y)) { aim(m.x, m.y); if (window.__oeuvreSound) window.__oeuvreSound.move(m.x, m.y); }
-      if (m.down && !d.classList.contains("down") && window.__oeuvreSound) window.__oeuvreSound.click(m.x, m.y);
-      d.classList.toggle("big", !!m.hover); d.classList.toggle("down", !!m.down);
+      if (m.down && !d.classList.contains("down")) { ripple(m.x, m.y); if (window.__oeuvreSound) window.__oeuvreSound.click(m.x, m.y); }
+      hoverEl = null; d.classList.toggle("big", !!m.hover); dot.classList.toggle("big", !!m.hover); d.classList.toggle("down", !!m.down);
     });
-    const step = () => { cx += (tx - cx) * 0.28; cy += (ty - cy) * 0.28; d.style.transform = `translate3d(${cx}px, ${cy}px, 0)`; requestAnimationFrame(step); };
-    requestAnimationFrame(step);
+    let sx = 1, sy = 1, ang = 0;
+    function step(t) {
+      const dt = last ? Math.min(50, t - last) : 16.7; last = t;
+      // the ring's target: the pointer, drawn a fifth of the way towards the centre of what you hover (a light magnet)
+      tx = px; ty = py;
+      if (hoverEl && hoverEl.isConnected && hoverEl.id !== "wordHit") {
+        const r = hoverEl.getBoundingClientRect();
+        if (r.width < 600 && r.height < 300) { tx += (r.left + r.width / 2 - px) * 0.2; ty += (r.top + r.height / 2 - py) * 0.2; }
+      }
+      const k = 1 - Math.pow(1 - 0.42, dt / 16.7);                       // the same feel at 60 Hz and 120 Hz
+      const vx = (tx - cx) * k, vy = (ty - cy) * k; cx += vx; cy += vy;
+      // stretch along the motion, then spring back to a circle
+      const sp = Math.hypot(vx, vy), want = Math.min(0.45, sp / 70);
+      if (sp > 0.3) ang = Math.atan2(vy, vx);
+      const kk = 1 - Math.pow(1 - 0.3, dt / 16.7);
+      sx += (1 + want - sx) * kk; sy += (1 - want * 0.55 - sy) * kk;
+      d.style.transform = `translate3d(${cx.toFixed(2)}px, ${cy.toFixed(2)}px, 0) rotate(${ang.toFixed(3)}rad) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+      const busy = Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1 || Math.abs(sx - 1) > 0.002 || Math.abs(sy - 1) > 0.002;
+      raf = busy ? requestAnimationFrame(step) : 0;                      // rests when the pointer does
+    }
+    kick();
   }
 
 

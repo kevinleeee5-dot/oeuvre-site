@@ -290,6 +290,17 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 .dot-cursor.on { opacity: 1; }
 .dot-cursor.big { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
 .dot-cursor.down { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+.dot-cursor { transition: width .35s var(--ease), height .35s var(--ease), margin .35s var(--ease), opacity .3s, background-color .35s; }
+.dot-cursor.big { background: rgba(255, 255, 255, .12); }
+/* the dot sits exactly on the pointer */
+.cursor-dot { position: fixed; left: 0; top: 0; z-index: 171; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: #fff;
+              pointer-events: none; mix-blend-mode: difference; opacity: 0; transition: opacity .2s, width .25s var(--ease), height .25s var(--ease), margin .25s var(--ease); will-change: transform; }
+.cursor-dot.on { opacity: 1; }
+.cursor-dot.big { width: 0; height: 0; margin: 0; }
+/* a click sends out one ring */
+.cursor-ripple { position: fixed; z-index: 169; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; border: 1px solid #fff;
+                 pointer-events: none; mix-blend-mode: difference; animation: cursorRipple .6s cubic-bezier(.2, .7, .2, 1) forwards; }
+@keyframes cursorRipple { from { transform: scale(.5); opacity: .8; } to { transform: scale(2.6); opacity: 0; } }
 
 /* ---------- home: small business words (js fills #tags) ---------- */
 #tags { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
