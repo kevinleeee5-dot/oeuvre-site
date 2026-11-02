@@ -281,10 +281,11 @@
       if (on) {
         body.classList.remove("list-out"); body.classList.add("list", "list-in");
         listTimer = setTimeout(() => body.classList.remove("list-in"), 1200);
+        attachToList(cur);
       } else {
-        setListHover(-1);
+        setListHover(-1); attachUntil = 0;
         body.classList.remove("list-in"); body.classList.add("list-out");
-        listTimer = setTimeout(() => { body.classList.remove("list", "list-out"); layout(true); }, reduced ? 0 : 620);
+        listTimer = setTimeout(() => { body.classList.remove("list", "list-out"); listVis = 0; listC = 0; menuC.style.opacity = ""; layout(true); }, reduced ? 0 : 620);
       }
     });
 
@@ -373,8 +374,10 @@
       const rg = document.createRange(); rg.selectNodeContents(tn); const r = rg.getBoundingClientRect();
       const f = parseFloat(getComputedStyle(w.el).fontSize) || 60;
       // the canvas sample put the text's top at 0.1 em; the DOM line box is taller than the font size, so centre the ink
-      const top = r.top + (r.height - f * 1.21) / 2 + f * 0.1 * 0;  // content-area top
-      const x = r.left + w.ix * f, y = top + (w.iy + 0.1) * f;
+      const top = r.top + (r.height - f * 1.21) / 2;   // content-area top
+      // while the line is still rising in, leave out its animated offset: the ink goes where the line will settle
+      const tr = (getComputedStyle(w.el).translate || "").split(" "), ty = tr.length > 1 ? parseFloat(tr[1]) || 0 : 0;
+      const x = r.left + w.ix * f, y = top - ty + (w.iy + 0.1) * f;
       return { x, y, w: w.gw * f, h: w.gh * f, fs: f, cx: x + w.gw * f / 2, cy: y + w.gh * f / 2 };
     }
     function setListHover(k) {
@@ -382,9 +385,25 @@
       if (listHover >= 0) words[listHover].el.classList.remove("lit");
       listHover = k;
       if (k < 0 || reduced || !words[k].pts) return;
-      words[k].el.classList.add("lit");
+      words[k].el.classList.add("lit"); attachUntil = 0;
       cur = k; pl = listPlace(words[k]); if (!pl) return;
       fs = pl.fs; assign(words[k], pl);
+    }
+    // opening the list: the floating word's ink flies onto its own line and fades out there
+    let attachUntil = 0, listVis = 0;
+    function attachToList(k) {
+      if (reduced || !words[k] || !words[k].pts) return;
+      const p = listPlace(words[k]); if (!p) return;
+      cur = k; pl = p; fs = p.fs; assign(words[k], p); listC = 1; listVis = 1;
+      attachUntil = performance.now() + 1300;
+      // the lines are still rising into place: when they have settled, shift the targets by however far this one moved
+      setTimeout(() => {
+        if (listHover >= 0 || !body.classList.contains("list")) return;
+        const q = listPlace(words[k]); if (!q) return;
+        const dx = q.x - p.x, dy = q.y - p.y;
+        for (let i = 0; i < N; i++) { TX[i] += dx; TY[i] += dy; }
+        pl = q;
+      }, 1000);
     }
     words.forEach((w, i) => {
       w.el.addEventListener("pointerenter", () => { if (body.classList.contains("list") && !body.classList.contains("list-out")) setListHover(i); });
@@ -536,8 +555,11 @@
       if (body.classList.contains("list")) {
         hit.style.pointerEvents = "none"; drawn = "";
         const sz2 = W + "x" + H; if (sz2 !== lastSize) { lastSize = sz2; mctx = fit(menuC); if (listHover >= 0) { const p = listPlace(words[listHover]); if (p) { pl = p; assign(words[listHover], pl); } } }
-        listC += ((listHover >= 0 && !reduced ? 1 : 0) - listC) * (listHover >= 0 ? 0.06 : 0.09);
-        if (listC < 0.01 && listHover < 0) { if (listC > 0) { listC = 0; mctx.clearRect(0, 0, W, H); } return; }
+        const want = !reduced && (listHover >= 0 || t < attachUntil);
+        listC += ((want ? 1 : 0) - listC) * (want ? 0.06 : 0.09);
+        listVis += ((want ? 1 : 0) - listVis) * (want ? 0.15 : 0.05);       // nothing shows in the list unless a word is touched
+        menuC.style.opacity = listVis.toFixed(3);
+        if (!want && listVis < 0.02) { if (listVis > 0 || listC > 0) { listVis = 0; listC = 0; mctx.clearRect(0, 0, W, H); } return; }
         acc = Math.min(acc + dt, 50);
         let st = 0; while (acc >= 16.6) { acc -= 16.6; step(listC, true); st++; }
         if (st) streaks(listC);
