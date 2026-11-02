@@ -10,8 +10,8 @@
     "legal": "Oeuvre 是 BNB Management Consulting Ltd 的经营名称。",
     "back": "返回",
     "skip": "跳到正文",
-    "index": "菜单",
-    "float": "关闭菜单",
+    "index": "此处本应保密",
+    "float": "假装没看见",
     "sound_on": "打开声音",
     "sound_off": "关闭声音",
     "soon": "即将推出",
@@ -26,7 +26,8 @@
     "homeTitle": "Oeuvre — 奥克兰品牌与数字工作室",
     "homeH1": "Oeuvre — 奥克兰品牌与数字工作室。创意有形，想象有为。",
     "metaDescription": "Oeuvre 是一家位于奥克兰的独立创意工作室。我们融合品牌策略、视觉设计与数字技术，打造品牌、网站和数字产品，让好的想法真正落地。",
-    "ogAlt": "Oeuvre — 奥克兰品牌与数字工作室"
+    "ogAlt": "Oeuvre — 奥克兰品牌与数字工作室",
+    "indexHover": "你什么都没看见"
   },
   "menu": [
     {

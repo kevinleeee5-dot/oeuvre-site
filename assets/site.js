@@ -274,6 +274,12 @@
     // the list opens word by word and closes the same way, then the floating word comes back
     words.forEach((w, i) => w.el.style.setProperty("--i", i));
     let listTimer = 0;
+    // a third label while the pointer is on the closed button (Chinese: 你什么都没看见)
+    if (toggle && toggle.dataset.hover) {
+      const idleLabel = () => body.classList.contains("list") && !body.classList.contains("list-out") ? toggle.dataset.on : toggle.dataset.off;
+      toggle.addEventListener("pointerenter", () => { if (!body.classList.contains("list")) toggle.textContent = toggle.dataset.hover; });
+      toggle.addEventListener("pointerleave", () => { toggle.textContent = idleLabel(); });
+    }
     toggle && toggle.addEventListener("click", () => {
       const on = !body.classList.contains("list") || body.classList.contains("list-out");
       clearTimeout(listTimer);

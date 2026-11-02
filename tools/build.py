@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102t"  # bump to bust caches of css/js
+VERSION = "20261102u"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -167,7 +167,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <header class="bar">
   <a class="mark" href="{lang_prefix or '/'}" aria-label="{esc(s['name'])} — {esc(s['home'])}">{esc(s['name'])}</a>
   {mini}
-  {'<button class="snd-btn" type="button" id="soundToggle" aria-pressed="false" aria-label="' + esc(s['sound_on']) + '" data-on="' + esc(s['sound_off']) + '" data-off="' + esc(s['sound_on']) + '">' + SOUND_ICON + '</button>\n  <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '">' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
+  {'<button class="snd-btn" type="button" id="soundToggle" aria-pressed="false" aria-label="' + esc(s['sound_on']) + '" data-on="' + esc(s['sound_off']) + '" data-off="' + esc(s['sound_on']) + '">' + SOUND_ICON + '</button>\n  <button class="chip" type="button" id="indexToggle" aria-pressed="false" data-on="' + esc(s['float']) + '" data-off="' + esc(s['index']) + '"' + (' data-hover="' + esc(s['indexHover']) + '"' if s.get('indexHover') else '') + '>' + esc(s['index']) + '</button>' if page_id == 'home' else ''}
 </header>
 {body}
 {cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
