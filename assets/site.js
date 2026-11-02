@@ -529,11 +529,6 @@
       }
       mctx.globalCompositeOperation = "source-over";
     }
-    // nothing is ever drawn over the figure's conversation panel (streaks included), with a 16 px margin
-    function clearPanel() {
-      const p = isStatic || !havePanel ? fallbackPanel() : panel; if (!p || p.w <= 0 || p.h <= 0) return;
-      mctx.clearRect(p.x - 16, p.y - 16, p.w + 32, p.h + 32);
-    }
     function focusRing() {
       if (focused !== cur || !words[cur].el.matches(":focus-visible")) return;
       const m = fs * 0.1;
@@ -585,7 +580,7 @@
         mctx.clearRect(0, 0, W, H);
         if (xf < 1) marks(OX, OY, 1 - xf);
         marks(TX, TY, xf);
-        clearPanel(); placeHit(xf > 0.5); focusRing();
+        placeHit(xf > 0.5); focusRing();
         return;
       }
 
@@ -596,7 +591,7 @@
       acc = Math.min(acc + dt, 50);
       let steps = 0;
       while (acc >= 16.6) { acc -= 16.6; step(c); steps++; }
-      if (steps) { streaks(c); clearPanel(); focusRing(); }
+      if (steps) { streaks(c); focusRing(); }
       if (perf) { const d = performance.now() - t0; perf.n++; perf.sum += d; if (d > perf.max) perf.max = d; if (steps) { perf.drawn++; perf.dsum += d; } }
       placeHit(c > 0.35 && tw > GATHER * 0.4 && tw < HOLD_END + DISSOLVE * 0.5);
     }
@@ -872,7 +867,7 @@
   }
 
 
-  /* ================= phone intro: the name and the line gather as streaks (the menu's flow), then a hard wipe ================= */
+  /* ================= intro (phones and desktop): the name and the line gather as streaks (the menu's flow), then a hard wipe ================= */
   // The page opens on black. "Oeuvre" and the line gather out of a flow field as streaks, exactly like the menu words. Only when the
   // whole picture has formed (and the figure is ready) a hard-edged mask sweeps down from the top and the home is there. Once per
   // session; at most 14 s; reduced motion shows the plain words for a moment instead.
@@ -898,7 +893,7 @@
         const off = document.createElement("canvas"); off.width = w; off.height = h; const o = off.getContext("2d");
         const fam = getComputedStyle(document.body).fontFamily, pad = Math.max(20, Math.min(w * 0.06, 40));
         o.font = `600 100px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = "-4px";
-        const f1 = Math.min(100, 50 * (w - 2 * pad) / o.measureText("Oeuvre").width * 2 * 0.5);   // half the width of a full-measure title
+        const f1 = Math.min(w > 820 ? Math.min(200, h * 0.2) : 100, 50 * (w - 2 * pad) / o.measureText("Oeuvre").width * 2 * 0.5);   // half the width of a full-measure title
         o.font = `600 ${f1}px ${fam}`; if ("letterSpacing" in o) o.letterSpacing = (-0.04 * f1) + "px";
         const mN = o.measureText("Oeuvre"), cap = mN.actualBoundingBoxAscent || f1 * 0.72;
         o.fillStyle = "#fff"; o.textBaseline = "alphabetic"; o.fillText("Oeuvre", Math.round((w - mN.width) / 2), Math.round(h * 0.5 + cap / 2));

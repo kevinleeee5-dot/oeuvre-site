@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102o"  # bump to bust caches of css/js
+VERSION = "20261102p"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -152,7 +152,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400&amp;display=swap"></noscript>
 <link rel="stylesheet" href="/assets/site.css?v={VERSION}">
-<script>(function(d){{d.className=d.className.replace('no-js','js');try{{if(sessionStorage.getItem('oeuvre-iris')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' arriving'}}catch(e){{}}{"try{if((innerWidth<=820||matchMedia('(pointer:coarse)').matches)&&(!sessionStorage.getItem('oeuvre-intro')||/[?&]intro(&|$)/.test(location.search)))d.className+=' intro'}catch(e){}" if page_id == 'home' else ''}}})(document.documentElement)</script>
+<script>(function(d){{d.className=d.className.replace('no-js','js');try{{if(sessionStorage.getItem('oeuvre-iris')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)d.className+=' arriving'}}catch(e){{}}{"try{if(!sessionStorage.getItem('oeuvre-intro')||/[?&]intro(&|$)/.test(location.search))d.className+=' intro'}catch(e){}" if page_id == 'home' else ''}}})(document.documentElement)</script>
 <script src="/assets/site.js?v={VERSION}" defer></script>
 </head>
 <body class="p-{page_id} {body_class}" data-page="{page_id}" data-section="{esc(section)}">
