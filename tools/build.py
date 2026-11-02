@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102v"  # bump to bust caches of css/js
+VERSION = "20261102w"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -221,7 +221,7 @@ def home(c, P):
 <main id="main" class="home">
   <h1 class="sr-only">{esc(s.get('homeH1', s['name'] + ' — ' + s['statement']))}</h1>
   <div class="being">
-    <iframe id="being" src="/being/index.html{'?lang=zh' if c['lang'] == 'zh' else ''}" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
+    <iframe id="being" src="/being/index.html?v={VERSION}{'&amp;lang=zh' if c['lang'] == 'zh' else ''}" title="{esc(s['beingTitle'])}" allow="camera; microphone; autoplay"></iframe>
   </div>
   <nav class="words" aria-label="Main"><ul>{words}</ul></nav>
   <div id="tags" aria-hidden="true" data-tags="{esc(json.dumps(c.get('homeTags', []), ensure_ascii=False))}"></div>

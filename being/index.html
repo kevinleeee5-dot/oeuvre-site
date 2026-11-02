@@ -249,7 +249,14 @@
           { chips: ["正常的事，你们做吗？", "听说你们有点东西？", "我有个想法，先别报警。", "你是活的，还是装的？"], say: "现实有点无聊，我们改改。" }
         ];
         var chips = window.ZH_SETS[0].chips;
-        [].forEach.call(document.querySelectorAll(".chip"), function (b, i) { if (chips[i]) { b.textContent = ""; var t = document.createElement("span"); t.className = "ct"; t.textContent = chips[i]; t.style.transition = "opacity .4s"; b.appendChild(t); } });
+        [].forEach.call(document.querySelectorAll(".chip"), function (b, i) {
+          if (!chips[i]) return;
+          b.textContent = ""; var t = document.createElement("span"); t.className = "ct";
+          var cur = document.createElement("span"); cur.className = "cl on"; cur.textContent = chips[i]; t.appendChild(cur); b.appendChild(t);
+        });
+        var st = document.createElement("style");
+        st.textContent = ".ct{display:inline-grid}.ct .cl{grid-area:1/1;transition:opacity 2.2s cubic-bezier(.4,0,.2,1),filter 2.2s cubic-bezier(.4,0,.2,1);opacity:0;filter:blur(3px)}.ct .cl.on{opacity:1;filter:blur(0)}";
+        document.head.appendChild(st);
         var say = document.getElementById("say");
         if (say) { say.placeholder = window.ZH_SETS[0].say; say.setAttribute("aria-label", "输入后按回车发送"); }
         document.addEventListener("DOMContentLoaded", function () { var tab = document.getElementById("tab"); if (tab && tab.lastChild) tab.lastChild.textContent = "对话"; });
@@ -2196,7 +2203,7 @@
   chipsEl.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest(".chip"); if (!b || sending) return;
     primeTTS(); if (rec) { recAbort = true; stopListening(); }
-    b.classList.add("used"); send(b.textContent);
+    b.classList.add("used"); send((b.querySelector(".cl.on") || b).textContent);
   });
   var PSTATE = /[?&]lang=zh\b/.test(location.search)
     ? { idle: "对话", listening: "正在听", thinking: "思考中", speaking: "正在说" }
@@ -2371,22 +2378,25 @@
     if (wait > 0) { wait--; timer = setTimeout(tick, 60); return; }
     ci += dir;
     if (ci >= q.length) { ci = q.length; dir = -1; wait = 30; }
-    else if (ci <= 0) { ci = 0; dir = 1; qi++; wait = 6; if (ZH) swapChips(qi % ZH.length); }
+    else if (ci <= 0) { ci = 0; dir = 1; qi++; wait = 6; }
     say.setAttribute("placeholder", q.slice(0, ci) + (ci % 2 ? "\u258f" : " "));
     timer = setTimeout(tick, dir > 0 ? 55 + Math.random() * 50 : 22);
   }
-  // the suggestions change with the placeholder: fade out, new words, fade in (chips already used stay hidden)
-  function swapChips(k) {
-    var box = document.getElementById("chips"); if (!box || !idle()) return;
-    var ts = box.querySelectorAll(".chip .ct"), set = ZH[k].chips;
-    base = ZH[k].say;
-    [].forEach.call(ts, function (t, i) {                       // one line after another, not the whole block
-      if (!set[i]) return;
-      setTimeout(function () {
-        t.style.opacity = "0";
-        setTimeout(function () { t.textContent = set[i]; t.style.opacity = ""; }, 400);
-      }, i * 650);
-    });
+  // the suggestions drift: every few seconds one line quietly becomes the same line from the next set
+  // (old and new cross over in place, softly blurred), so the change is barely noticed
+  if (ZH) {
+    var lineSet = [0, 0, 0, 0], li = 0;
+    setInterval(function () {
+      var box = document.getElementById("chips"); if (!box || !idle()) return;
+      var slots = box.querySelectorAll(".chip .ct"); if (!slots.length) return;
+      var i = li % slots.length, slot = slots[i]; li++;
+      lineSet[i] = (lineSet[i] + 1) % ZH.length;
+      var text = ZH[lineSet[i]].chips[i]; if (!text) return;
+      var old = slot.querySelector(".cl.on"), nu = document.createElement("span");
+      nu.className = "cl"; nu.textContent = text; slot.appendChild(nu);
+      void nu.offsetWidth; nu.classList.add("on"); if (old) old.classList.remove("on");
+      setTimeout(function () { if (old && old.parentNode) old.parentNode.removeChild(old); }, 2400);
+    }, 3200);
   }
   say.addEventListener("focus", function () { say.setAttribute("placeholder", base); });
   setTimeout(tick, 1800);
