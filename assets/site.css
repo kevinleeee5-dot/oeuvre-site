@@ -98,7 +98,7 @@ html.busy, html.busy * { cursor: progress !important; }
    keyboard focus ring is drawn round the word by the script, and the hit link is out of the tab order) */
 .word-hit { position: absolute; left: 0; top: 0; z-index: 6; display: block; width: 0; height: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
             background: transparent; border: 0; outline: none; box-shadow: none; }
-.no-js #menu, .no-js .word-hit, body.list #menu, body.list .word-hit { display: none; }
+.no-js #menu, .no-js .word-hit, body.list .word-hit { display: none; }
 .home-foot { position: absolute; z-index: 6; left: var(--gutter); right: var(--gutter); bottom: calc(max(22px, env(safe-area-inset-bottom)) + var(--bar, 0px));
              display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; pointer-events: none; }
 .home-foot > * { pointer-events: auto; }
@@ -119,6 +119,20 @@ html.busy, html.busy * { cursor: progress !important; }
 .no-js .word, body.list .word { position: static; visibility: visible; transform: none !important; opacity: 1; display: block; margin: .06em 0; font-size: clamp(2.6rem, 11vw, 6rem); }
 .no-js .words, body.list .words { position: absolute; z-index: 5; left: var(--gutter); top: 50%; transform: translateY(-50%); }
 body.list .being { opacity: .2; transition: opacity .4s; }
+/* the list opens and closes word by word (translate, not transform: the list pins transform) */
+@keyframes listIn { from { opacity: 0; translate: 0 .32em; filter: blur(8px); } to { opacity: 1; translate: 0 0; filter: blur(0); } }
+@keyframes listOut { from { opacity: 1; translate: 0 0; filter: blur(0); } to { opacity: 0; translate: 0 -.22em; filter: blur(6px); } }
+body.list.list-in .word { animation: listIn .9s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 90ms + 80ms); }
+body.list.list-out .word { animation: listOut .42s cubic-bezier(.6, 0, .8, .4) both; animation-delay: calc((3 - var(--i, 0)) * 50ms); }
+body.list .being { transition: opacity .6s cubic-bezier(.2, .7, .2, 1); }
+body.list-out .being { opacity: 1; }
+#tags { transition: opacity .5s; }
+body.list #tags { opacity: 0; }
+/* hovering a word in the list: its flat ink fades and the streaming particles take its place */
+body.list .word { transition: color .5s cubic-bezier(.2, .7, .2, 1), opacity .3s; }
+body.list .word.lit { color: rgba(255, 255, 255, 0); }
+body.list .word.lit sup { color: #fff; }
+@media (prefers-reduced-motion: reduce) { body.list.list-in .word, body.list.list-out .word { animation-duration: .01ms; } }
 
 /* ---------- sub-pages ---------- */
 .wrap { max-width: calc(var(--max) + 2 * var(--gutter)); margin: 0 auto; padding: clamp(96px, 14vh, 150px) var(--gutter) 40px; }

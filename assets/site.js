@@ -271,10 +271,21 @@
 
 
     const toggle = $("#indexToggle");
+    // the list opens word by word and closes the same way, then the floating word comes back
+    words.forEach((w, i) => w.el.style.setProperty("--i", i));
+    let listTimer = 0;
     toggle && toggle.addEventListener("click", () => {
-      const on = body.classList.toggle("list");
+      const on = !body.classList.contains("list") || body.classList.contains("list-out");
+      clearTimeout(listTimer);
       toggle.setAttribute("aria-pressed", on); toggle.textContent = on ? toggle.dataset.on : toggle.dataset.off;
-      if (!on) layout(true);
+      if (on) {
+        body.classList.remove("list-out"); body.classList.add("list", "list-in");
+        listTimer = setTimeout(() => body.classList.remove("list-in"), 1200);
+      } else {
+        setListHover(-1);
+        body.classList.remove("list-in"); body.classList.add("list-out");
+        listTimer = setTimeout(() => { body.classList.remove("list", "list-out"); layout(true); }, reduced ? 0 : 620);
+      }
     });
 
     /* ---- glyph sampling: each word becomes a cloud of points where the ink is (unit = font size) ---- */
@@ -299,6 +310,8 @@
         if (d[(yi * c.width + xi) * 4 + 3] > 128) out.push((x - minx) / SAMPLE, (y - miny) / SAMPLE);
       }
       w.pts = Float32Array.from(out); w.gw = (maxx - minx + 1) / SAMPLE; w.gh = (maxy - miny + 1) / SAMPLE;
+      // where the ink starts inside the text box (for laying the points over the list's DOM words)
+      w.ix = (minx - 20) / SAMPLE; w.iy = (miny - SAMPLE * 0.1) / SAMPLE;
     }
     const sampleAll = () => words.forEach(sampleWord);
 
@@ -351,6 +364,35 @@
       }
     }
     const HI = new Int32Array(N);                      // each particle's current glyph point (index into w.pts)
+
+    /* ---- the list (Index): hovering a word turns it into the same streaming ink ---- */
+    let listHover = -1, listC = 0;
+    function listPlace(w) {
+      // the label's own text box (the number in <sup> is left out), font size from the link
+      const tn = w.el.childNodes[0]; if (!tn) return null;
+      const rg = document.createRange(); rg.selectNodeContents(tn); const r = rg.getBoundingClientRect();
+      const f = parseFloat(getComputedStyle(w.el).fontSize) || 60;
+      // the canvas sample put the text's top at 0.1 em; the DOM line box is taller than the font size, so centre the ink
+      const top = r.top + (r.height - f * 1.21) / 2 + f * 0.1 * 0;  // content-area top
+      const x = r.left + w.ix * f, y = top + (w.iy + 0.1) * f;
+      return { x, y, w: w.gw * f, h: w.gh * f, fs: f, cx: x + w.gw * f / 2, cy: y + w.gh * f / 2 };
+    }
+    function setListHover(k) {
+      if (k === listHover) return;
+      if (listHover >= 0) words[listHover].el.classList.remove("lit");
+      listHover = k;
+      if (k < 0 || reduced || !words[k].pts) return;
+      words[k].el.classList.add("lit");
+      cur = k; pl = listPlace(words[k]); if (!pl) return;
+      fs = pl.fs; assign(words[k], pl);
+    }
+    words.forEach((w, i) => {
+      w.el.addEventListener("pointerenter", () => { if (body.classList.contains("list") && !body.classList.contains("list-out")) setListHover(i); });
+      w.el.addEventListener("pointerleave", () => { if (listHover === i) setListHover(-1); });
+      w.el.addEventListener("focus", () => { if (body.classList.contains("list")) setListHover(i); });
+      w.el.addEventListener("blur", () => { if (listHover === i) setListHover(-1); });
+    });
+    addEventListener("scroll", () => { if (listHover >= 0) { const p = listPlace(words[listHover]); if (p) { pl = p; assign(words[listHover], pl); } } }, { passive: true });
 
     /* ---- the cycle: gather → hold → dissolve → drift, then the next word somewhere else ---- */
     const GATHER = 2200, HOLD = 3600, DISSOLVE = 1600, DRIFT = 500, HOLD_END = GATHER + HOLD, CYCLE = HOLD_END + DISSOLVE + DRIFT;
@@ -491,7 +533,16 @@
       const t0 = perf ? performance.now() : 0;
       const dt = Math.min(50, lastT ? t - lastT : 16.7); lastT = t;
       if (!pl) return;
-      if (body.classList.contains("list")) { mctx.clearRect(0, 0, W, H); hit.style.pointerEvents = "none"; drawn = ""; return; }
+      if (body.classList.contains("list")) {
+        hit.style.pointerEvents = "none"; drawn = "";
+        const sz2 = W + "x" + H; if (sz2 !== lastSize) { lastSize = sz2; mctx = fit(menuC); if (listHover >= 0) { const p = listPlace(words[listHover]); if (p) { pl = p; assign(words[listHover], pl); } } }
+        listC += ((listHover >= 0 && !reduced ? 1 : 0) - listC) * (listHover >= 0 ? 0.06 : 0.09);
+        if (listC < 0.01 && listHover < 0) { if (listC > 0) { listC = 0; mctx.clearRect(0, 0, W, H); } return; }
+        acc = Math.min(acc + dt, 50);
+        let st = 0; while (acc >= 16.6) { acc -= 16.6; step(listC); st++; }
+        if (st) streaks(listC);
+        return;
+      }
       const sz = W + "x" + H; if (sz !== lastSize) { lastSize = sz; mctx = fit(menuC); }
       // the real face box arrived: if the word sits on the panel or across the face, move it (same moment in its cycle)
       if (haveFace && !wasLive) { wasLive = true; if (!isStatic && (overlaps(pl, band()) || faceShare(pl, face) > 0.15)) show(cur, true); }
