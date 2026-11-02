@@ -274,11 +274,16 @@
     // the list opens word by word and closes the same way, then the floating word comes back
     words.forEach((w, i) => w.el.style.setProperty("--i", i));
     let listTimer = 0;
-    // a third label while the pointer is on the closed button (Chinese: 你什么都没看见)
-    if (toggle && toggle.dataset.hover) {
-      const idleLabel = () => body.classList.contains("list") && !body.classList.contains("list-out") ? toggle.dataset.on : toggle.dataset.off;
-      toggle.addEventListener("pointerenter", () => { if (!body.classList.contains("list")) toggle.textContent = toggle.dataset.hover; });
-      toggle.addEventListener("pointerleave", () => { toggle.textContent = idleLabel(); });
+    // the button keeps one width (its longest label), so the sound waves beside it never move
+    if (toggle) {
+      const fitToggle = () => {
+        toggle.style.width = ""; let w = 0; const now = toggle.textContent;
+        for (const t of [toggle.dataset.on, toggle.dataset.off]) { if (!t) continue; toggle.textContent = t; w = Math.max(w, toggle.getBoundingClientRect().width); }
+        toggle.textContent = now; toggle.style.width = Math.ceil(w) + "px";
+      };
+      fitToggle();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitToggle);
+      addEventListener("resize", fitToggle);
     }
     toggle && toggle.addEventListener("click", () => {
       const on = !body.classList.contains("list") || body.classList.contains("list-out");

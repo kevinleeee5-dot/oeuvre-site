@@ -366,3 +366,14 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 :lang(zh) .mf-text { font-weight: 300; }
 /* the Chinese call to action is a full sentence: smaller, and allowed to wrap */
 :lang(zh) .cta-link { font-size: clamp(2rem, 4.8vw, 4.8rem); line-height: 1.12; }
+
+/* the menu button: fixed width (set by the script), label to the right */
+#indexToggle { justify-content: flex-end; text-align: right; white-space: nowrap; }
+/* the sound button: waves only, no speaker. Off: three still, dim bars; on: they move */
+.snd-btn .spk { display: none; }
+.snd-btn .snd { display: inline-flex; margin-left: 0; height: 12px; gap: 2.5px; }
+.snd-btn .snd i { width: 1.5px; height: 5px; }
+.snd-btn[aria-pressed="false"] .snd i:nth-child(2) { height: 8px; }
+.snd-btn[aria-pressed="false"] { opacity: .45; }
+.snd-btn[aria-pressed="false"]:hover { opacity: .8; }
+.snd-btn[aria-pressed="true"] { opacity: 1; }
