@@ -31,6 +31,7 @@
 }
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--fg); }
+html { overflow-x: clip; }
 body { font-family: var(--font); font-weight: 300; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 a { color: inherit; text-decoration: none; }
 a:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; border-radius: 2px; }
@@ -51,14 +52,14 @@ section { margin-top: 88px; }
 .top li a:hover, .top li a[aria-current] { color: var(--fg); }
 
 /* hero: one rounded picture with small type laid over it */
-.hero { position: relative; border-radius: var(--r); overflow: hidden; aspect-ratio: 2 / 1; background: var(--card); }
+.hero { position: relative; overflow: hidden; aspect-ratio: 2 / 1; max-height: 88svh; background: var(--card);
+         margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }   /* full bleed, edge to edge */
 .hero img { position: absolute; inset: 0; will-change: transform; }
 .hero .veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 42%, rgba(255,255,255,0) 70%); }
 .hero > div:not(.veil) { position: absolute; z-index: 1; }
-.hero .tr { right: 22px; top: 20px; text-align: right; }
-.hero .mid { left: 22px; top: 50%; transform: translateY(-50%); }
-.hero h1 { margin: 0; font-weight: 300; font-size: 46px; line-height: 1.02; letter-spacing: -.03em; }
-.hero .bl { left: 22px; bottom: 20px; max-width: 30ch; }
+.hero .mid { left: max(20px, calc((100vw - var(--max)) / 2)); top: 50%; transform: translateY(-50%); }
+.hero h1 { margin: 0; font-weight: 300; font-size: clamp(44px, 5.4vw, 80px); line-height: 1; letter-spacing: -.035em; white-space: nowrap; }
+.hero .sub { margin: 26px 0 0; font-size: clamp(14px, 1.25vw, 18px); line-height: 1.4; max-width: 24ch; }
 
 /* where it starts — narrow column set off-centre */
 .intro { margin-left: 26%; max-width: 380px; }
@@ -100,8 +101,9 @@ section { margin-top: 88px; }
   .top ul { gap: 14px; }
   .hero { aspect-ratio: 4 / 5; }
   .hero .veil { background: linear-gradient(180deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.75) 62%, rgba(255,255,255,.9) 100%); }
-  .hero h1 { font-size: 38px; }
-  .hero .mid { top: auto; bottom: 74px; transform: none; }
+  .hero h1 { font-size: 40px; white-space: normal; }
+  .hero .mid { top: auto; bottom: 28px; transform: none; }
+  .hero .sub { margin-top: 14px; }
   .intro { margin-left: 0; }
   .mod { grid-template-columns: 1fr; }
   .mod:nth-child(even) figure { order: 0; }
@@ -126,9 +128,7 @@ section { margin-top: 88px; }
     <figure class="hero">
       <img src="/assets/img/brand-workshop/drawing.jpg" width="2400" height="1358" alt="Technical drawings of a dropper bottle and pump bottles taped to a studio wall" fetchpriority="high">
       <div class="veil"></div>
-      <div class="tr small">Auckland, NZ</div>
-      <div class="mid"><h1>Brand<br>Workshop</h1></div>
-      <div class="bl small">Your own skincare brand, from first idea to the shelf.</div>
+      <div class="mid"><h1>Brand Workshop</h1><p class="sub">Your own skincare brand, from first idea to the shelf.</p></div>
     </figure>
 
     <section class="intro">
