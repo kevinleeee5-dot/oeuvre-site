@@ -41,6 +41,8 @@ from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_RTF = "/Users/trevion/Downloads/Oeuvre/Oeuvre API key.rtf"
+ELEVEN_RTF = "/Users/trevion/Downloads/Oeuvre/Elevenlabs API.rtf"   # ElevenLabs key for /api/tts (memory only, never logged)
+TTS_VOICE, TTS_MODEL, TTS_OUTPUT = "SAz9YHcvj6GT2YYXdXww", "eleven_multilingual_v2", "mp3_44100_64"   # River
 PERSONA_FILE = os.path.join(ROOT, "api", "persona.php")
 
 # ---- model + prices (Claude Haiku 5.5, USD per token, prompts <= 100K tokens) -------------
@@ -110,6 +112,26 @@ def load_key():
     return m.group(0) if m else ""
 
 
+def load_eleven_key():
+    k = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+    if k:
+        return k
+    try:
+        with open(ELEVEN_RTF, encoding="latin-1") as f:
+            raw = f.read()
+    except OSError:
+        return ""
+    m = re.search(r"\bsk_[A-Za-z0-9]{20,}\b", raw) or re.search(r"\b[a-f0-9]{32}\b", raw)
+    return m.group(0) if m else ""
+
+
+def tts_sig(text):
+    """Same signature as api/talk.php: /api/tts speaks only replies this server gave."""
+    import hmac
+    secret = hashlib.sha256(("oeuvre-tts:" + API_KEY).encode()).hexdigest().encode()
+    return hmac.new(secret, text.encode("utf-8"), hashlib.sha256).hexdigest()[:32]
+
+
 def load_persona():
     with open(PERSONA_FILE, encoding="utf-8") as f:
         src = f.read()
@@ -117,6 +139,7 @@ def load_persona():
 
 
 API_KEY = ""
+ELEVEN_KEY = ""
 PERSONA = ""
 
 
@@ -336,6 +359,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().send_error(code, message, explain)
 
     def do_POST(self):
+        if urllib.parse.urlsplit(self.path).path == "/api/tts":
+            return self.tts()
         if urllib.parse.urlsplit(self.path).path != "/api/talk":
             return self.reply(404, {"error": "not found", "code": "bad_request"})
         t0 = time.time()
@@ -399,7 +424,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         if st == 200:
             if data.get("stop_reason") == "refusal":
-                return 200, {"reply": FALLBACK}, info + " stop=refusal"
+                return 200, {"reply": FALLBACK, "sig": tts_sig(FALLBACK)}, info + " stop=refusal"
             text = " ".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
             text = clean_reply(text)
             if data.get("stop_reason") == "max_tokens":  # trim to the last full sentence
@@ -407,11 +432,47 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 text = text[:cut + 1] if cut > 0 else text
             if not text:
                 return 502, {"error": "empty reply", "code": "upstream"}, info
-            return 200, {"reply": text}, info
+            return 200, {"reply": text, "sig": tts_sig(text)}, info
         if st in (401, 403):
             return 500, {"error": "server not configured", "code": "config"}, info + " upstream=%d" % st
         return 502, {"error": "the figure could not answer just now", "code": "upstream"}, \
             info + " upstream=%d" % st
+
+    def tts(self):
+        """POST /api/tts {text, sig}: ElevenLabs audio for a signed reply (dev twin of api/tts.php)."""
+        if not self.same_origin():
+            return self.reply(403, {"error": "cross-origin request refused", "code": "bad_request"})
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+            body = json.loads(self.rfile.read(n).decode("utf-8")) if 0 < n <= 8192 else None
+        except (ValueError, UnicodeDecodeError):
+            body = None
+        text = (body or {}).get("text") if isinstance(body, dict) else None
+        sig = (body or {}).get("sig") if isinstance(body, dict) else None
+        if not isinstance(text, str) or not isinstance(sig, str) or not text.strip() or len(text) > 700:
+            return self.reply(400, {"error": "bad body", "code": "bad_request"})
+        import hmac
+        if not ELEVEN_KEY or not API_KEY or not hmac.compare_digest(tts_sig(text.strip()), sig):
+            return self.reply(403 if ELEVEN_KEY else 500, {"error": "unsigned text or no voice", "code": "bad_request"})
+        req = urllib.request.Request(
+            "https://api.elevenlabs.io/v1/text-to-speech/%s?output_format=%s" % (TTS_VOICE, TTS_OUTPUT),
+            data=json.dumps({"text": text.strip(), "model_id": TTS_MODEL}).encode(),
+            headers={"xi-api-key": ELEVEN_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                audio = r.read()
+        except urllib.error.HTTPError as e:
+            log("tts upstream=%d" % e.code)
+            return self.reply(502, {"error": "the voice could not speak just now", "code": "upstream"})
+        except (urllib.error.URLError, OSError):
+            return self.reply(502, {"error": "the voice could not speak just now", "code": "upstream"})
+        log("tts status=200 chars=%d" % len(text))
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/mpeg")
+        self.send_header("Content-Length", str(len(audio)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(audio)
 
     def reply(self, status, obj):
         b = json.dumps(obj).encode()
@@ -437,6 +498,8 @@ def main():
         ROOT = os.path.abspath(a.root)
         PERSONA_FILE = os.path.join(ROOT, "api", "persona.php")
     API_KEY = load_key()
+    global ELEVEN_KEY
+    ELEVEN_KEY = load_eleven_key()
     PERSONA = load_persona()
     log("dev_server root=%s model=%s key=%s daily_cap=%.2f lifetime_cap=%.2f counters=%s" % (
         ROOT, MODEL, "loaded" if API_KEY else "MISSING", DAILY_USD, LIFETIME_USD, COUNTER_FILE))

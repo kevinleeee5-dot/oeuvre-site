@@ -198,6 +198,11 @@ function validate($body): ?string {
     return null;
 }
 
+/** A signature for a reply, so /api/tts speaks only what this endpoint said (secret derived from the API key). */
+function tts_sig(string $text, string $key): string {
+    return substr(hash_hmac('sha256', $text, hash('sha256', 'oeuvre-tts:' . $key)), 0, 32);
+}
+
 function same_origin(): bool {
     $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
     foreach (['HTTP_ORIGIN', 'HTTP_REFERER'] as $h) {
@@ -306,7 +311,7 @@ $info = sprintf('in=%d out=%d cost=%.6f day=%.4f life=%.4f ms=%d upstream=%d',
 if ($st === 200) {
     if (($data['stop_reason'] ?? '') === 'refusal') {
         logline('status=200 code=ok stop=refusal ' . $info);
-        out(200, ['reply' => FALLBACK]);
+        out(200, ['reply' => FALLBACK, 'sig' => tts_sig(FALLBACK, $key)]);
     }
     $text = '';
     foreach ((array) ($data['content'] ?? []) as $b) {
@@ -322,7 +327,7 @@ if ($st === 200) {
         fail(502, 'upstream', 'empty reply');
     }
     logline('status=200 code=ok ' . $info);
-    out(200, ['reply' => $text]);
+    out(200, ['reply' => $text, 'sig' => tts_sig($text, $key)]);
 }
 if ($st === 401 || $st === 403) {
     logline('status=500 code=config ' . $info);

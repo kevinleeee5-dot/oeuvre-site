@@ -1782,12 +1782,52 @@
   var VOICE_ZH = null;
   function loadVoices() { try { var l = SYNTH.getVoices(); VOICE = pickVoice(l); VOICE_ZH = pickZhVoice(l); } catch (e) {} }
   if (SYNTH) { loadVoices(); try { SYNTH.addEventListener("voiceschanged", loadVoices); } catch (e) { try { SYNTH.onvoiceschanged = loadVoices; } catch (e2) {} } }
-  function primeTTS() {                    // some browsers only let a page speak after a gesture: say nothing, once, inside one
+  // the voice: ElevenLabs audio from /api/tts for replies /api/talk signed. The mouth follows the audio's loudness (an
+  // analyser), the text follows its playback position. No system voice: when the audio cannot play, the reply is text only.
+  var TTS_API = "/api/tts", AC = null, AN = null, ABUF = null;
+  function audioCtx() {
+    if (AC) { if (AC.state === "suspended") AC.resume().catch(function () {}); return AC; }
+    try {
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      AN = AC.createAnalyser(); AN.fftSize = 1024; AN.smoothingTimeConstant = 0.6; ABUF = new Float32Array(AN.fftSize);
+      AN.connect(AC.destination);
+    } catch (e) { AC = null; AN = null; }
+    return AC;
+  }
+  function loudness() {
+    if (!AN || !ABUF) return 0.5;
+    AN.getFloatTimeDomainData(ABUF); var sum = 0;
+    for (var i = 0; i < ABUF.length; i++) sum += ABUF[i] * ABUF[i];
+    return clamp((Math.sqrt(sum / ABUF.length) - 0.012) * 7, 0, 1);
+  }
+  function stopVoice(s) {
+    if (!s) return;
+    if (s.ctl) { try { s.ctl.abort(); } catch (e) {} }
+    if (s.aud) { try { s.aud.pause(); } catch (e) {} if (s.url) URL.revokeObjectURL(s.url); s.aud = null; }
+  }
+  function voice(s, sig) {
+    s.el = true; s.ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    audioCtx();
+    fetch(TTS_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: s.text, sig: sig, session: SESSION }), signal: s.ctl ? s.ctl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error("tts " + r.status); return r.blob(); })
+      .then(function (b) {
+        if (SP !== s) return;
+        s.url = URL.createObjectURL(b); var a = s.aud = new Audio(s.url); a.preload = "auto";
+        if (AC && AN) { try { AC.createMediaElementSource(a).connect(AN); } catch (e) {} }
+        a.onplaying = function () { if (SP !== s) return; s.started = true; s.audio = true; };
+        a.onended = function () { if (SP !== s) return; s.audio = false; s.ended = true; };
+        a.onerror = function () { if (SP !== s) return; s.el = false; };
+        var p = a.play(); if (p && p.catch) p.catch(function () { if (SP === s) s.el = false; });
+      })
+      .catch(function () { if (SP === s) s.el = false; });
+  }
+  function primeTTS() {                    // some browsers only let a page play sound after a gesture: open the audio context inside one
+    audioCtx();
     if (primed || !SYNTH || !UTTER) return; primed = true;
     try { var u = new UTTER(" "); u.volume = 0; SYNTH.speak(u); } catch (e) {}
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function cancelSpeech() { if (SP && SP.tts && SYNTH) { try { SYNTH.cancel(); } catch (e) {} } SP = null; }
+  function cancelSpeech() { if (SP && SP.tts && SYNTH) { try { SYNTH.cancel(); } catch (e) {} } if (SP && SP.el) stopVoice(SP); SP = null; }
   // opt: sim (silent, for ?speak=1), dim (an aside, not an answer), after (html shown once the text is typed), silent (text only),
   // acts (the action chips: shown faint under the reply from the start, lit once it is typed)
   function say(text, opt) {
@@ -1798,7 +1838,9 @@
     s.txEl = saidEl.querySelector(".tx") || saidEl; s.actsEl = saidEl.querySelector(".acts");
     setConvo("speaking");
     if (s.sim) { s.audio = true; s.started = true; return; }
-    if (!SYNTH || !UTTER || opt.silent) return;
+    if (opt.silent || !opt.sig) return;                                              // only signed replies are spoken
+    voice(s, opt.sig); return;
+    if (!SYNTH || !UTTER) return;
     try { SYNTH.cancel(); } catch (e) {}
     var parts = splitSentences(s.text), off = 0, zh = CJK.test(s.text);
     parts.forEach(function (p, idx) {
@@ -1838,25 +1880,30 @@
         if (/[.!?,]/.test(ch) && (p0 | 0) !== (s.pos | 0)) { s.dwell = /,/.test(ch) ? 160 : 380; s.audio = false; }
       }
       if (s.pos >= n && s.dwell <= 0) { s.audio = false; s.ended = true; }
+    } else if (s.el) {
+      if (!s.started && t - s.t0 > 9000) { s.el = false; stopVoice(s); }                       // no audio came: text only
+      else if (s.started && s.aud && s.aud.duration > 0 && isFinite(s.aud.duration)) s.pos = Math.min(n, n * s.aud.currentTime / s.aud.duration);
     } else if (s.tts) {
       if (!s.started && t - s.t0 > 3500) { s.tts = false; try { SYNTH.cancel(); } catch (e) {} }   // no audio came: text only
       if (s.audio) { ch = s.text[s.pos | 0]; s.pos = Math.min(s.segEnd, s.pos + dt / 1000 * s.cps * paceOf(ch)); }
     }
-    var playing = s.audio && (s.sim || (s.tts && (!SYNTH || (SYNTH.speaking && !SYNTH.paused))));
+    var playing = s.audio && (s.sim || (s.el && s.aud && !s.aud.paused) || (s.tts && (!SYNTH || (SYNTH.speaking && !SYNTH.paused))));
     if (playing) {
       for (var c = Math.max(0, Math.floor(s.last)); c <= Math.floor(s.pos) && c < n; c++) if (c >= s.last && isLetter(s.text[c]) && !isLetter(s.text[c - 1])) wordPulse();
       if (s.pos < n) {
         var i0 = s.pos | 0, f = s.pos - i0, v = visemeOf(s.text[i0]), v2 = visemeOf(s.text[i0 + 1]);
         for (k = 0; k < 3; k++) MT[k] = v[k] + (v2[k] - v[k]) * f;
-        MT[0] *= 0.82 + 0.18 * Math.sin(s.pos * 0.9);                                  // syllable to syllable, not every one the same
+        if (s.el) {                                                                    // the real voice: open as loud as it is
+          var amp = loudness(); MT[0] = Math.max(0.06, amp) * (0.75 + 0.25 * MT[0]); MT[1] *= Math.min(1, amp * 1.6); MT[2] *= Math.min(1, amp * 1.6);
+        } else MT[0] *= 0.82 + 0.18 * Math.sin(s.pos * 0.9);                            // syllable to syllable, not every one the same
       }
     }
     for (k = 0; k < 3; k++) MOUTH[k] = MT[k];
     s.last = s.pos;
     // the reply as text: typed along with the voice (a little ahead of it), or on its own when there is no voice
-    if (s.sim || (s.tts && s.started && !s.ended)) s.tw = Math.max(s.tw, Math.min(n, s.pos + 2));
-    else if (s.tts && !s.started) { /* waiting for the voice (at most 3.5 s) */ }
-    else s.tw += dt / 1000 * (s.ended && s.tts ? 60 : 32);
+    if (s.sim || ((s.tts || s.el) && s.started && !s.ended)) s.tw = Math.max(s.tw, Math.min(n, s.pos + 2));
+    else if ((s.tts || s.el) && !s.started) { /* waiting for the voice */ }
+    else s.tw += dt / 1000 * (s.ended && (s.tts || s.el) ? 60 : 32);
     if (s.tw > n) s.tw = n;
     var shownN = s.tw | 0;
     if (shownN !== s.painted) {
@@ -1865,7 +1912,7 @@
       if (shownN >= n && s.actsEl) litActs(s.actsEl);
       threadToEnd();
     }
-    var finished = s.sim || s.tts ? s.ended : true;
+    var finished = s.sim || s.tts || s.el ? s.ended : true;
     if (finished && s.tw >= n && !playing) {
       if (!s.doneAt) s.doneAt = t;
       if (t - s.doneAt > 700) { SP = null; speakNext = t + 1400; if (convo === "speaking") setConvo("idle"); }
@@ -1917,7 +1964,7 @@
     var reply = data && typeof data.reply === "string" ? data.reply.trim() : "";
     if (res && res.ok && reply) {
       talkLog.push({ role: "assistant", content: reply }); if (talkLog.length > 40) talkLog = talkLog.slice(-40);
-      say(reply, { acts: intentsOf(reply, text) }); return;
+      say(reply, { acts: intentsOf(reply, text), sig: typeof data.sig === "string" ? data.sig : "" }); return;
     }
     talkLog.pop();                                                                     // the unanswered question leaves the history, so turns stay paired
     var code = String((data && data.code) || "");
