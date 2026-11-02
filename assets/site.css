@@ -356,3 +356,13 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 :lang(zh) .word { line-height: 1.02; }
 :lang(zh) .home-statement, :lang(zh) .lead, :lang(zh) .studio-body, :lang(zh) .big { font-weight: 300; letter-spacing: 0; }
 :lang(zh) .mini ul, :lang(zh) .kicker, :lang(zh) .svc-body h3, :lang(zh) .label { letter-spacing: .04em; }
+
+/* studio manifesto */
+.manifesto { margin: 0 0 clamp(72px, 14vh, 140px); display: grid; gap: 28px; max-width: 46rem; }
+.mf-lines { margin: 0; font-size: clamp(2.4rem, 6vw, 5.6rem); line-height: 1.05; letter-spacing: -.03em; font-weight: 500; }
+.mf-lines span { display: block; }
+.mf-text { margin: 0; color: var(--dim); font-size: clamp(1.05rem, 1.5vw, 1.3rem); line-height: 1.6; max-width: 34em; }
+:lang(zh) .mf-lines { font-weight: 900; letter-spacing: -.02em; }
+:lang(zh) .mf-text { font-weight: 300; }
+/* the Chinese call to action is a full sentence: smaller, and allowed to wrap */
+:lang(zh) .cta-link { font-size: clamp(2rem, 4.8vw, 4.8rem); line-height: 1.12; }

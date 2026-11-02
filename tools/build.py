@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261102s"  # bump to bust caches of css/js
+VERSION = "20261102t"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -331,10 +331,19 @@ def studio(c, P):
   <h1 class="page-title">{esc(V['title'])}</h1>
   <p class="statement-big">{words}</p>
   <div class="studio-body">{''.join(f'<p>{esc(t)}</p>' for t in V['body'])}</div>
+  {manifesto(V.get('manifesto'))}
   <h2 class="label">{esc(V['principlesTitle'])}</h2>
   <div class="principles">{''.join(f'<div><span class="n">0{i + 1}</span><h3>{esc(p["name"])}</h3><p>{esc(p["text"])}</p></div>' for i, p in enumerate(V['principles']))}</div>
   <p class="legal">{esc(c['site']['legal'])}<br>{esc(c['site']['place'])}</p>
 </main>"""
+
+
+def manifesto(m):
+    """The studio's short manifesto, between the introduction and the principles (where a language has one)."""
+    if not m:
+        return ""
+    lines = "".join(f"<span>{esc(t)}</span>" for t in m["lines"])
+    return f'<section class="manifesto"><p class="mf-lines">{lines}</p><p class="mf-text">{esc(m["text"])}</p></section>'
 
 
 def contact(c, P):
