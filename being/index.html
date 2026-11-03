@@ -139,6 +139,8 @@
   body.thinking #think { display:flex; }
   #think i { display:block; width:20px; height:2px; border-radius:1px; background:linear-gradient(90deg, rgba(255,255,255,0), var(--fg)); opacity:.2; animation:streak 1.2s var(--ease) infinite; }
   #think i:nth-child(2) { animation-delay:.18s; } #think i:nth-child(3) { animation-delay:.36s; }
+  #think .tk { margin-left:6px; font-size:12.5px; color:var(--soft); opacity:0; transform:translateY(2px); filter:blur(2px); transition:opacity 1.4s var(--ease), transform 1.4s var(--ease), filter 1.4s var(--ease); white-space:nowrap; }
+  #think .tk.on { opacity:.85; transform:none; filter:none; }
   @keyframes streak { 0% { opacity:.15; transform:translateX(-3px) scaleX(.6); } 40% { opacity:1; transform:translateX(2px) scaleX(1); } 100% { opacity:.15; transform:translateX(5px) scaleX(.6); } }
   #notice { min-height:0; color:var(--soft); font-size:12.5px; opacity:0; transition:opacity .5s; }
   #notice:empty { display:none; }
@@ -231,7 +233,7 @@
       <button class="chip" type="button">What does Oeuvre do?</button><button class="chip" type="button">Show me your work</button><button class="chip" type="button">How do projects start?</button><button class="chip" type="button">Who are you?</button>
     </div>
     <ol id="thread" aria-live="polite" data-clarity-mask="True"></ol>
-    <div id="think" role="status" aria-label="thinking"><i></i><i></i><i></i></div>
+    <div id="think" role="status" aria-label="thinking"><i></i><i></i><i></i><span class="tk" aria-hidden="true"></span></div>
     <div id="notice" role="status"></div>
     <div class="inrow">
       <input id="say" data-clarity-mask="True" type="text" maxlength="500" autocomplete="off" spellcheck="false" enterkeyhint="send" placeholder="Ask it something" aria-label="Type to it, then Enter">
@@ -1838,9 +1840,9 @@
       segBase: 0, segEnd: String(text).length, segT: NOW, cps: 14.5, doneAt: 0, dwell: 0, after: opt.after || "", painted: -1, actsEl: null };
     saidEl = replyLine(!!opt.dim, opt.acts);
     s.txEl = saidEl.querySelector(".tx") || saidEl; s.actsEl = saidEl.querySelector(".acts");
-    setConvo("speaking");
-    if (s.sim) { s.audio = true; s.started = true; return; }
-    if (opt.silent || !opt.sig) return;                                              // only signed replies are spoken
+    if (s.sim) { setConvo("speaking"); s.audio = true; s.started = true; return; }
+    if (opt.silent || !opt.sig) { setConvo("speaking"); return; }                    // only signed replies are spoken
+    s.hold = true; saidEl.style.display = "none";                                    // wait for the voice: still "thinking" (streaks, glances), no words yet
     voice(s, opt.sig); return;
     if (!SYNTH || !UTTER) return;
     try { SYNTH.cancel(); } catch (e) {}
@@ -1867,14 +1869,16 @@
   function isLetter(c) { return !!c && /[a-z0-9À-ɏ]/i.test(c); }
   function wordPulse() { if (AUTO && AUTO.AU && RNG() < 0.3) AUTO.AU.E[7] -= 0.25; }   // a small nod with some words
   function speechStep(t, dt) {
-    var k;
+    var k; thinkWord();
     if (!SP) {
+      if (convo === "thinking" && !sending) setConvo("idle");
       for (k = 0; k < 3; k++) MOUTH[k] *= Math.pow(0.85, dt / 16.67);                 // setMouth() values fade unless renewed
       if (PARAM.speak && convo === "idle" && t > speakNext) say(SPEAK_LINES[speakIdx++ % SPEAK_LINES.length], { sim: true });
       return;
     }
     MT[0] = MT[1] = MT[2] = 0;
     var s = SP, n = s.text.length, ch;
+    if (s.hold && (s.started || !s.el)) { s.hold = false; if (saidEl) saidEl.style.display = ""; setConvo("speaking"); }
     if (s.sim) {                                                                       // silent speech for ?speak=1: same mouth, no audio
       if (s.dwell > 0) { s.dwell -= dt; if (s.dwell <= 0) s.audio = s.pos < n; }
       else if (s.pos < n) {
@@ -1904,11 +1908,12 @@
     s.last = s.pos;
     // the reply as text: typed along with the voice (a little ahead of it), or on its own when there is no voice
     if (s.sim || ((s.tts || s.el) && s.started && !s.ended)) s.tw = Math.max(s.tw, Math.min(n, s.pos + 2));
-    else if (s.el && !s.started) { if (t - s.t0 > 900) s.tw += dt / 1000 * 9; }      // the voice is still coming: let the words appear slowly meanwhile
+    else if (s.el && !s.started) { /* the voice is still coming: no words yet */ }
     else if (s.tts && !s.started) { /* waiting for the voice */ }
     else s.tw += dt / 1000 * (s.ended && (s.tts || s.el) ? 60 : 32);
     if (s.tw > n) s.tw = n;
     var shownN = s.tw | 0;
+    if (s.hold) return;
     if (shownN !== s.painted) {
       s.painted = shownN;
       if (s.txEl) s.txEl.innerHTML = shownN >= n ? esc(s.text) + (s.after ? " " + s.after : "") : esc(s.text.slice(0, shownN)) + '<span class="caret"></span>';
@@ -1934,9 +1939,19 @@
     }
     return s;
   })();
+  var TK = { el: null, at: 0, word: "", n: 0 };
+  function thinkWord() {                                                              // a short aside once the wait passes ~2 s, like someone taking a breath before answering
+    if (!TK.el) TK.el = document.querySelector("#think .tk"); if (!TK.el) return;
+    if (convo !== "thinking") { TK.at = 0; TK.word = ""; TK.el.classList.remove("on"); return; }
+    if (!TK.at) TK.at = NOW;
+    if (NOW - TK.at < 2200 || TK.word) return;
+    var zh = /[?&]lang=zh\b/.test(location.search) || (talkLog.length && CJK.test(talkLog[talkLog.length - 1].content));
+    var L = zh ? ["嗯……", "稍等一下。", "我想想。"] : ["mm.", "one moment.", "let me think."];
+    TK.word = L[TK.n++ % L.length]; TK.el.textContent = TK.word; TK.el.classList.add("on");
+  }
   function setConvo(s) {
     if (convo === s) return;
-    convo = s;
+    convo = s; TK.at = 0; TK.word = ""; if (TK.el) TK.el.classList.remove("on");
     ["listening", "thinking", "speaking"].forEach(function (c) { if (c === s) document.body.classList.add(c); else document.body.classList.remove(c); });
     if (AUTO && AUTO.AU) { if (s === "listening" || s === "thinking") AUTO.AU.side = RNG() < 0.5 ? -1 : 1; if (s !== "idle") AUTO.AU.sacAt = 0; }   // look again, now
     micLabel.textContent = s === "listening" ? "listening" : "speak";
