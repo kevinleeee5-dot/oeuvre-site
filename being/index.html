@@ -1956,7 +1956,9 @@
     talkLog.push({ role: "user", content: text });
     if (CJK.test(text)) recLang = "zh-CN";            // they wrote in Chinese: listen for Chinese next time too
     setConvo("thinking");
-    var msgs = talkLog.slice(-20); if (msgs[0].role !== "user") msgs = msgs.slice(1);
+    var msgs = talkLog.slice(-12); if (msgs[0].role !== "user") msgs = msgs.slice(1);   // the server takes at most 12 messages (api/talk.php MAX_MESSAGES)
+    for (var tot = 0, k = msgs.length; k--;) { tot += msgs[k].content.length; if (tot > 3600) { msgs = msgs.slice(k + 1); break; } }   // and 4000 characters in all
+    if (msgs.length && msgs[0].role !== "user") msgs = msgs.slice(1);
     var res = null, data = null, ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 30000);
     try {
@@ -2012,7 +2014,10 @@
     };
     try { r.start(); setConvo("listening"); } catch (e) { rec = null; notice("it couldn't start listening. you can type to it instead."); }
   }
-  function stopListening() { if (rec) { try { rec.stop(); } catch (e) {} } }
+  function stopListening() {
+    if (!rec) return; var r = rec; try { r.stop(); } catch (e) {}
+    setTimeout(function () { if (rec === r) { try { r.abort(); } catch (e) {} setTimeout(function () { if (rec === r) { rec = null; recText = ""; sayEl.classList.remove("interim"); if (convo === "listening") setConvo("idle"); } }, 800); } }, 2500);   // onend never came: free the mic
+  }
   function isField(el) { return !!el && (/^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(el.tagName || "") || !!el.isContentEditable); }
   micBtn.addEventListener("click", function () { if (rec) stopListening(); else listen("tap"); if (micBtn.blur) micBtn.blur(); });
   window.addEventListener("keydown", function (e) {                                  // hold the space bar to talk
@@ -2022,6 +2027,9 @@
     holdSpace = true; listen("hold");
   });
   window.addEventListener("keyup", function (e) { if ((e.code === "Space" || e.key === " ") && holdSpace) { holdSpace = false; stopListening(); } });
+  function releaseSpace() { if (holdSpace) { holdSpace = false; stopListening(); } }                 // the key-up was lost (focus left the frame, tab switch): do not stay "held"
+  window.addEventListener("blur", releaseSpace);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) releaseSpace(); });
   sayEl.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" || e.isComposing) return;
     e.preventDefault(); primeTTS();
