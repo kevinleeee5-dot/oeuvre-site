@@ -315,7 +315,14 @@
     var q = new URLSearchParams(search || "");
     var o = { id: IDS[0], autostart: false, cam: false, seed: null, yaw: null, pitch: null, ui: true, expr: null, perf: false, speak: false, hold: null, video: true };
     function num(k) { var v = q.get(k); if (v === null || v.trim() === "") return null; v = Number(v); return Number.isFinite(v) ? v : null; }
-    var id = (q.get("id") || IDS[0]).toLowerCase(); o.id = IDS.indexOf(id) >= 0 ? id : IDS[0];
+    var id = (q.get("id") || "").toLowerCase(); o.id = IDS.indexOf(id) >= 0 ? id : IDS[0];
+    // no ?id (a normal visit): a different face first each time, never the same one as the visit before. Debug params keep the old fixed start.
+    if (!q.get("id") && !q.get("seed") && !q.get("clip") && !q.get("to")) {
+      var last = ""; try { last = localStorage.getItem("oeuvre.firstface") || ""; } catch (e) {}
+      var pool = IDS.filter(function (x) { return x !== last; });
+      o.id = pool[Math.floor(Math.random() * pool.length)];
+      try { localStorage.setItem("oeuvre.firstface", o.id); } catch (e) {}
+    }
     var hs = num("hold"); o.hold = hs === null ? null : clamp(hs, 2, 120) * 1000; o.video = q.get("video") !== "0";
     // registration checks: ?clip=e2&vt=0 shows that clip paused at vt seconds (the hold never ends)
     var cl = (q.get("clip") || "").toLowerCase(); o.clip = /^[a-z][12]$/.test(cl) && IDS.indexOf(cl[0]) >= 0 ? cl : null; o.vt = o.clip ? num("vt") : null;
