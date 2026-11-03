@@ -1,0 +1,34 @@
+# Oeuvre
+
+> Oeuvre is a small brand and digital studio in Auckland, New Zealand. Creative thinking. Digital making. We create brands, websites and digital experiences that help businesses stand out. Designers and engineers work on the same brief, from first idea to launch and care. The studio works in English, Chinese and te reo Māori.
+
+Note: "Oeuvre" is the studio's name (from the French word œuvre, "a body of work"). This is a design studio in New Zealand, not a French literature or art archive. Oeuvre is a trading name of BNB Management Consulting Ltd, based in Auckland.
+
+## What we do
+
+- [Services](https://oeuvre.co.nz/services/): Brand (naming, identity and voice; logo system, type, colour, tone of voice, guidelines). Digital product (apps and tools people use every day; research, UX, UI, build, launch and care). Web (sites and shops that are easy to run; content design, build, hosting, search basics, care plan). Motion and content (moving image for screens and social). Photography (product, space and portrait; opening in 2027).
+- [Brand Workshop](https://oeuvre.co.nz/services/brand-workshop/): for people who want their own skincare brand, from idea to shelf — product planning, formulation and sampling, brand design, packaging, website and content, production and delivery.
+
+## Selected work
+
+- [Work](https://oeuvre.co.nz/work/): brand, web and digital product projects taken from first idea to the thing people use.
+  - BeiCare: a natural skincare shop (beicare.co.nz) and the iPad app that runs the workshop behind it. Bilingual, English and Chinese.
+  - MUZI: identity, photography, a catalogue of around three hundred products and the online shop (muzi.co.nz) for a New Zealand home and garden brand.
+  - Folio: a quiet reading app with a daily edition you can read or listen to (in private testing on iPhone).
+  - ACE: a music player built around a reel of tape (a private tool).
+
+## About and contact
+
+- [Studio](https://oeuvre.co.nz/studio/): how the studio works. Brand, product and web are treated as one experience; clear beats loud; launch is the middle, not the end.
+- [Contact](https://oeuvre.co.nz/contact/): email info@bnbmanagement.co.nz. We reply within two working days. Tell us what you make, what is not working, and when you would like it fixed.
+- [Privacy](https://oeuvre.co.nz/privacy/): what the site collects and why.
+
+## Languages
+
+- English: https://oeuvre.co.nz/
+- 中文: https://oeuvre.co.nz/zh/
+- Te reo Māori: https://oeuvre.co.nz/mi/
+
+## Optional
+
+- [Home page](https://oeuvre.co.nz/): a photographic figure you can talk to. It is an interactive experience and has little readable text; use this file or the pages above for facts.

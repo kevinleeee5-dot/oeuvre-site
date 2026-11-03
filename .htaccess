@@ -21,6 +21,9 @@ Options -Indexes
   <FilesMatch "\.(css|js)$">
     Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
+  <FilesMatch "^llms\.txt$">
+    Header set Content-Type "text/plain; charset=utf-8"
+  </FilesMatch>
   Header set X-Content-Type-Options "nosniff"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
