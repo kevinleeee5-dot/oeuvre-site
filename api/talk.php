@@ -11,7 +11,8 @@ declare(strict_types=1);
  * Counters: dirname(__DIR__, 2) . '/oeuvre-secrets/talk-counters.json' (outside the web root), guarded by flock.
  * Requires PHP >= 8.1 (never, array_is_list) with curl + mbstring. Spend is reserved (worst case)
  * before each upstream call and settled from real usage after it, so caps cannot be overshot.
- * Nothing here logs message text or the key; error_log gets counts and costs only.
+ * error_log gets counts and costs only, never the key or message text. The conversation text itself goes to
+ * oeuvre-secrets/talk-log/ (daily JSONL, outside the web root, no IP, emails and phone numbers masked) for api/digest.php.
  */
 
 const MODEL = 'claude-sonnet-5-5';
@@ -57,6 +58,39 @@ function logline(string $s): void {
 
 function secrets_dir(): string {
     return dirname(__DIR__, 2) . '/' . SECRETS_DIR;
+}
+
+/** Mask what a visitor might type that identifies them: email addresses and phone-like numbers. */
+function scrub(string $t): string {
+    $t = preg_replace('/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/u', '[email]', $t) ?? $t;
+    $t = preg_replace('/\+?\d[\d\s().\-]{6,}\d/u', '[number]', $t) ?? $t;
+    return $t;
+}
+
+/**
+ * Append one line to the day's conversation log (NZ date), read by api/digest.php. Never breaks a reply:
+ * any failure is swallowed. No IP is stored; the session id is a one-way hash.
+ * kind: ok | refusal | upstream | budget | rate_limited.
+ */
+function convo_log(string $session, int $turn, string $kind, string $user, ?string $reply): void {
+    try {
+        $dir = secrets_dir() . '/talk-log';
+        if (!is_dir($dir) && !@mkdir($dir, 0700)) return;
+        $nz = new DateTimeImmutable('now', new DateTimeZone('Pacific/Auckland'));
+        $rec = [
+            't' => gmdate('c'),
+            's' => substr(hash('sha256', 'oeuvre-sid:' . $session), 0, 10),
+            'n' => $turn,
+            'k' => $kind,
+            'u' => scrub($user),
+            'a' => $reply === null ? null : scrub($reply),
+        ];
+        $line = json_encode($rec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($line === false) return;
+        @file_put_contents($dir . '/' . $nz->format('Y-m-d') . '.jsonl', $line . "\n", FILE_APPEND | LOCK_EX);
+    } catch (Throwable $e) {
+        // logging must never take the figure down
+    }
 }
 
 function load_key(): string {
@@ -117,7 +151,7 @@ function utc_day(int $ts): string {
     return gmdate('Y-m-d', $ts);
 }
 
-/** @return array{0:bool,1:?string,2:float} */
+/** @return array{0:bool,1:?string,2:float,3:int} ok, error code, reserved cost, this session's turn number */
 function reserve(string $ip, string $session, float $cost): array {
     $now = microtime(true);
     $day = utc_day((int) $now);
@@ -137,14 +171,14 @@ function reserve(string $ip, string $session, float $cost): array {
         $st['lifetime_cap_usd'] = $capLife;
         $dd = $st['days'][$day] ?? ['usd' => 0.0, 'requests' => 0];
         if ((float) $st['lifetime_usd'] + $cost > $capLife || (float) $dd['usd'] + $cost > DAILY_USD) {
-            return [false, 'budget', 0.0];
+            return [false, 'budget', 0.0, 0];
         }
         $ik = ip_key($ip);
         $hits = $st['ip'][$ik] ?? [];
         $lastHour = count(array_filter($hits, fn($t) => $t > $now - 3600));
-        if ($lastHour >= IP_PER_HOUR || count($hits) >= IP_PER_DAY) return [false, 'rate_limited', 0.0];
+        if ($lastHour >= IP_PER_HOUR || count($hits) >= IP_PER_DAY) return [false, 'rate_limited', 0.0, 0];
         $s = $st['sessions'][$session] ?? ['turns' => 0, 'ts' => $now];
-        if ((int) $s['turns'] >= SESSION_TURNS) return [false, 'rate_limited', 0.0];
+        if ((int) $s['turns'] >= SESSION_TURNS) return [false, 'rate_limited', 0.0, 0];
 
         $hits[] = $now;
         $st['ip'][$ik] = $hits;
@@ -153,7 +187,7 @@ function reserve(string $ip, string $session, float $cost): array {
         $dd['usd'] = (float) $dd['usd'] + $cost;
         $dd['requests'] = (int) $dd['requests'] + 1;
         $st['days'][$day] = $dd;
-        return [true, null, $cost];
+        return [true, null, $cost, (int) $s['turns'] + 1];
     });
 }
 
@@ -276,6 +310,7 @@ if ($key === '' || !is_string($persona) || $persona === '') {
 }
 
 $msgs = $body['messages'];
+$lastUser = (string) $msgs[count($msgs) - 1]['content'];
 $total = 0;
 foreach ($msgs as $m) $total += mb_strlen($m['content'], 'UTF-8');
 // Pessimistic reservation: ~2 chars per token for input, full max_tokens for output.
@@ -283,13 +318,14 @@ $estIn = (int) ceil((mb_strlen($persona, 'UTF-8') + $total) / 2) + 100;
 $reserve = $estIn * PRICE_IN + MAX_TOKENS * PRICE_OUT;
 
 try {
-    [$ok, $code, $reserved] = reserve((string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), $body['session'], $reserve);
+    [$ok, $code, $reserved, $turn] = reserve((string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), $body['session'], $reserve);
 } catch (Throwable $e) {
     logline('status=500 code=config counters=unavailable');
     fail(500, 'config', 'server not configured');
 }
 if (!$ok) {
     logline('status=' . ($code === 'budget' ? 503 : 429) . ' code=' . $code);
+    convo_log($body['session'], 0, (string) $code, $lastUser, null);
     if ($code === 'budget') fail(503, 'budget', 'the figure is resting for now');
     fail(429, 'rate_limited', 'too many messages, try again later');
 }
@@ -311,6 +347,7 @@ $info = sprintf('in=%d out=%d cost=%.6f day=%.4f life=%.4f ms=%d upstream=%d',
 if ($st === 200) {
     if (($data['stop_reason'] ?? '') === 'refusal') {
         logline('status=200 code=ok stop=refusal ' . $info);
+        convo_log($body['session'], $turn, 'refusal', $lastUser, FALLBACK);
         out(200, ['reply' => FALLBACK, 'sig' => tts_sig(FALLBACK, $key)]);
     }
     $text = '';
@@ -324,9 +361,11 @@ if ($st === 200) {
     }
     if ($text === '') {
         logline('status=502 code=upstream empty ' . $info);
+        convo_log($body['session'], $turn, 'upstream', $lastUser, null);
         fail(502, 'upstream', 'empty reply');
     }
     logline('status=200 code=ok ' . $info);
+    convo_log($body['session'], $turn, 'ok', $lastUser, $text);
     out(200, ['reply' => $text, 'sig' => tts_sig($text, $key)]);
 }
 if ($st === 401 || $st === 403) {
@@ -334,4 +373,5 @@ if ($st === 401 || $st === 403) {
     fail(500, 'config', 'server not configured');
 }
 logline('status=502 code=upstream ' . $info);
+convo_log($body['session'], $turn, 'upstream', $lastUser, null);
 fail(502, 'upstream', 'the figure could not answer just now');

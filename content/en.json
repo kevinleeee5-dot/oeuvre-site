@@ -420,7 +420,7 @@
     "metaTitle": "Privacy — Oeuvre",
     "metaDescription": "How oeuvre.co.nz handles your information: analytics, the talking figure on the home page, and your rights under the New Zealand Privacy Act 2020.",
     "lead": "What this site collects, why, and who helps us run it. In plain words.",
-    "updated": "Last updated 3 November 2026",
+    "updated": "Last updated 5 November 2026",
     "sections": [
       {
         "h": "Who we are",
@@ -440,7 +440,7 @@
         "h": "The figure on the home page",
         "p": [
           "The figure does not use your camera. Its movement comes from video recorded in advance.",
-          "When you type or speak to it, your message is sent to Anthropic, whose Claude model writes the reply, and the reply is sent to ElevenLabs, which turns it into speech. We do not keep the text of conversations on our server. To prevent abuse we keep counts of messages and costs, and a scrambled (hashed) form of your IP address for about an hour.",
+          "When you type or speak to it, your message is sent to Anthropic, whose Claude model writes the reply, and the reply is sent to ElevenLabs, which turns it into speech. We keep the text of conversations on our server for up to 90 days, without your IP address and with email addresses and phone numbers masked, so we can see what visitors ask and improve the site. Each morning Anthropic's Claude model reads the previous day's conversations and writes a short summary that is emailed to us. Please do not share anything you would not want us to read. To prevent abuse we keep counts of messages and costs, and a scrambled (hashed) form of your IP address for about an hour.",
           "Voice input uses your browser's own speech recognition, and only while you hold the space bar or tap the microphone. Some browsers, such as Chrome, send that audio to their provider to turn it into text."
         ]
       },

@@ -373,7 +373,7 @@
     "metaTitle": "Tūmataiti — Oeuvre",
     "metaDescription": "Me pēhea e tiakina ai ō mōhiohio e oeuvre.co.nz: te tātari manuhiri, te whakaahua kōrero i te whārangi matua, me ō motika i raro i te Ture Tūmataiti 2020.",
     "lead": "He aha ngā mea e kohia ana e tēnei pae, he aha ai, ā, ko wai e āwhina ana i a mātou. Ki te reo māmā.",
-    "updated": "I whakahōuhia i te 3 o Whiringa-ā-rangi 2026",
+    "updated": "I whakahōuhia i te 5 o Whiringa-ā-rangi 2026",
     "sections": [
       {
         "h": "Ko wai mātou",
@@ -393,7 +393,7 @@
         "h": "Te whakaahua i te whārangi matua",
         "p": [
           "Kāore te whakaahua e whakamahi i tō kāmera. Ko ōna nekehanga i ahu mai i te ataata i hopukina i mua.",
-          "Ka patohia, ka kōrero rānei koe ki a ia, ka tukuna tō karere ki a Anthropic, mā tōna tauira Claude e tuhi te whakautu, ā, ka tukuna te whakautu ki a ElevenLabs hei huri ki te reo kōrero. Kāore mātou e pupuri i te kupu o ngā kōrero ki tō mātou tūmau. Hei ārai i te tūkino, ka puritia e mātou te maha o ngā karere me ngā utu, me tētahi momo kua whakapōrorohia (hash) o tō wāhitau IP mō te kotahi hāora pea.",
+          "Ka patohia, ka kōrero rānei koe ki a ia, ka tukuna tō karere ki a Anthropic, mā tōna tauira Claude e tuhi te whakautu, ā, ka tukuna te whakautu ki a ElevenLabs hei huri ki te reo kōrero. Ka puritia e mātou te kupu o ngā kōrero ki tō mātou tūmau tae atu ki te 90 rā, me te kore o tō wāhitau IP, ā, kua huna ngā wāhitau īmēra me ngā nama waea, kia kitea ai e mātou ngā pātai a ngā manuhiri, kia pai ake ai te pae tukutuku. I ia ata ka pānui te tauira Claude a Anthropic i ngā kōrero o te rā i mua, ka tuhi i tētahi whakarāpopototanga poto ka tukuna ki a mātou mā te īmēra. Kaua e tuku i tētahi mea kāore koe e pīrangi kia kite mātou. Hei ārai i te tūkino, ka puritia e mātou te maha o ngā karere me ngā utu, me tētahi momo kua whakapōrorohia (hash) o tō wāhitau IP mō te kotahi hāora pea.",
           "Ka whakamahi te tāuru reo i te pūmōhio reo o tō ake pūtirotiro, ā, i te wā anake e pēhi ana koe i te pae mokowā, e pā ana rānei ki te hopuoro. Ko ētahi pūtirotiro, pērā i a Chrome, ka tuku i taua oro ki tō rātou kaiwhakarato hei huri ki te kupu."
         ]
       },

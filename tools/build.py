@@ -36,7 +36,7 @@ def clarity(s):
     i = s.get("clarityId")
     if not i:
         return ""
-    return ('<script>(function(c,l,a,r,i,t,y){if(c.location.hostname!=="oeuvre.co.nz")return;c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};'
+    return ('<script>(function(c,l,a,r,i,t,y){if(c.location.hostname!=="oeuvre.co.nz")return;try{var m=new URLSearchParams(c.location.search).get("me");if(m==="1")localStorage.setItem("oeuvre.me","1");else if(m==="0")localStorage.removeItem("oeuvre.me");if(localStorage.getItem("oeuvre.me")==="1")return}catch(e){}c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};'
             't=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];'
             'y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","' + esc(i) + '");</script>')
 
