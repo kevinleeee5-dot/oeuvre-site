@@ -180,6 +180,24 @@
     /* ---- sound: a gapless ambient loop (Web Audio, so there is no join) that starts by itself, plus a quiet pentatonic
        glass note as the pointer travels. Browsers only let a page make sound after a first click, tap or key, so the loop is
        loaded and armed at once and begins the moment that happens (or at once where the browser already allows it) ---- */
+    /* ?audiodebug: a small panel that reports what the page's and the figure's audio are doing (for phones, where there is no
+       console). The figure writes to it through parent.__adbg. */
+    const adbg = (() => {
+      if (!/[?&]audiodebug\b/.test(location.search)) return () => { };
+      const box = document.createElement("pre"), lines = [];
+      box.style.cssText = "position:fixed;left:8px;right:8px;top:8px;z-index:2147483647;margin:0;padding:8px;max-height:45vh;overflow:auto;background:rgba(255,255,230,.94);color:#000;font:11px/1.35 ui-monospace,Menlo,monospace;white-space:pre-wrap;pointer-events:none;border-radius:6px";
+      document.body.appendChild(box);
+      const t0 = performance.now(), log = s => { lines.push(((performance.now() - t0) / 1000).toFixed(1) + "s " + s); if (lines.length > 40) lines.shift(); };
+      window.__adbg = log;
+      setInterval(() => {
+        let f = ""; try { f = frame.contentWindow.__beingAudio ? frame.contentWindow.__beingAudio() : "figure: -"; } catch (_) { f = "figure: ?"; }
+        const s = window.__oeuvreSoundState ? window.__oeuvreSoundState() : "ambient: -";
+        let as = "-"; try { as = navigator.audioSession ? navigator.audioSession.type : "n/a"; } catch (_) { }
+        box.textContent = s + " | session " + as + "\n" + f + "\n" + lines.join("\n");
+      }, 400);
+      log("ua " + navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 90));
+      return log;
+    })();
     const sound = (() => {
       const btn = $("#soundToggle"), AC = window.AudioContext || window.webkitAudioContext;
       if (!btn || !AC) { body.classList.add("no-audio"); window.__oeuvreSound = null; return null; }
@@ -203,13 +221,20 @@
       const load = () => {
         if (buf || loading) return; loading = true;
         fetch(URL_).then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no))).then(b => {
-          buf = b; loading = false; if (!on || src) return;
+          buf = b; loading = false; adbg("ambient decoded " + b.duration.toFixed(1) + "s"); if (!on || src) return;
           src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(amb); src.start(0); level(ducked ? DUCK : FULL);
-        }).catch(() => { loading = false; });
+        }).catch(e => { loading = false; adbg("ambient load failed: " + (e && (e.name || e.message))); });
       };
-      const resume = () => { if (ctx && ctx.state === "suspended" && on) ctx.resume().catch(() => { }); };
+      // iPhone: the page's sound is muted by the ring/silent switch unless the session is "playback"; set it on the first tap,
+      // so nothing changes for a visitor who never touches the page. Safari also reports "interrupted", not only "suspended".
+      const resume = e => {
+        if (!ctx || !on || ctx.state === "running" || ctx.state === "closed") return;
+        if (e && e.type !== "pointerdown") { try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) { } }
+        ctx.resume().then(() => adbg("ambient " + (e ? e.type : "") + " -> " + ctx.state), er => adbg("ambient resume refused: " + (er && er.name)));
+      };
       const start = () => { on = true; label(); ensure(); load(); if (src) level(ducked ? DUCK : FULL); resume(); try { localStorage.removeItem(KEY); } catch (_) { } };
       const stop = () => { on = false; label(); level(0); try { localStorage.setItem(KEY, "1"); } catch (_) { } };
+      window.__oeuvreSoundState = () => "ambient: " + (on ? "on" : "off") + ", ctx " + (ctx ? ctx.state : "none") + ", " + (src ? "looping" : buf ? "loaded" : loading ? "loading" : "not loaded");
       btn.addEventListener("click", () => on ? stop() : start());
       document.addEventListener("visibilitychange", () => { if (!ctx || !on) return; if (document.hidden) ctx.suspend().catch(() => { }); else resume(); });
       const GESTURES = ["pointerdown", "keydown", "touchend", "click"];

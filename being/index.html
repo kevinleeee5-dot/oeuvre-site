@@ -1796,8 +1796,16 @@
   // the voice: ElevenLabs audio from /api/tts for replies /api/talk signed. The mouth follows the audio's loudness (an
   // analyser), the text follows its playback position. No system voice: when the audio cannot play, the reply is text only.
   var TTS_API = "/api/tts", AC = null, AN = null, ABUF = null;
+  // iPhone/iPad: Web Audio is muted by the silent switch and goes quiet whenever its context is suspended or "interrupted",
+  // and an element routed through it goes quiet with it. There the reply plays as a plain media element (heard in silent
+  // mode too) and the mouth follows the words alone (loudness() = 0.5).
+  var IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function adbg(s) { try { if (window.parent && window.parent.__adbg) window.parent.__adbg("figure " + s); } catch (e) {} }
+  window.__beingAudio = function () {
+    return "figure: ios " + IOS + ", ctx " + (AC ? AC.state : "none") + ", player " + (PLAYER ? (PLAYER.__unlocked ? "unlocked" : "locked") + (PLAYER.paused ? " paused" : " playing") : "none");
+  };
   function audioCtx() {
-    if (AC) { if (AC.state === "suspended") AC.resume().catch(function () {}); return AC; }
+    if (AC) { if (AC.state !== "running" && AC.state !== "closed") AC.resume().catch(function () {}); return AC; }
     try {
       AC = new (window.AudioContext || window.webkitAudioContext)();
       AN = AC.createAnalyser(); AN.fftSize = 1024; AN.smoothingTimeConstant = 0.6; ABUF = new Float32Array(AN.fftSize);
@@ -1817,7 +1825,7 @@
   function player() {
     if (PLAYER || typeof Audio === "undefined") return PLAYER;
     PLAYER = new Audio(); PLAYER.preload = "auto"; PLAYER.setAttribute("playsinline", "");
-    if (AC && AN) { try { AC.createMediaElementSource(PLAYER).connect(AN); } catch (e) {} }
+    if (!IOS && AC && AN) { try { AC.createMediaElementSource(PLAYER).connect(AN); } catch (e) {} }
     return PLAYER;
   }
   function stopVoice(s) {
@@ -1829,17 +1837,17 @@
     s.el = true; s.ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
     audioCtx();
     fetch(TTS_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: s.text, sig: sig, session: SESSION }), signal: s.ctl ? s.ctl.signal : undefined })
-      .then(function (r) { if (!r.ok) throw new Error("tts " + r.status); return r.blob(); })
+      .then(function (r) { adbg("tts " + r.status + " " + (r.headers.get("content-type") || "")); if (!r.ok) throw new Error("tts " + r.status); return r.blob(); })
       .then(function (b) {
         if (SP !== s) return;
         var a = player(); if (!a) { s.el = false; return; }
         s.url = URL.createObjectURL(b); s.aud = a; a.src = s.url;
-        a.onplaying = function () { if (SP !== s) return; s.started = true; s.audio = true; };
+        a.onplaying = function () { adbg("voice playing"); if (SP !== s) return; s.started = true; s.audio = true; };
         a.onended = function () { if (SP !== s) return; s.audio = false; s.ended = true; };
-        a.onerror = function () { if (SP !== s) return; s.el = false; };
-        var p = a.play(); if (p && p.catch) p.catch(function () { if (SP === s) s.el = false; });
+        a.onerror = function () { adbg("voice error " + (a.error && a.error.code)); if (SP !== s) return; s.el = false; };
+        var p = a.play(); if (p && p.catch) p.catch(function (e) { adbg("voice play refused: " + (e && e.name)); if (SP === s) s.el = false; });
       })
-      .catch(function () { if (SP === s) s.el = false; });
+      .catch(function (e) { adbg("tts failed: " + (e && (e.message || e.name))); if (SP === s) s.el = false; });
   }
   function primeTTS() {                    // some browsers only let a page play sound after a gesture: open the audio context inside one
     // iPhone: a reply the visitor asked for plays even with the ring/silent switch on (where supported)
@@ -1848,11 +1856,13 @@
     var a = player();                      // unlock the reply player with a few silent milliseconds, still inside the gesture
     if (a && !a.__unlocked && (a.paused || !a.src)) {
       a.__unlocked = true; a.onplaying = a.onended = a.onerror = null; a.src = HUSH;
-      try { var p = a.play(); if (p && p.catch) p.catch(function () { a.__unlocked = false; }); } catch (e) { a.__unlocked = false; }
+      try { var p = a.play(); if (p && p.then) p.then(function () { adbg("player unlocked"); }, function (e) { a.__unlocked = false; adbg("unlock refused: " + (e && e.name)); }); } catch (e) { a.__unlocked = false; }
     }
     if (primed || !SYNTH || !UTTER) return; primed = true;
     try { var u = new UTTER(" "); u.volume = 0; SYNTH.speak(u); } catch (e) {}
   }
+  // any tap in the figure (the input, the tab, the face) unlocks the voice: a phone's Enter key may not count as a gesture
+  ["touchend", "click"].forEach(function (t) { document.addEventListener(t, function () { if (!PLAYER || !PLAYER.__unlocked) primeTTS(); }, { capture: true, passive: true }); });
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function cancelSpeech() { if (SP && SP.tts && SYNTH) { try { SYNTH.cancel(); } catch (e) {} } if (SP && SP.el) stopVoice(SP); SP = null; }
   // opt: sim (silent, for ?speak=1), dim (an aside, not an answer), after (html shown once the text is typed), silent (text only),
