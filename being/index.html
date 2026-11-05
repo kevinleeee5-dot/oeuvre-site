@@ -87,7 +87,11 @@
     transition:color .25s, border-color .25s, background .25s, opacity .4s, transform .4s var(--ease); }
   .chip:hover { color:#000; background:var(--fg); border-color:var(--fg); }
   .chip.used { display:none; }
+  /* the suggestions after a reply: one row that swipes sideways (the page allows no touch gestures and the panel only
+     vertical ones, so this row says pan-x itself); a trailing spacer lets the last pill clear the fade */
+  #panel.talked .chips::after { content:""; flex:none; width:16%; }
   #panel.talked .chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding:1px 0 2px; margin-top:-2px;
+    touch-action:pan-x; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
     -webkit-mask-image:linear-gradient(to right, #000 82%, transparent); mask-image:linear-gradient(to right, #000 82%, transparent); }
   #panel.talked .chips::-webkit-scrollbar { display:none; }
   /* the first screen of the column: no header, no sentence, no rules - the questions as quiet lines above one input (desktop); phones keep the pills */

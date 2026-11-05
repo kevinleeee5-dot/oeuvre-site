@@ -218,11 +218,26 @@
         return ctx;
       };
       const level = v => { if (!ctx) return; amb.gain.cancelScheduledValues(ctx.currentTime); amb.gain.setTargetAtTime(v, ctx.currentTime, 1.1); };
+      // the loop picks up where it was on the last home page (language switch, back from another page), as if it had kept
+      // playing meanwhile; after 10 minutes away it starts from the top again
+      const POS = "oeuvre-sound-pos";
+      let t0 = 0, off0 = 0;
+      const where = () => buf && src ? (off0 + ctx.currentTime - t0) % buf.duration : null;
+      addEventListener("pagehide", () => { const p = where(); if (p === null) return; try { sessionStorage.setItem(POS, JSON.stringify({ p, at: Date.now() })); } catch (_) { } });
+      const startAt = () => {
+        try {
+          const s = JSON.parse(sessionStorage.getItem(POS) || "null"), away = s ? (Date.now() - s.at) / 1000 : Infinity;
+          if (s && away >= 0 && away < 600 && Number.isFinite(s.p)) return (s.p + away) % buf.duration;
+        } catch (_) { }
+        return 0;
+      };
       const load = () => {
         if (buf || loading) return; loading = true;
         fetch(URL_).then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no))).then(b => {
           buf = b; loading = false; adbg("ambient decoded " + b.duration.toFixed(1) + "s"); if (!on || src) return;
-          src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(amb); src.start(0); level(ducked ? DUCK : FULL);
+          off0 = startAt(); t0 = ctx.currentTime;
+          src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(amb); src.start(0, off0); level(ducked ? DUCK : FULL);
+          if (off0) adbg("ambient continues at " + off0.toFixed(1) + "s");
         }).catch(e => { loading = false; adbg("ambient load failed: " + (e && (e.name || e.message))); });
       };
       // iPhone: the page's sound is muted by the ring/silent switch unless the session is "playback"; set it on the first tap,
