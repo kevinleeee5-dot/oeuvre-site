@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261105h"  # bump to bust caches of css/js
+VERSION = "20261106b"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -119,6 +119,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
     full_title = s.get("homeTitle", s["name"]) if page_id == "home" else (title if s["name"] in title else f"{title} — {s['name']}")
     canonical = s["url"] + path
     langs = []
+    cur_label = next((l["label"] for l in c["languages"] if l["code"] == c["lang"]), c["lang"].upper())
     for l in c["languages"]:
         if l.get("hidden"):                       # e.g. 中 while the Chinese site is off: no chip, no link
             continue
@@ -126,9 +127,9 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
         if l["ready"]:
             href = ("/" if l["code"] == "en" else f"/{l['code']}/") + path.lstrip("/")
             langs.append(f'<a href="{esc(href)}" lang="{esc(l["code"])}" hreflang="{esc(l["code"])}"'
-                         f'{" aria-current=\"true\"" if cur else ""} title="{esc(l["name"])}">{esc(l["label"])}</a>')
+                         f'{" aria-current=\"true\"" if cur else ""} title="{esc(l["name"])}">{esc(l["name"])}</a>')
         else:
-            langs.append(f'<span aria-disabled="true" lang="{esc(l["code"])}" title="{esc(l["name"])} — {esc(s["soon"])}">{esc(l["label"])}</span>')
+            langs.append(f'<span aria-disabled="true" lang="{esc(l["code"])}" title="{esc(l["name"])} — {esc(s["soon"])}">{esc(l["name"])}</span>')
     alt_links = "\n".join(f'<link rel="alternate" hreflang="{a}" href="{esc(h)}">' for a, h in alternates)
     mini = ""
     if page_id != "home":
@@ -189,7 +190,7 @@ def page(c, *, lang_prefix, path, page_id, section, title, description, body, bo
 {cta(c, lang_prefix) if page_id not in ("home", "contact", "notfound") else ""}
 <footer class="foot">
   <p class="foot-legal">{esc(s['legal'])} <a class="foot-link" href="{lang_prefix}/privacy/">{esc(c['privacy']['link'])}</a></p>
-  <div class="langs" role="group" aria-label="{esc(s['languages'])}">{''.join(langs)}</div>
+  <details class="langs"><summary aria-label="{esc(s['languages'])}: {esc(cur_label)}">{esc(cur_label)}</summary><div class="lang-menu" role="group" aria-label="{esc(s['languages'])}">{''.join(langs)}</div></details>
 </footer>
 <canvas id="iris" aria-hidden="true"></canvas>
 <div id="live" class="sr-only" aria-live="polite"></div>

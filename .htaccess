@@ -11,11 +11,11 @@ Options -Indexes
   RewriteRule ^(.*)$ https://oeuvre.co.nz/$1 [R=301,L]
   RewriteRule ^api/talk/?$ api/talk.php [L]
   RewriteRule ^api/tts/?$ api/tts.php [L]
-  RewriteRule ^(tools|docs|proto)(/|$) - [R=404,L]
+  RewriteRule ^(tools|docs|proto|content)(/|$) - [R=404,L]
   RewriteRule (^|/)README\.md$ - [R=404,L]
 </IfModule>
 <IfModule mod_headers.c>
-  <FilesMatch "\.(jpg|jpeg|png|svg|webp|bin|woff2)$">
+  <FilesMatch "\.(jpg|jpeg|png|svg|webp|bin|woff2|mp4|mp3)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
   <FilesMatch "\.(css|js)$">
@@ -28,6 +28,7 @@ Options -Indexes
   <FilesMatch "^llms\.txt$">
     Header set Content-Type "text/plain; charset=utf-8"
   </FilesMatch>
+  Header set Strict-Transport-Security "max-age=31536000"
   Header set X-Content-Type-Options "nosniff"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

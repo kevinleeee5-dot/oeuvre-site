@@ -63,18 +63,28 @@ html.busy, html.busy * { cursor: progress !important; }
   /* bigger hit areas on phones, same look */
   .chip { min-height: 40px; min-width: 40px; display: inline-flex; align-items: center; justify-content: center; }
   .snd-btn { width: 32px; height: 32px; }
-  .langs { gap: 2px; margin: -10px -6px; }
-  .langs > * { padding: 10px 6px; min-width: 32px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
 }
 
 /* ---------- footer ---------- */
 .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap;
         padding: 40px var(--gutter) max(28px, env(safe-area-inset-bottom)); font-size: 13px; color: var(--dim); max-width: calc(var(--max) + 2 * var(--gutter)); margin: 0 auto; }
 .foot p { margin: 0; }
-.langs { display: flex; gap: 14px; }
-.langs a { text-decoration: none; color: var(--fg); }
-.langs a[aria-current] { text-decoration: underline; text-underline-offset: 4px; }
-.langs span[aria-disabled] { opacity: .45; cursor: not-allowed; }
+/* the language switch: one small word for the language you are on; a tap opens the others (a <details>, so it works without script) */
+.langs { position: relative; }
+.langs summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 4px; color: var(--fg); user-select: none; -webkit-tap-highlight-color: transparent; }
+.langs summary::-webkit-details-marker { display: none; }
+.langs summary::after { content: ""; width: 5px; height: 5px; border: solid currentColor; border-width: 0 1px 1px 0; transform: translateY(1px) rotate(-135deg); opacity: .7; transition: transform .35s var(--ease, ease); }
+.langs[open] summary::after { transform: translateY(-1px) rotate(45deg); }
+.lang-menu { position: absolute; right: -6px; bottom: calc(100% + 6px); min-width: 138px; display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
+  background: rgba(10, 10, 10, .86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 10px 32px rgba(0, 0, 0, .45);
+  text-shadow: none; animation: langin .35s var(--ease, ease) both; }
+@keyframes langin { from { opacity: 0; transform: translateY(6px); } }
+.lang-menu a, .lang-menu span { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 12px; border-radius: 9px; font-size: 13px; letter-spacing: .01em; white-space: nowrap; text-decoration: none; color: rgba(255, 255, 255, .72); }
+.lang-menu a:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.lang-menu a[aria-current] { color: #fff; }
+.lang-menu a[aria-current]::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.lang-menu span[aria-disabled] { opacity: .45; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .lang-menu { animation: none; } .langs summary::after { transition: none; } }
 
 /* ---------- home ---------- */
 .p-home { overflow: hidden; height: 100vh; height: 100svh; height: 100lvh; }
@@ -109,7 +119,6 @@ html.busy, html.busy * { cursor: progress !important; }
 /* the bust runs to the bottom edge: plain white with a soft dark halo reads over skin and black alike (no blend) */
 .home-statement { color: rgba(255, 255, 255, .95); }
 .p-home .langs { color: rgba(255, 255, 255, .92); text-shadow: 0 0 14px rgba(0, 0, 0, .65), 0 0 2px rgba(0, 0, 0, .5); }
-.p-home .langs span[aria-disabled] { opacity: .62; }
 .p-home .foot-legal { display: none; }
 .p-home .home-foot { right: calc(var(--gutter) + 120px); }
 /* the figure's conversation sheet is open (phones, portrait screens): the statement and the language links step aside */
@@ -390,8 +399,15 @@ html.arriving .page-title .ch, .page-title.late .ch { --d: 520ms; }
 
 /* the language switch stays in reach on every page (the home page keeps its own corner) */
 body:not(.p-home) .langs { position: fixed; z-index: 30; right: max(var(--gutter), env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
-  gap: 12px; padding: 7px 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
+  padding: 0 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
   background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-body:not(.p-home) .langs a { color: rgba(255, 255, 255, .7); }
-body:not(.p-home) .langs a[aria-current] { color: #fff; }
+body:not(.p-home) .langs summary { color: #fff; }
+body:not(.p-home) .lang-menu { right: 0; bottom: calc(100% + 8px); }
 body:not(.p-home) .foot { padding-bottom: max(72px, env(safe-area-inset-bottom)); }
+
+/* small text links keep their look but get a finger-sized hit area on touch screens */
+@media (pointer: coarse) {
+  .back, .foot-link, .mark { position: relative; }
+  .back::after, .foot-link::after, .mark::after { content: ""; position: absolute; inset: -12px -8px; }
+  .mail { padding-block: 8px; }
+}

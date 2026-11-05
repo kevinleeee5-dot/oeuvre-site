@@ -372,61 +372,73 @@
     "title": "Tūmataiti",
     "metaTitle": "Tūmataiti — Oeuvre",
     "metaDescription": "Me pēhea e tiakina ai ō mōhiohio e oeuvre.co.nz: te tātari manuhiri, te whakaahua kōrero i te whārangi matua, me ō motika i raro i te Ture Tūmataiti 2020.",
-    "lead": "He aha ngā mea e kohia ana e tēnei pae, he aha ai, ā, ko wai e āwhina ana i a mātou. Ki te reo māmā.",
-    "updated": "I whakahōuhia i te 5 o Whiringa-ā-rangi 2026",
+    "lead": "Ngā mōhiohio e kohia ana e mātou, te take e hiahiatia ana, me ngā tāngata e whai wāhi ana ki te whakahaere. Anei, kua whakamāramahia.",
+    "updated": "Whakahoutanga whakamutunga: 5 Whiringa-ā-rangi 2026",
     "sections": [
       {
         "h": "Ko wai mātou",
         "p": [
-          "Ko Oeuvre te ingoa hokohoko o BNB Management Consulting Ltd, kei Tāmaki Makaurau, Aotearoa. Kei a mātou te haepapa mō tēnei paetukutuku me ngā mōhiohio e kohia ana e ia.",
-          "Ngā pātai me ngā tono: info@bnbmanagement.co.nz."
+          "Ko Oeuvre te ingoa hokohoko o BNB Management Consulting Ltd, kei Tāmaki Makaurau, Aotearoa.",
+          "Ko mātou te kawenga mō tēnei paetukutuku me ngā mōhiohio e kohia ana mā roto i a ia.",
+          "Mehemea he pātai tāu, tuhia mai ki info@bnbmanagement.co.nz."
         ]
       },
       {
-        "h": "Te tātari manuhiri",
+        "h": "Ngā tatauranga haerenga",
         "p": [
-          "Ka whakamahi mātou i a Microsoft Clarity kia mōhio ai me pēhea te whakamahi i te pae: ngā whārangi i torohia, te roa i runga i te whārangi, te panuku me ngā pāwhiri, te momo pūrere me te pūtirotiro, me tētahi wāhi tata. Ka hopukina hoki e Clarity he rīkoata kore-ingoa o te whakamahinga o tētahi whārangi, ā, ka mātakitakina e mātou kia kitea ai ngā wāhi pōhēhē, pakaru rānei.",
-          "Ka whakatakoto a Clarity i ngā pihikete kia mōhio ai ki tētahi pūtirotiro ka hoki mai. Ko ngā mea katoa ka patohia ki te pouaka kōrero, me te kōrero anō hoki, ka hunaia i ēnei rīkoata. Ka tukatukahia ēnei raraunga e Microsoft i raro i tāna ake tauākī tūmataiti, ā, ka puritia mō tētahi wā poto."
+          "Ka whakamahi mātou i a Microsoft Clarity hei mōhio ki te whakamahinga o te paetukutuku: ngā whārangi i tirohia, te roa o te noho, te retireti me ngā pāwhiri, te momo pūrere me te pūtirotiro, me te rohe whānui o te haerenga.",
+          "Mā tēnei e kitea ai ngā hoahoa kāore i māmā te mārama, ngā āhuatanga kua pakaru, me ngā wheako hei whakapai ake.",
+          "Ka whakamahi a Clarity i ngā pihikete hei mōhio ki ngā hokinga mai, ā, ka taea te hopu i te āhua o te whakamahi i tētahi whārangi. I aua hopunga, ka huna ngā tuhinga i te pouaka kōrero me te kupu o te kōrerorero.",
+          "Ko Microsoft te kaiwhakahaere o ēnei raraunga i raro i tāna kaupapahere matatapu, ā, ka rongoā i raro i ōna ake ture pupuri."
         ]
       },
       {
-        "h": "Te whakaahua i te whārangi matua",
+        "h": "Te kanohi o te whārangi tuatahi",
         "p": [
-          "Kāore te whakaahua e whakamahi i tō kāmera. Ko ōna nekehanga i ahu mai i te ataata i hopukina i mua.",
-          "Ka patohia, ka kōrero rānei koe ki a ia, ka tukuna tō karere ki a Anthropic, mā tōna tauira Claude e tuhi te whakautu, ā, ka tukuna te whakautu ki a ElevenLabs hei huri ki te reo kōrero. Ka puritia e mātou te kupu o ngā kōrero ki tō mātou tūmau tae atu ki te 90 rā, me te kore o tō wāhitau IP, ā, kua huna ngā wāhitau īmēra me ngā nama waea, kia kitea ai e mātou ngā pātai a ngā manuhiri, kia pai ake ai te pae tukutuku. I ia ata ka pānui te tauira Claude a Anthropic i ngā kōrero o te rā i mua, ka tuhi i tētahi whakarāpopototanga poto ka tukuna ki a mātou mā te īmēra. Kaua e tuku i tētahi mea kāore koe e pīrangi kia kite mātou. Hei ārai i te tūkino, ka puritia e mātou te maha o ngā karere me ngā utu, me tētahi momo kua whakapōrorohia (hash) o tō wāhitau IP mō te kotahi hāora pea.",
-          "Ka whakamahi te tāuru reo i te pūmōhio reo o tō ake pūtirotiro, ā, i te wā anake e pēhi ana koe i te pae mokowā, e pā ana rānei ki te hopuoro. Ko ētahi pūtirotiro, pērā i a Chrome, ka tuku i taua oro ki tō rātou kaiwhakarato hei huri ki te kupu."
+          "He ataata kua oti kē te hanga te kanohi o te whārangi tuatahi. Kāore e whakamahi i tō kāmera.",
+          "Mehemea ka kōrero koe ki a ia, ka tukua ngā kupu e tuhia ana e koe, te tuhinga rānei o tāu kōrero, ki a Anthropic, ā, ka tuhia e Claude te whakautu. Ka tukua taua whakautu ki a ElevenLabs kia huri hei reo.",
+          "Kia mārama ai ki ngā hiahia o ngā manuhiri, kia pai ake ai te paetukutuku, ka pupuri mātou i ngā kupu kōrerorero ki tā mātou tūmau mō te 90 rā i te nuinga.",
+          "Kāore he wāhitau IP i ngā kōrerorero kua tiakina, ā, ka huna aunoa ngā wāhitau īmēra me ngā nama waea. Ka whakamahi hoki mātou i a Claude hei whakarāpopoto i ngā kōrerorero o te rā o mua, ā, ka tukua taua rāpoto ma te īmēra ki te kapa paetukutuku.",
+          "**Kaua e tuku i ngā mōhiohio tūmataiti, hōhonu rānei e kore koe e hiahia kia kite mātou i te kōrerorero.**",
+          "Hei ārai i te whakamahi hē, ka tuhi mātou i te tatau karere me te utu ratonga, ā, ka pupuri poto i tētahi āhua haehae o tō wāhitau IP, ka mukua i muri i te kotahi haora pea.",
+          "Nā tō pūtirotiro te mōhio ki te reo, ā, e kaha ana anake i te wā e pupuri ana koe i te pātuhi mokowā, e pāwhiri ana rānei koe i te hopuoro. Tērā pea ka tukua e ētahi pūtirotiro te hopunga ki tā rātou kaiwhakarato kia tuhia."
         ]
       },
       {
         "h": "Ētahi atu ratonga",
         "p": [
-          "Ka manaakitia te pae e Hostinger, ā, ka puritia e ōna tūmau ngā rēhita uru noa (pērā i te wāhitau IP, te wā me te whārangi i tonoa). Ka utaina ngā momotuhi mai i Google Fonts, ā, ka whiwhi a Google i tō wāhitau IP ina tīkina he momotuhi.",
-          "Ka maumahara tō pūtirotiro ki ētahi tautuhinga torutoru mō tēnei pae anake, pērā i te oro, kua kite rānei koe i te hākoritanga tīmatanga. Ka noho ēnei ki tō pūrere."
+          "Ka manaakitia te paetukutuku e Hostinger. Tērā pea ka pupuri te tūmau i ngā rārangi uru māori, tae atu ki te wāhitau IP, te wā o te haerenga me te whārangi i tonoa.",
+          "Ka utaina ngā momotuhi o te paetukutuku mā Google Fonts. I roto i tērā tukanga, tērā pea ka whiwhi a Google i tō wāhitau IP.",
+          "Ka tiakina hoki e mātou ētahi manakohanga paetukutuku ki tō pūrere, pēnei i te whakaritenga oro me te kitenga o te hākoritanga whakatuwhera. Ka noho ēnei i tō pūtirotiro anake."
         ]
       },
       {
-        "h": "Ka haere ō mōhiohio ki hea",
+        "h": "Te wāhi e haere ai ngā mōhiohio",
         "p": [
-          "Tērā pea ka tukatukahia ngā mōhiohio e Microsoft, Anthropic, ElevenLabs, Google me Hostinger ki waho o Aotearoa, tae atu ki Amerika. Ka whakamahia rātou e mātou nā te mea ki tā mātou titiro he ōrite ō rātou haumarutanga me ō rātou tiakanga tūmataiti ki ō Aotearoa."
+          "Tērā pea ka tukatuka ētahi o ngā kaiwhakarato e whakamahia ana e mātou, tae atu ki a Microsoft, Anthropic, ElevenLabs, Google me Hostinger, i ngā raraunga ki waho i Aotearoa, tae atu ki Amerika.",
+          "Ka whakahaere ēnei kaiwhakarato i ngā mōhiohio i raro i ō rātou ake kaupapahere matatapu. Ka kōwhiri mātou i ngā tuatoru e ai ki ngā hiahia o te ratonga, ā, ka aro ki tā rātou tiaki raraunga."
         ]
       },
       {
         "h": "Īmēra",
         "p": [
-          "Ki te tuhi mai koe, ka whakamahia e mātou ō kōrero hei whakautu, hei mahi tahi hoki ki a koe anake, ā, ka puritia mō te roa e hiahiatia ana mō taua take me ā mātou pūkete."
+          "Mehemea ka whakapā mai koe, ka whakamahi mātou i ngā mōhiohio kua homai hei whakahoki kōrero, hei kōrero mō te mahi tahi, hei whakahaere rānei i tāu tono.",
+          "Ka pupuri ēnei karere mō te roa e hiahiatia ana hei whakahaere i te mahi me te pupuri rekoata e tika ana, ā, e kore e whakamahia mō ētahi atu kaupapa."
         ]
       },
       {
-        "h": "Ō motika",
+        "h": "Ōu mōtika",
         "p": [
-          "I raro i te Ture Tūmataiti 2020 ka taea e koe te tono kia kite i ngā mōhiohio whaiaro e puritia ana e mātou mōu, ā, kia whakatikahia. Tuhia mai ki info@bnbmanagement.co.nz.",
-          "Ki te kore koe e pai ki tā mātou whakautu, ka taea e koe te whakapā atu ki te Tari o te Toihau Tūmataiti i privacy.org.nz."
+          "I raro i te Ture Matatapu 2020 o Aotearoa, he mōtika tōu ki te tono kia kite i ngā mōhiohio whaiaro e pupuritia ana e mātou mōu, me te tono kia whakatikaina.",
+          "Whakapā mai ki info@bnbmanagement.co.nz.",
+          "Mehemea kāore koe i te harikoa ki tā mātou whakahaere i ō mōhiohio, ka taea hoki e koe te whakapā ki te Tari o te Kaihautū Matatapu o Aotearoa (privacy.org.nz)."
         ]
       },
       {
-        "h": "Ngā panonitanga",
+        "h": "Ngā whakahou",
         "p": [
-          "Ka whakahōuhia e mātou tēnei whārangi ina rerekē ngā mea e kohia ana. Ko te rā i runga ake e whakaatu ana i te putanga hōu rawa."
+          "Ka whakahoutia tēnei whārangi ina huri te āhua o tā mātou kohi, whakamahi rānei i ngā mōhiohio.",
+          "Ko te rā i te upoko o te whārangi te putanga hou rawa."
         ]
       }
     ],

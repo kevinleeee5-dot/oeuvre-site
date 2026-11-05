@@ -145,11 +145,30 @@ main { padding-top: 76px; }
 
 /* the language switch stays in reach on every screen */
 .langs { position: fixed; z-index: 30; right: max(var(--gutter), env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
-         gap: 12px; padding: 7px 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
+         padding: 0 12px; border-radius: 999px; font-size: 12px; letter-spacing: .04em;
          background: rgba(0, 0, 0, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .langs a { text-decoration: none; color: rgba(255, 255, 255, .7); }
 .langs a[aria-current] { color: #fff; }
 .foot { padding-bottom: max(72px, env(safe-area-inset-bottom, 0px)); }
+/* touch screens: small links keep their look but get a finger-sized hit area */
+@media (pointer: coarse) {
+  .foot-link, .mini a, .mark { position: relative; }
+  .foot-link::after, .mini a::after, .mark::after { content: ""; position: absolute; inset: -12px -8px; }
+}
+/* the language switch: one word, a tap opens the others */
+.langs summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 4px; color: #fff; user-select: none; -webkit-tap-highlight-color: transparent; }
+.langs summary::-webkit-details-marker { display: none; }
+.langs summary::after { content: ""; width: 5px; height: 5px; border: solid currentColor; border-width: 0 1px 1px 0; transform: translateY(1px) rotate(-135deg); opacity: .7; transition: transform .35s ease; }
+.langs[open] summary::after { transform: translateY(-1px) rotate(45deg); }
+.lang-menu { position: absolute; right: 0; bottom: calc(100% + 8px); min-width: 138px; display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
+  background: rgba(10, 10, 10, .86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 10px 32px rgba(0, 0, 0, .45); animation: langin .35s ease both; }
+@keyframes langin { from { opacity: 0; transform: translateY(6px); } }
+.lang-menu a, .lang-menu span { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 12px; border-radius: 9px; font-size: 13px; white-space: nowrap; text-decoration: none; color: rgba(255, 255, 255, .72); }
+.lang-menu a:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.lang-menu a[aria-current] { color: #fff; }
+.lang-menu a[aria-current]::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.lang-menu span[aria-disabled] { opacity: .45; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .lang-menu { animation: none; } }
 </style>
 <script>(function(c,l,a,r,i,t,y){if(c.location.hostname!=="oeuvre.co.nz")return;try{var m=new URLSearchParams(c.location.search).get("me");if(m==="1")localStorage.setItem("oeuvre.me","1");else if(m==="0")localStorage.removeItem("oeuvre.me");if(localStorage.getItem("oeuvre.me")==="1")return}catch(e){}c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","z7bwtz0c8m");</script>
 </head>
@@ -225,9 +244,14 @@ main { padding-top: 76px; }
 <aside class="cta"><p class="kicker">下一个好想法？</p><a class="cta-link" href="/zh/contact/"><span>你负责异想天开，我们负责想办法。</span><span class="arr" aria-hidden="true">→</span></a></aside>
 <footer class="foot">
   <p class="foot-legal">Oeuvre 是 BNB Management Consulting Ltd 的经营名称。 <a class="foot-link" href="/zh/privacy/">隐私说明</a></p>
-  <div class="langs" role="group" aria-label="语言"><a href="/services/brand-workshop/" lang="en" hreflang="en" title="English">EN</a><a href="/zh/services/brand-workshop/" lang="zh" hreflang="zh" aria-current="true" title="中文">CN</a><a href="/mi/services/brand-workshop/" lang="mi" hreflang="mi" title="Te reo Māori">MI</a></div>
+  <details class="langs"><summary aria-label="语言: CN">CN</summary><div class="lang-menu" role="group" aria-label="语言"><a href="/services/brand-workshop/" lang="en" hreflang="en" title="English">English</a><a href="/zh/services/brand-workshop/" lang="zh" hreflang="zh" aria-current="true" title="中文">中文</a><a href="/mi/services/brand-workshop/" lang="mi" hreflang="mi" title="Te reo Māori">Te reo Māori</a></div></details>
 </footer>
 <canvas id="grid" aria-hidden="true"></canvas>
+<script>
+(function () { var d = document.querySelector('details.langs'); if (!d) return;
+  document.addEventListener('pointerdown', function (e) { if (d.open && !d.contains(e.target)) d.open = false; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && d.open) d.open = false; }); })();
+</script>
 <script>
 /* A layout grid behind the page that only shows where light has passed.
    Twelve columns line up with the content; rows every 96px. Each line is broken up by drifting noise,

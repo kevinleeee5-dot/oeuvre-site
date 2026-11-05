@@ -1025,6 +1025,8 @@
     if (reduced || !cv) { setTimeout(() => { formed = true; check(); }, 2200); }
     else {
       const run = () => {
+        // a tab opened in the background has no size yet: wait until it has one
+        if (!innerWidth || !innerHeight) { addEventListener("resize", run, { once: true }); return; }
         const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
         cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext("2d"); g.scale(dpr, dpr);
         // the picture to form, set like a title page: the name fitted to the measure, the line a third of its size under it,
@@ -1115,4 +1117,12 @@
   /* ================= resize + arrive ================= */
   addEventListener("resize", () => { W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2); ictx = fit(irisC); });
   arrive();
+})();
+
+/* language menu: a tap anywhere else, or Escape, closes it */
+(function () {
+  var d = document.querySelector("details.langs"); if (!d) return;
+  document.addEventListener("pointerdown", function (e) { if (d.open && !d.contains(e.target)) d.open = false; });
+  addEventListener("blur", function () { d.open = false; });   // a tap on the figure (its own frame) takes the focus away
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && d.open) { d.open = false; var s = d.querySelector("summary"); s && s.focus(); } });
 })();
