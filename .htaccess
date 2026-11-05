@@ -21,6 +21,10 @@ Options -Indexes
   <FilesMatch "\.(css|js)$">
     Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
+  # pages: browsers check back on every visit (a cheap 304 via ETag), so a release shows at once
+  <FilesMatch "\.(html|xml|txt)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
   <FilesMatch "^llms\.txt$">
     Header set Content-Type "text/plain; charset=utf-8"
   </FilesMatch>

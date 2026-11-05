@@ -17,4 +17,7 @@ Preview locally: `python3 -I tools/dev_server.py --port 8130` → http://127.0.0
 in `~/.oeuvre-dev/`). Plain `python3 -m http.server 8130` also works without talk. Add `?static` to any URL to skip
 animations, for screenshots.
 
-`main` deploys to https://oeuvre.co.nz automatically — merge only when the site should go live.
+`main` deploys to https://oeuvre.co.nz automatically — merge only when the site should go live. How: the host's
+`public_html` is a shallow clone of this repo, and an hPanel cron job (every minute) runs
+`git fetch --depth=1 origin main && git reset --hard FETCH_HEAD` there. Do not upload files by hand: tracked files
+are overwritten by the next run. Secrets and logs live outside `public_html`, in `oeuvre-secrets/`.
