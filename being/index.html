@@ -196,7 +196,17 @@
     /* the browser's bottom bar can sit outside the page (a strip in the page's own black): the picture melts into it so there is no seam */
     body::after { content:""; position:fixed; left:0; right:0; bottom:0; height:calc(24svh + var(--bar,0px)); z-index:1; pointer-events:none;
       background:linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.55) calc(100% - var(--bar,0px) - 8svh), #000 calc(100% - var(--bar,0px))); }
-    body:not(.panelopen) #panel { transform:translateY(105%); }
+    /* open/close: the site's halftone iris, from the Talk pill (irisPanel); the drift and fade below are what is left
+       where masks or motion are off */
+    body:not(.panelopen) #panel { transform:translateY(16px); transition:opacity .3s var(--ease) .38s, transform .7s var(--ease), visibility 0s linear .7s; }
+    #panel.iris { -webkit-mask-image:radial-gradient(circle at var(--ox) var(--oy), #000 var(--cr), transparent calc(var(--cr) + 1px)),
+        radial-gradient(circle, #000 var(--dr), transparent calc(var(--dr) + .7px)), radial-gradient(circle at var(--ox) var(--oy), #000 var(--wr), transparent calc(var(--wr) + 1px));
+      mask-image:radial-gradient(circle at var(--ox) var(--oy), #000 var(--cr), transparent calc(var(--cr) + 1px)),
+        radial-gradient(circle, #000 var(--dr), transparent calc(var(--dr) + .7px)), radial-gradient(circle at var(--ox) var(--oy), #000 var(--wr), transparent calc(var(--wr) + 1px));
+      -webkit-mask-size:100% 100%, 14px 14px, 100% 100%; mask-size:100% 100%, 14px 14px, 100% 100%;
+      -webkit-mask-repeat:no-repeat, repeat, no-repeat; mask-repeat:no-repeat, repeat, no-repeat;
+      -webkit-mask-composite:source-over, source-in; mask-composite:add, intersect; }
+    #panel.rising > * { animation:rise .6s var(--ease) both; animation-delay:calc(var(--i, 0) * 55ms + 140ms); }
     .lede { font-size:14px; max-width:none; }
     #thread .it { font-size:14.5px; }
     .tab { writing-mode:horizontal-tb; width:auto; min-height:44px; top:auto; right:16px; bottom:calc(max(64px,calc(env(safe-area-inset-bottom) + 52px)) + var(--bar,0px)); transform:none; border:1px solid rgba(255,255,255,.5);
@@ -212,7 +222,7 @@
   @media (max-height: 499px) and (min-aspect-ratio: 1/1) {
     #panel, #panel.talked { left:auto; right:0; top:0; bottom:var(--kb,0px); width:min(400px,50vw); height:auto; max-height:none; border-top:0; border-left:1px solid var(--hair);
       border-radius:16px 0 0 16px; padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) 16px; gap:10px; }
-    body:not(.panelopen) #panel { transform:translateX(105%); }
+    body:not(.panelopen) #panel { transform:translateX(16px); }
     .lede, .foot { display:none; }
     .tab { bottom:max(16px,env(safe-area-inset-bottom)); }
   }
@@ -1423,6 +1433,7 @@
   // --- identities: all five are first class. IDENT[id] = { ID, RT, tex, lay }; the current one is CUR_ID; the figure cycles through them
   var IDENT = {}, IDS_JSON = null, CUR_ID = PARAM.id, FLD = null, FSC = null, GPOS = null, GSH = null, GCAV = new Float32Array(INNER_UP.length * 4), GFB = [0, 0, 0, 0], GIRIS = new Float32Array(4);
   var LIFT = 0, LIFT_T = 0, lastChange = -1e9, readyAt = 0, touched = false, KB = 0;
+  var VIEW = { s: 1, ty: 0, ox: 0, oy: 0, key: "1.000|0" };   // the phone's step-back while the sheet is open (setView)
   // SHIFT: a horizontal offset (css px) the figure eases to over 1.2 s: to the true centre when the desktop column is collapsed,
   // left of centre when a landscape phone's drawer is open
   var SHIFT = 0, SHM = { from: 0, to: 0, t0: 0 }, GEO = { key: "", n: 0 };
@@ -2197,6 +2208,7 @@
     draw(O, TR ? IDENT[TR.to] : null, R, vmix);
     // the face box in css px (the photo's: the clips stay inside it), for the parent and the talk control
     faceCss[0] = GFB[0]; faceCss[1] = GFB[1] - 0.22 * GFB[3]; faceCss[2] = GFB[2]; faceCss[3] = GFB[3] * 1.22;
+    if (VIEW.s !== 1 || VIEW.ty) { var v0 = viewPoint(faceCss[0], faceCss[1]); faceCss[0] = v0[0]; faceCss[1] = v0[1]; faceCss[2] *= VIEW.s; faceCss[3] *= VIEW.s; }   // as the phone's step-back draws it
     if (!readyPosted) { readyPosted = true; post({ type: "oeuvre-ready", camera: false }); gate.classList.add("off"); document.body.classList.remove("loading"); readyAt = t; }
     if (t - facePostAt > 100) { facePostAt = t; post({ type: "oeuvre-face", x: faceCss[0], y: faceCss[1], w: faceCss[2], h: faceCss[3], state: stateName() }); postPanel(); liftTarget(); placeHint(t); }
     LIFT += (LIFT_T - LIFT) * ease(0.09, dt);
@@ -2266,8 +2278,42 @@
   // ===========================================================================
   var PANEL_KEY = "oeuvre.panel", lastPanel = "";
   function panelWanted() { try { return sessionStorage.getItem(PANEL_KEY) !== "0"; } catch (e) { return true; } }
+  // phones: the sheet opens and closes the way the site changes pages, a halftone front from the Talk pill. A solid disc
+  // (--cr) with a ring of growing dots ahead of it (--cr..--wr, dots --dr) is the panel's mask; closing runs it back to the pill.
+  var irisRaf = 0, irisDone = null;
+  function irisPanel(open) {
+    if (irisRaf) { cancelAnimationFrame(irisRaf); irisRaf = 0; if (irisDone) irisDone(); }
+    if (reduce || !isCompact(W, H) || !(window.CSS && CSS.supports && (CSS.supports("mask-composite", "intersect") || CSS.supports("-webkit-mask-composite", "source-in")))) return;
+    var pr = panelEl.getBoundingClientRect(), tr = tabBtn.getBoundingClientRect();
+    if (!pr.width || !pr.height) return;
+    var ox = clamp(tr.left + tr.width / 2 - pr.left, 0, pr.width), oy = clamp(tr.top + tr.height / 2 - pr.top, 0, pr.height);
+    var far = Math.max(Math.hypot(ox, oy), Math.hypot(pr.width - ox, oy), Math.hypot(ox, pr.height - oy), Math.hypot(pr.width - ox, pr.height - oy));
+    var feather = Math.max(90, far * 0.45), dur = open ? 720 : 520, t0 = performance.now(), st = panelEl.style;
+    st.setProperty("--ox", ox.toFixed(1) + "px"); st.setProperty("--oy", oy.toFixed(1) + "px");
+    if (open) {
+      var kids = panelEl.children; for (var i = 0, n = 0; i < kids.length; i++) if (kids[i].offsetParent !== null) kids[i].style.setProperty("--i", n++);
+      panelEl.classList.add("rising");
+    }
+    panelEl.classList.add("iris");
+    irisDone = function () {
+      panelEl.classList.remove("iris"); ["--ox", "--oy", "--cr", "--wr", "--dr"].forEach(function (k) { st.removeProperty(k); });
+      irisDone = null; setTimeout(function () { panelEl.classList.remove("rising"); }, 900);
+    };
+    function frame(now) {
+      var p = clamp((now - t0) / dur, 0, 1), e = open ? 1 - Math.pow(1 - p, 3) : 1 - Math.pow(p, 2) * (3 - 2 * p), front = e * (far + feather);
+      st.setProperty("--cr", Math.max(0, front - feather).toFixed(1) + "px");
+      st.setProperty("--wr", Math.max(0, front).toFixed(1) + "px");
+      st.setProperty("--dr", (1 + 4.2 * Math.sin(Math.min(1, e * 1.4) * Math.PI / 2)).toFixed(2) + "px");
+      if (p < 1) { irisRaf = requestAnimationFrame(frame); return; }
+      irisRaf = 0; if (open) irisDone(); else { st.setProperty("--cr", "0px"); st.setProperty("--wr", "0px"); setTimeout(function () { if (irisDone && !irisRaf) irisDone(); }, 260); }
+    }
+    frame(t0); irisRaf = requestAnimationFrame(frame);
+  }
   function setPanel(open, focus) {
+    var was = document.body.classList.contains("panelopen");
+    if (was !== !!open) irisPanel(!!open);
     document.body.classList.toggle("panelopen", !!open);
+    if (was !== !!open) liftTarget();                                                 // the figure moves with the sheet, not on the next tick
     tabBtn.setAttribute("aria-expanded", open ? "true" : "false");
     tabBtn.inert = !!open; panelEl.inert = !open;                                     // the hidden one is out of the tab order
     if (open && focus) { primeTTS(); setTimeout(function () { try { sayEl.focus({ preventScroll: true }); } catch (e) {} }, 60); }
@@ -2350,14 +2396,30 @@
     METER.stream = null; METER.ctx = null; METER.an = null; METER.lv = 0;
     for (var i = 0; i < METER.bars.length; i++) METER.bars[i].style.setProperty("--v", "0");
   }
-  // phones: while the sheet is open the figure rises so the face stays above it (never the crown off the top, never the picture's
-  // bottom edge above the sheet)
+  // phones: while the sheet is open the figure steps back from the lens (the whole picture scales down a little toward the crown)
+  // so the face stays above the sheet; only what scaling cannot do (at most 16% smaller) is made up by a small rise. The move is
+  // a CSS transform on the canvas with the sheet's own timing (irisPanel: 720 ms out, 520 ms back), so the two arrive together.
   function isLand() { return isCompact(W, H) && W / H >= 1; }
+  function setView(s, ty, ox, oy, open) {
+    var key = s.toFixed(3) + "|" + Math.round(ty);
+    if (key === VIEW.key) return;
+    if (open || VIEW.s === 1) { VIEW.ox = ox; VIEW.oy = oy; }                     // the origin is fixed for the way out and back
+    VIEW.s = s; VIEW.ty = ty; VIEW.key = key;
+    cv.style.transition = reduce ? "none" : open ? "transform .72s cubic-bezier(.2,.7,.2,1)" : "transform .52s cubic-bezier(.4,0,.2,1)";
+    cv.style.transformOrigin = VIEW.ox.toFixed(1) + "px " + VIEW.oy.toFixed(1) + "px";
+    cv.style.transform = s === 1 && !ty ? "" : "translate3d(0," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+  }
+  function viewPoint(x, y) { return [VIEW.ox + (x - VIEW.ox) * VIEW.s, VIEW.oy + (y - VIEW.oy) * VIEW.s + VIEW.ty]; }   // css px as drawn
   function liftTarget() {
-    if (!LAY || !isCompact(W, H) || isLand() || !document.body.classList.contains("panelopen")) { LIFT_T = KB > 0 && isCompact(W, H) && !isLand() ? -Math.min(KB, LAY ? LAY.oy + headTop(ID.faceBox) * LAY.S - 10 : 0) : 0; return; }
+    if (!LAY || !isCompact(W, H) || isLand() || !document.body.classList.contains("panelopen")) {
+      LIFT_T = KB > 0 && isCompact(W, H) && !isLand() ? -Math.min(KB, LAY ? LAY.oy + headTop(ID.faceBox) * LAY.S - 10 : 0) : 0;
+      setView(1, 0, VIEW.ox, VIEW.oy, false); return;
+    }
     var sheetTop = H - KB - panelEl.offsetHeight, crown = LAY.oy + headTop(ID.faceBox) * LAY.S, chin = LAY.oy + chinY(ID.faceBox) * LAY.S;
-    var want = Math.max(0, chin - sheetTop + 16);
-    LIFT_T = -Math.max(0, Math.min(want, crown - 10, LAY.bottom - sheetTop + KB));
+    var cx = LAY.ox + SHIFT + (ID.faceBox[0] + ID.faceBox[2] / 2) * LAY.S, floor = sheetTop - 16;
+    var s = chin > floor ? clamp((floor - crown) / Math.max(1, chin - crown), 0.84, 1) : 1;
+    var after = crown + (chin - crown) * s, ty = after > floor ? -Math.min(after - floor, Math.max(0, crown - 10)) : 0;
+    LIFT_T = 0; setView(s, ty, cx, crown, true);
   }
   // the horizontal ease (1.2 s, ease in-out): desktop, the column collapsed -> the face to the true centre; a landscape phone's
   // drawer open -> the face to the middle of what the drawer leaves

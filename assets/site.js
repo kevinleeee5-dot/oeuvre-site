@@ -1044,7 +1044,9 @@
         // the line is small: it gets denser ink and a calmer stream than the name, so its strokes hold together
         const nameIdx = [], lineIdx = [];
         for (let j = 0; j < pts.length; j += 2) nameIdx.push(j);
-        const nName = Math.min(9000, Math.round(nameIdx.length * 1.5)), nLine = 0, N = Math.max(1, nName);
+        // ink per pixel of glyph: the desktop's 1.5 reads as a solid mass on a phone's small letters, so phones get under half
+        const dens = w < 700 ? 0.65 : w < 1100 ? 1.1 : 1.5;
+        const nName = Math.min(9000, Math.round(nameIdx.length * dens)), nLine = 0, N = Math.max(1, nName);
         const X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N),
           TX = new Float32Array(N), TY = new Float32Array(N), HI = new Int32Array(N), SD = new Float32Array(N), FL = new Float32Array(N), BORN = new Float32Array(N);
         // a few at first, then more and more: each particle enters at its own moment (later ones far more common) and gathers on its own clock
