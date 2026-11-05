@@ -1811,6 +1811,15 @@
     for (var i = 0; i < ABUF.length; i++) sum += ABUF[i] * ABUF[i];
     return clamp((Math.sqrt(sum / ABUF.length) - 0.012) * 7, 0, 1);
   }
+  // one player for every reply, unlocked inside the visitor's tap (primeTTS): phones (iOS above all) refuse play() on an
+  // element first played after a network wait, but let an element that already played in a gesture play again later
+  var PLAYER = null, HUSH = "data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA";
+  function player() {
+    if (PLAYER || typeof Audio === "undefined") return PLAYER;
+    PLAYER = new Audio(); PLAYER.preload = "auto"; PLAYER.setAttribute("playsinline", "");
+    if (AC && AN) { try { AC.createMediaElementSource(PLAYER).connect(AN); } catch (e) {} }
+    return PLAYER;
+  }
   function stopVoice(s) {
     if (!s) return;
     if (s.ctl) { try { s.ctl.abort(); } catch (e) {} }
@@ -1823,8 +1832,8 @@
       .then(function (r) { if (!r.ok) throw new Error("tts " + r.status); return r.blob(); })
       .then(function (b) {
         if (SP !== s) return;
-        s.url = URL.createObjectURL(b); var a = s.aud = new Audio(s.url); a.preload = "auto";
-        if (AC && AN) { try { AC.createMediaElementSource(a).connect(AN); } catch (e) {} }
+        var a = player(); if (!a) { s.el = false; return; }
+        s.url = URL.createObjectURL(b); s.aud = a; a.src = s.url;
         a.onplaying = function () { if (SP !== s) return; s.started = true; s.audio = true; };
         a.onended = function () { if (SP !== s) return; s.audio = false; s.ended = true; };
         a.onerror = function () { if (SP !== s) return; s.el = false; };
@@ -1833,7 +1842,14 @@
       .catch(function () { if (SP === s) s.el = false; });
   }
   function primeTTS() {                    // some browsers only let a page play sound after a gesture: open the audio context inside one
+    // iPhone: a reply the visitor asked for plays even with the ring/silent switch on (where supported)
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
     audioCtx();
+    var a = player();                      // unlock the reply player with a few silent milliseconds, still inside the gesture
+    if (a && !a.__unlocked && (a.paused || !a.src)) {
+      a.__unlocked = true; a.onplaying = a.onended = a.onerror = null; a.src = HUSH;
+      try { var p = a.play(); if (p && p.catch) p.catch(function () { a.__unlocked = false; }); } catch (e) { a.__unlocked = false; }
+    }
     if (primed || !SYNTH || !UTTER) return; primed = true;
     try { var u = new UTTER(" "); u.volume = 0; SYNTH.speak(u); } catch (e) {}
   }

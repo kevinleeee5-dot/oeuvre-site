@@ -212,7 +212,12 @@
       const stop = () => { on = false; label(); level(0); try { localStorage.setItem(KEY, "1"); } catch (_) { } };
       btn.addEventListener("click", () => on ? stop() : start());
       document.addEventListener("visibilitychange", () => { if (!ctx || !on) return; if (document.hidden) ctx.suspend().catch(() => { }); else resume(); });
-      ["pointerdown", "keydown", "touchend", "click"].forEach(t => addEventListener(t, resume, { capture: true, passive: true }));
+      const GESTURES = ["pointerdown", "keydown", "touchend", "click"];
+      GESTURES.forEach(t => addEventListener(t, resume, { capture: true, passive: true }));
+      // on a phone the figure's frame covers the page, so every tap lands in the frame, not here: listen inside it too (same
+      // origin), so the resume runs within that tap, which is what iOS and Android need before a page may make sound
+      const hookFrame = () => { try { const w = frame && frame.contentWindow; if (!w || w.__oeuvreGestures) return; w.__oeuvreGestures = true; GESTURES.forEach(t => w.addEventListener(t, resume, { capture: true, passive: true })); } catch (_) { } };
+      if (frame) { frame.addEventListener("load", hookFrame); hookFrame(); }
       /* the pointer's voice: a bell note for each stretch of travel, pitch from height, pan from the side, louder when quicker */
       const SC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
       let acc = 0, lt = 0, lx = null, ly = null, lastNote = 0;
