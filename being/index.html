@@ -1433,7 +1433,7 @@
   // --- identities: all five are first class. IDENT[id] = { ID, RT, tex, lay }; the current one is CUR_ID; the figure cycles through them
   var IDENT = {}, IDS_JSON = null, CUR_ID = PARAM.id, FLD = null, FSC = null, GPOS = null, GSH = null, GCAV = new Float32Array(INNER_UP.length * 4), GFB = [0, 0, 0, 0], GIRIS = new Float32Array(4);
   var LIFT = 0, LIFT_T = 0, lastChange = -1e9, readyAt = 0, touched = false, KB = 0;
-  var VIEW = { s: 1, ty: 0, ox: 0, oy: 0, key: "1.000|0" };   // the phone's step-back while the sheet is open (setView)
+  var VIEW = { s: 1, ty: 0, from: null, to: null, t0: 0, dur: 1, open: false };   // the phone's step-back while the sheet is open (setView)
   // SHIFT: a horizontal offset (css px) the figure eases to over 1.2 s: to the true centre when the desktop column is collapsed,
   // left of centre when a landscape phone's drawer is open
   var SHIFT = 0, SHM = { from: 0, to: 0, t0: 0 }, GEO = { key: "", n: 0 };
@@ -1554,7 +1554,10 @@
     for (var id in IDS_JSON.ids) { var d = IDS_JSON.ids[id], fb = d.faceBox; t = Math.max(t, layout(W, H, [fb.x, fb.y, fb.w, fb.h], { imgH: d.image.h, eyeV: eyeVOf(d) }).eyeMin); }
     return t;
   }
-  function layoutFor(I) { return layout(W, H, I.faceBox, { right: panelRight(), imgH: I.H, eyeV: (I.eyes[0].cv + I.eyes[1].cv) / 2 * I.H, eyeT: eyeTarget() }); }
+  function layoutFor(I, base) {
+    var L = layout(W, H, I.faceBox, { right: panelRight(), imgH: I.H, eyeV: (I.eyes[0].cv + I.eyes[1].cv) / 2 * I.H, eyeT: eyeTarget() });
+    return base || (VIEW.s === 1 && !VIEW.ty) ? L : zoomLay(L, I);      // the phone's step-back (zoomLay); base: as composed
+  }
   var pending = null, PRE = null;
   // the buffers a transition needs (the field distances, both uv sets, the particles' uv row) are built during the hold, in the
   // last second before it starts, and the next identity's retarget pre-steps are spread over the hold's last frames: no spike
@@ -2193,6 +2196,7 @@
     if (VS.el && uploadVideo()) VS.hasFrame = true;
     OPT.dt = dt;
     shiftStep(t);
+    viewStep();
     // the figure is a still mesh between transitions: once it has settled (30 frames on the same composition) the retarget and the
     // compose are skipped and the vertex buffers are left as they are; only the clip's frame changes
     var gk = CUR_ID + "|" + LAY.ox + "|" + LAY.oy + "|" + LAY.S + "|" + LIFT.toFixed(2) + "|" + SHIFT.toFixed(2);
@@ -2208,7 +2212,6 @@
     draw(O, TR ? IDENT[TR.to] : null, R, vmix);
     // the face box in css px (the photo's: the clips stay inside it), for the parent and the talk control
     faceCss[0] = GFB[0]; faceCss[1] = GFB[1] - 0.22 * GFB[3]; faceCss[2] = GFB[2]; faceCss[3] = GFB[3] * 1.22;
-    if (VIEW.s !== 1 || VIEW.ty) { var v0 = viewPoint(faceCss[0], faceCss[1]); faceCss[0] = v0[0]; faceCss[1] = v0[1]; faceCss[2] *= VIEW.s; faceCss[3] *= VIEW.s; }   // as the phone's step-back draws it
     if (!readyPosted) { readyPosted = true; post({ type: "oeuvre-ready", camera: false }); gate.classList.add("off"); document.body.classList.remove("loading"); readyAt = t; }
     if (t - facePostAt > 100) { facePostAt = t; post({ type: "oeuvre-face", x: faceCss[0], y: faceCss[1], w: faceCss[2], h: faceCss[3], state: stateName() }); postPanel(); liftTarget(); placeHint(t); }
     LIFT += (LIFT_T - LIFT) * ease(0.09, dt);
@@ -2396,41 +2399,39 @@
     METER.stream = null; METER.ctx = null; METER.an = null; METER.lv = 0;
     for (var i = 0; i < METER.bars.length; i++) METER.bars[i].style.setProperty("--v", "0");
   }
-  // phones: while the sheet is open the figure steps back from the lens (the whole picture scales down a little toward the crown)
-  // so the face stays above the sheet; only what scaling cannot do (at most 8% smaller) is made up by a small rise. The move is
-  // a CSS transform on the canvas with the sheet's own timing (irisPanel: 720 ms out, 520 ms back), so the two arrive together.
+  // phones: while the sheet is open the figure steps back from the lens (the picture is drawn a little smaller, toward the crown)
+  // so the face stays above the sheet; only what scaling cannot do (at most 8% smaller) is made up by a small rise. It is drawn
+  // smaller inside the full-screen canvas (layoutFor -> zoomLay), so the picture still runs off both sides: no edge, no fade.
+  // Timing as the sheet's (irisPanel): 720 ms out (ease-out), 520 ms back (ease-in-out), so the two arrive together.
   function isLand() { return isCompact(W, H) && W / H >= 1; }
-  // the canvas's own edges would show once it is smaller than the screen: a black inset feather rides on top of it with the
-  // same transform and timing, fading in as it steps back, so the picture melts into the black around it
-  var EDGE = null;
-  function setView(s, ty, ox, oy, open) {
-    var key = s.toFixed(3) + "|" + Math.round(ty);
-    if (key === VIEW.key) return;
-    if (open || VIEW.s === 1) { VIEW.ox = ox; VIEW.oy = oy; }                     // the origin is fixed for the way out and back
-    VIEW.s = s; VIEW.ty = ty; VIEW.key = key;
-    if (!EDGE) {
-      EDGE = document.createElement("div"); EDGE.setAttribute("aria-hidden", "true");
-      EDGE.style.cssText = "position:fixed;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 28px 22px #000";
-      cv.parentNode.insertBefore(EDGE, cv.nextSibling);
-    }
-    var tr = reduce ? "none" : open ? "transform .72s cubic-bezier(.2,.7,.2,1)" : "transform .52s cubic-bezier(.4,0,.2,1)";
-    var org = VIEW.ox.toFixed(1) + "px " + VIEW.oy.toFixed(1) + "px", tf = s === 1 && !ty ? "" : "translate3d(0," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
-    [cv, EDGE].forEach(function (el) { el.style.transformOrigin = org; el.style.transform = tf; });
-    cv.style.transition = tr;
-    EDGE.style.transition = reduce ? "none" : tr + (open ? ", opacity .36s ease-out" : ", opacity .3s ease-in .22s");
-    EDGE.style.opacity = s < 1 || ty ? "1" : "0";
+  function zoomLay(L, I) {
+    var z = VIEW.s, ax = L.ox + (I.faceBox[0] + I.faceBox[2] / 2) * L.S, ay = L.oy + headTop(I.faceBox) * L.S;
+    var ox = ax - (ax - L.ox) * z, oy = ay - (ay - L.oy) * z + VIEW.ty;
+    return { S: L.S * z, ox: ox, oy: oy, frac: L.frac * z, phone: L.phone, bottom: oy + (L.bottom - L.oy) * z, eyeMin: L.eyeMin };
   }
-  function viewPoint(x, y) { return [VIEW.ox + (x - VIEW.ox) * VIEW.s, VIEW.oy + (y - VIEW.oy) * VIEW.s + VIEW.ty]; }   // css px as drawn
+  function setView(s, ty, open) {
+    var to = VIEW.to || { s: 1, ty: 0 };
+    if (Math.abs(s - to.s) < 0.001 && Math.abs(ty - to.ty) < 0.5) return;
+    VIEW.from = { s: VIEW.s, ty: VIEW.ty }; VIEW.to = { s: s, ty: ty }; VIEW.t0 = performance.now(); VIEW.dur = reduce ? 1 : open ? 720 : 520; VIEW.open = open;
+  }
+  function viewStep() {
+    if (!VIEW.to) return;
+    var p = clamp((performance.now() - VIEW.t0) / VIEW.dur, 0, 1), e = VIEW.open ? 1 - Math.pow(1 - p, 3) : p * p * (3 - 2 * p);
+    var s = VIEW.from.s + (VIEW.to.s - VIEW.from.s) * e, ty = VIEW.from.ty + (VIEW.to.ty - VIEW.from.ty) * e;
+    if (s === VIEW.s && ty === VIEW.ty) return;
+    VIEW.s = s; VIEW.ty = ty;
+    for (var k in IDENT) IDENT[k].lay = layoutFor(IDENT[k].ID);
+    if (IDENT[CUR_ID]) LAY = IDENT[CUR_ID].lay;
+  }
   function liftTarget() {
     if (!LAY || !isCompact(W, H) || isLand() || !document.body.classList.contains("panelopen")) {
       LIFT_T = KB > 0 && isCompact(W, H) && !isLand() ? -Math.min(KB, LAY ? LAY.oy + headTop(ID.faceBox) * LAY.S - 10 : 0) : 0;
-      setView(1, 0, VIEW.ox, VIEW.oy, false); return;
+      setView(1, 0, false); return;
     }
-    var sheetTop = H - KB - panelEl.offsetHeight, crown = LAY.oy + headTop(ID.faceBox) * LAY.S, chin = LAY.oy + chinY(ID.faceBox) * LAY.S;
-    var cx = LAY.ox + SHIFT + (ID.faceBox[0] + ID.faceBox[2] / 2) * LAY.S, floor = sheetTop - 16;
+    var L0 = layoutFor(ID, true), sheetTop = H - KB - panelEl.offsetHeight, crown = L0.oy + headTop(ID.faceBox) * L0.S, chin = L0.oy + chinY(ID.faceBox) * L0.S, floor = sheetTop - 16;
     var s = chin > floor ? clamp((floor - crown) / Math.max(1, chin - crown), 0.92, 1) : 1;
     var after = crown + (chin - crown) * s, ty = after > floor ? -Math.min(after - floor, Math.max(0, crown - 10)) : 0;
-    LIFT_T = 0; setView(s, ty, cx, crown, true);
+    LIFT_T = 0; setView(s, ty, true);
   }
   // the horizontal ease (1.2 s, ease in-out): desktop, the column collapsed -> the face to the true centre; a landscape phone's
   // drawer open -> the face to the middle of what the drawer leaves
