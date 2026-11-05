@@ -2400,7 +2400,7 @@
     for (var i = 0; i < METER.bars.length; i++) METER.bars[i].style.setProperty("--v", "0");
   }
   // phones: while the sheet is open the figure steps back from the lens (the picture is drawn a little smaller, toward the crown)
-  // so the face stays above the sheet; only what scaling cannot do (at most 8% smaller) is made up by a small rise. It is drawn
+  // so the face stays above the sheet; only what scaling cannot do (at most 12% smaller) is made up by a small rise. It is drawn
   // smaller inside the full-screen canvas (layoutFor -> zoomLay), so the picture still runs off both sides: no edge, no fade.
   // Timing as the sheet's (irisPanel): 720 ms out (ease-out), 520 ms back (ease-in-out), so the two arrive together.
   function isLand() { return isCompact(W, H) && W / H >= 1; }
@@ -2429,7 +2429,7 @@
       setView(1, 0, false); return;
     }
     var L0 = layoutFor(ID, true), sheetTop = H - KB - panelEl.offsetHeight, crown = L0.oy + headTop(ID.faceBox) * L0.S, chin = L0.oy + chinY(ID.faceBox) * L0.S, floor = sheetTop - 16;
-    var s = chin > floor ? clamp((floor - crown) / Math.max(1, chin - crown), 0.92, 1) : 1;
+    var s = chin > floor ? clamp((floor - crown) / Math.max(1, chin - crown), 0.88, 1) : 1;
     var after = crown + (chin - crown) * s, ty = after > floor ? -Math.min(after - floor, Math.max(0, crown - 10)) : 0;
     LIFT_T = 0; setView(s, ty, true);
   }
