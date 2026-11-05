@@ -2397,17 +2397,28 @@
     for (var i = 0; i < METER.bars.length; i++) METER.bars[i].style.setProperty("--v", "0");
   }
   // phones: while the sheet is open the figure steps back from the lens (the whole picture scales down a little toward the crown)
-  // so the face stays above the sheet; only what scaling cannot do (at most 16% smaller) is made up by a small rise. The move is
+  // so the face stays above the sheet; only what scaling cannot do (at most 8% smaller) is made up by a small rise. The move is
   // a CSS transform on the canvas with the sheet's own timing (irisPanel: 720 ms out, 520 ms back), so the two arrive together.
   function isLand() { return isCompact(W, H) && W / H >= 1; }
+  // the canvas's own edges would show once it is smaller than the screen: a black inset feather rides on top of it with the
+  // same transform and timing, fading in as it steps back, so the picture melts into the black around it
+  var EDGE = null;
   function setView(s, ty, ox, oy, open) {
     var key = s.toFixed(3) + "|" + Math.round(ty);
     if (key === VIEW.key) return;
     if (open || VIEW.s === 1) { VIEW.ox = ox; VIEW.oy = oy; }                     // the origin is fixed for the way out and back
     VIEW.s = s; VIEW.ty = ty; VIEW.key = key;
-    cv.style.transition = reduce ? "none" : open ? "transform .72s cubic-bezier(.2,.7,.2,1)" : "transform .52s cubic-bezier(.4,0,.2,1)";
-    cv.style.transformOrigin = VIEW.ox.toFixed(1) + "px " + VIEW.oy.toFixed(1) + "px";
-    cv.style.transform = s === 1 && !ty ? "" : "translate3d(0," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+    if (!EDGE) {
+      EDGE = document.createElement("div"); EDGE.setAttribute("aria-hidden", "true");
+      EDGE.style.cssText = "position:fixed;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 28px 22px #000";
+      cv.parentNode.insertBefore(EDGE, cv.nextSibling);
+    }
+    var tr = reduce ? "none" : open ? "transform .72s cubic-bezier(.2,.7,.2,1)" : "transform .52s cubic-bezier(.4,0,.2,1)";
+    var org = VIEW.ox.toFixed(1) + "px " + VIEW.oy.toFixed(1) + "px", tf = s === 1 && !ty ? "" : "translate3d(0," + ty.toFixed(1) + "px,0) scale(" + s.toFixed(4) + ")";
+    [cv, EDGE].forEach(function (el) { el.style.transformOrigin = org; el.style.transform = tf; });
+    cv.style.transition = tr;
+    EDGE.style.transition = reduce ? "none" : tr + (open ? ", opacity .36s ease-out" : ", opacity .3s ease-in .22s");
+    EDGE.style.opacity = s < 1 || ty ? "1" : "0";
   }
   function viewPoint(x, y) { return [VIEW.ox + (x - VIEW.ox) * VIEW.s, VIEW.oy + (y - VIEW.oy) * VIEW.s + VIEW.ty]; }   // css px as drawn
   function liftTarget() {
@@ -2417,7 +2428,7 @@
     }
     var sheetTop = H - KB - panelEl.offsetHeight, crown = LAY.oy + headTop(ID.faceBox) * LAY.S, chin = LAY.oy + chinY(ID.faceBox) * LAY.S;
     var cx = LAY.ox + SHIFT + (ID.faceBox[0] + ID.faceBox[2] / 2) * LAY.S, floor = sheetTop - 16;
-    var s = chin > floor ? clamp((floor - crown) / Math.max(1, chin - crown), 0.84, 1) : 1;
+    var s = chin > floor ? clamp((floor - crown) / Math.max(1, chin - crown), 0.92, 1) : 1;
     var after = crown + (chin - crown) * s, ty = after > floor ? -Math.min(after - floor, Math.max(0, crown - 10)) : 0;
     LIFT_T = 0; setView(s, ty, cx, crown, true);
   }
