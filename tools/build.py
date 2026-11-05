@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content"
-VERSION = "20261103f"  # bump to bust caches of css/js
+VERSION = "20261105a"  # bump to bust caches of css/js
 # the sound toggle: a speaker; off = a small cross, on = three bars as waves (css animates them)
 SOUND_ICON = ('<svg class="spk" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">'
               '<path d="M3.5 7.6h2.8L10 4.4v11.2l-3.7-3.2H3.5z" fill="currentColor"/>'
@@ -43,6 +43,11 @@ def clarity(s):
 
 def esc(s):
     return html.escape(str(s), quote=True)
+
+
+def strong(s):
+    """**text** -> <strong>text</strong>, on already-escaped text."""
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
 
 
 def merge(base, over):
@@ -360,7 +365,7 @@ def manifesto(m):
 def privacy(c, P):
     V = c["privacy"]
     secs = "".join(
-        f'<section class="pv-sec"><h2>{esc(s["h"])}</h2>{"".join(f"<p>{esc(t)}</p>" for t in s["p"])}</section>'
+        f'<section class="pv-sec"><h2>{esc(s["h"])}</h2>{"".join(f"<p>{strong(esc(t))}</p>" for t in s["p"])}</section>'
         for s in V["sections"])
     return f"""<main id="main" class="wrap privacy">
   {back(c, P + '/')}
