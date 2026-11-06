@@ -22,6 +22,8 @@
   .sr-only:focus-visible { width:auto; height:auto; clip:auto; clip-path:none; left:var(--g); bottom:var(--g); padding:8px 12px; border:1px solid var(--fg); border-radius:99px; z-index:9; font:11px var(--mono); letter-spacing:.1em; text-transform:uppercase; background:#000; }
   .hud { position:fixed; font:11px/1.5 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--dim); pointer-events:none; z-index:2; }
   .hud b { color:var(--fg); font-weight:500; }
+  .hud #state { display:inline-block; min-width:calc(10ch + .8em); }
+  .hud #clock { display:inline-block; min-width:calc(5ch + .4em); }
   .tl { top:max(20px,env(safe-area-inset-top)); left:max(20px,env(safe-area-inset-left)); }
   .bl { bottom:max(20px,env(safe-area-inset-bottom)); left:max(20px,env(safe-area-inset-left)); }
   #perf { position:fixed; left:max(20px,env(safe-area-inset-left)); top:calc(max(20px,env(safe-area-inset-top)) + 44px); font:11px/1.5 var(--mono);
